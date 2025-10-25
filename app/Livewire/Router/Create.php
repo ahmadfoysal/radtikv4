@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\Mikrotik;
+namespace App\Livewire\Router;
 
 use Livewire\Component;
 
@@ -103,7 +103,7 @@ class Create extends Component
 
     public function render()
     {
-        return view('livewire.mikrotik.create')
+        return view('livewire.router.create')
             ->layout('components.layouts.app', ['title' => 'Add Router – RadTik']);
     }
 }

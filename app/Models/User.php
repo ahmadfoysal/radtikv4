@@ -8,11 +8,12 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, TwoFactorAuthenticatable;
+    use HasFactory, Notifiable, TwoFactorAuthenticatable, HasRoles;
 
     /**
      * The attributes that are mass assignable.
@@ -23,6 +24,17 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'phone',
+        'address',
+        'profile_image',
+        'country',
+        'balance',
+        'admin_id',
+        'subscription',
+        'is_active',
+        'last_login_at',
+        'is_phone_verified',
+        'expiration_date',
     ];
 
     /**
@@ -46,6 +58,11 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'subscription' => 'array',
+            'is_active' => 'boolean',
+            'last_login_at' => 'datetime',
+            'is_phone_verified' => 'boolean',
+            'expiration_date' => 'date',
             'password' => 'hashed',
         ];
     }
@@ -58,7 +75,32 @@ class User extends Authenticatable
         return Str::of($this->name)
             ->explode(' ')
             ->take(2)
-            ->map(fn ($word) => Str::substr($word, 0, 1))
+            ->map(fn($word) => Str::substr($word, 0, 1))
             ->implode('');
+    }
+
+    //Reseller relation
+    public function reseller()
+    {
+        return $this->hasMany(User::class, 'admin_id');
+    }
+
+    //Admins relation
+    public function admins()
+    {
+        return $this->belongsTo(User::class, 'admin_id');
+    }
+
+    //Vouchers relation
+    public function vouchers()
+    {
+        return $this->hasMany(Voucher::class);
+    }
+
+    //Router relation
+
+    public function routers()
+    {
+        return $this->hasMany(Router::class);
     }
 }

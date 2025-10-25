@@ -86,7 +86,8 @@
 
         {{-- CONTENT --}}
         <x-slot:content>
-            <div class="p-4 sm:p-5 lg:p-6">
+            <!-- 0px horizontal on mobile -->
+            <div class="px-0 py-4 sm:px-4 lg:px-6">
                 {{ $slot }}
             </div>
         </x-slot:content>

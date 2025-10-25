@@ -49,10 +49,10 @@
 
         {{-- RESELLERS --}}
         <x-mary-menu-sub title="Resellers" icon="o-user-group">
-            <x-mary-menu-item title="All Resellers" icon="o-list-bullet" link="/resellers" />
+            <x-mary-menu-item title="All Resellers" icon="o-list-bullet" link="/users" />
             <x-mary-menu-item title="Commission Reports" icon="o-banknotes" link="/resellers/commission" />
             <x-mary-menu-item title="Voucher Sales" icon="o-ticket" link="/resellers/vouchers" />
-            <x-mary-menu-item title="Add Reseller" icon="o-user-plus" link="/resellers/create" />
+            <x-mary-menu-item title="Add Reseller" icon="o-user-plus" link="/user/add" />
         </x-mary-menu-sub>
 
         {{-- BILLING & TRANSACTIONS --}}

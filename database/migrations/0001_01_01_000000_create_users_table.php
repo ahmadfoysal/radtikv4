@@ -16,6 +16,17 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
+            $table->string('phone')->nullable();
+            $table->string('address')->nullable();
+            $table->string('profile_image')->nullable();
+            $table->string('country')->nullable();
+            $table->decimal('balance', 15, 2)->default(0);
+            $table->foreignId('admin_id')->nullable()->constrained('users')->onDelete('cascade');
+            $table->json('subscription')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->timestamp('last_login_at')->nullable();
+            $table->boolean('is_phone_verified')->default(false);
+            $table->date('expiration_date')->nullable();
             $table->string('password');
             $table->rememberToken();
             $table->timestamps();
@@ -42,6 +53,8 @@ return new class extends Migration
      */
     public function down(): void
     {
+
+        Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('users');
         Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');

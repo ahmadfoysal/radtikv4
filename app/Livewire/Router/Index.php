@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\Mikrotik;
+namespace App\Livewire\Router;
 
 use Livewire\Component;
 
@@ -44,7 +44,7 @@ class Index extends Component
 
     public function render()
     {
-        return view('livewire.mikrotik.index')
+        return view('livewire.router.index')
             ->layout('components.layouts.app', ['title' => 'Routers – RadTik']);
     }
 }

@@ -73,3 +73,19 @@
 .mary-table-pagination button {
     @apply cursor-pointer;
 }
+
+@layer utilities {
+    .edge-to-edge {
+        @apply -mx-0; /* default */
+    }
+    @screen sm {
+        .edge-to-edge {
+            @apply mx-0; /* restore normal margins at ≥sm */
+        }
+    }
+}
+@layer components {
+    .mary-card {
+        @apply border border-gray-200;
+    }
+}

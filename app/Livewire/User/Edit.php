@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\Mikrotik;
+namespace App\Livewire\User;
 
 use Livewire\Component;
 
@@ -8,6 +8,6 @@ class Edit extends Component
 {
     public function render()
     {
-        return view('livewire.mikrotik.edit');
+        return view('livewire.user.edit');
     }
 }
