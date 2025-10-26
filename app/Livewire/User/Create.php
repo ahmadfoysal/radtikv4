@@ -9,7 +9,7 @@ class Create extends Component
 {
     #[Validate('required|string|max:255')]
     public $name;
-    #[Validate('required|email|max:255')]
+    #[Validate('required|email|max:255|unique:users,email')]
     public $email;
     #[Validate('required|string|min:8|max:255')]
     public $password;
@@ -36,6 +36,13 @@ class Create extends Component
         session()->flash('message', 'User created successfully.');
 
         return redirect()->route('users.index');
+    }
+
+    public function cancel()
+    {
+        //redirect to user list with a flash message
+
+        $this->redirect(route('users.index'), navigate: true);
     }
 
     public function render()
