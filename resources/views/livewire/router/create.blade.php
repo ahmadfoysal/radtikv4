@@ -3,17 +3,38 @@
 
     <x-mary-form wire:submit="save">
         <div class="grid md:grid-cols-2 gap-4">
-            <x-mary-input label="Name" wire:model="name" />
-            <x-mary-input label="IP Address" wire:model="ip" />
-            <x-mary-input label="Port" wire:model="port" type="number" />
-            <x-mary-input label="Username" wire:model="username" />
-            <x-mary-input label="Password" wire:model="password" type="password" />
-            <x-mary-input label="Location" wire:model="location" class="md:col-span-2" />
+            <div>
+                <x-mary-input label="Name" wire:model.live.debounce.500ms="name" placeholder="Office Core Router" />
+
+            </div>
+
+            <div>
+                <x-mary-input label="IP / Host" wire:model.live.debounce.500ms="address"
+                    placeholder="192.168.0.1 or router.example.com" />
+
+            </div>
+
+            <div>
+                <x-mary-input label="API Port" type="number" min="1" max="65535"
+                    wire:model.live.debounce.500ms="port" />
+
+            </div>
+
+            <div>
+                <x-mary-input label="Username" wire:model.live.debounce.500ms="username" />
+
+            </div>
+
+            <div class="md:col-span-2">
+                <x-mary-input label="Password" type="password" wire:model.live.debounce.500ms="password" />
+
+            </div>
+
+            <div class="md:col-span-2">
+                <x-mary-textarea label="Note" rows="2" wire:model.live.debounce.500ms="note"
+                    placeholder="Short note about this router..." />
+            </div>
         </div>
-
-        <x-mary-textarea label="Notes" wire:model="notes" rows="1"
-            placeholder="Short note about this router..." />
-
         <x-slot:actions>
             <x-mary-button label="Cancel" class="btn-ghost" type="button" wire:click="cancel" />
             <x-mary-button label="Save Router" class="btn-primary" type="submit" spinner="save" />

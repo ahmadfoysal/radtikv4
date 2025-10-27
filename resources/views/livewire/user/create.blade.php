@@ -1,4 +1,4 @@
-<x-mary-card title="Add Router" progress-indicator separator
+<x-mary-card title="Add User" progress-indicator separator
     class="max-w-2xl mx-auto bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300 rounded-2xl border border-base-300">
 
     <x-mary-form wire:submit="save">

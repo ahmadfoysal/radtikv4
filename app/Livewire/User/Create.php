@@ -4,9 +4,14 @@ namespace App\Livewire\User;
 
 use Livewire\Attributes\Validate;
 use Livewire\Component;
+use Mary\Traits\Toast;
+use Illuminate\Support\Facades\DB;
 
 class Create extends Component
 {
+
+    use Toast;
+
     #[Validate('required|string|max:255')]
     public $name;
     #[Validate('required|email|max:255|unique:users,email')]
@@ -24,19 +29,42 @@ class Create extends Component
     {
         $this->validate();
 
-        \App\Models\User::create([
-            'name' => $this->name,
-            'email' => $this->email,
-            'password' => bcrypt($this->password),
-            'phone' => $this->phone,
-            'address' => $this->address,
-            'country' => $this->country,
-        ]);
+        DB::transaction(function () {
+            $user = \App\Models\User::create([
+                'name'     => $this->name,
+                'email'    => $this->email,
+                'password' => bcrypt($this->password),
+                'phone'    => $this->phone,
+                'address'  => $this->address,
+                'country'  => $this->country,
+            ]);
 
-        session()->flash('message', 'User created successfully.');
+            // Decide which role to give the new user
+            $roleToAssign = null;
 
-        return redirect()->route('users.index');
+            if (auth()->user()->hasRole('superadmin')) {
+                $roleToAssign = 'admin';
+            } elseif (auth()->user()->hasRole('admin')) {
+                $roleToAssign = 'reseller';
+            }
+
+            // Optional: block creation if the current user isn't allowed to assign any role
+            if (is_null($roleToAssign)) {
+                abort(403, 'You are not allowed to assign a role to this user.');
+            }
+
+            // Assign the role (or use syncRoles([$roleToAssign]) if you want to replace any existing roles)
+            $user->assignRole($roleToAssign);
+        });
+
+        $this->success(
+            title: 'Success!',
+            description: 'User created successfully.'
+        );
+
+        $this->redirect(route('users.index'), navigate: true);
     }
+
 
     public function cancel()
     {

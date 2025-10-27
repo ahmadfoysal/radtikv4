@@ -1,58 +1,69 @@
-<x-layouts.auth>
-    <div class="flex flex-col gap-6">
-        <x-auth-header :title="__('Log in to your account')" :description="__('Enter your email and password below to log in')" />
+<x-layouts.auth.mary :title="__('Log in')">
+    <x-slot:header>{{ __('Log in to your account') }}</x-slot:header>
+    <x-slot:subheader>{{ __('Enter your email and password below to log in') }}</x-slot:subheader>
 
-        <!-- Session Status -->
-        <x-auth-session-status class="text-center" :status="session('status')" />
+    {{-- Session status (Fortify flash message) --}}
+    <x-auth-session-status class="text-center" :status="session('status')" />
 
-        <form method="POST" action="{{ route('login.store') }}" class="flex flex-col gap-6">
-            @csrf
+    {{-- Login form (Fortify handles POST /login) --}}
+    <form method="POST" action="{{ route('login') }}" class="grid gap-4" novalidate>
+        @csrf
 
-            <!-- Email Address -->
-            <flux:input
-                name="email"
-                :label="__('Email address')"
-                type="email"
-                required
-                autofocus
-                autocomplete="email"
-                placeholder="email@example.com"
-            />
-
-            <!-- Password -->
-            <div class="relative">
-                <flux:input
-                    name="password"
-                    :label="__('Password')"
-                    type="password"
-                    required
-                    autocomplete="current-password"
-                    :placeholder="__('Password')"
-                    viewable
-                />
-
+        {{-- Email --}}
+        <x-mary-input name="email" label="{{ __('Email address') }}" type="email" placeholder="email@example.com"
+            autocomplete="email" autofocus required :value="old('email')" />
+        @error('email')
+            <p class="text-error text-sm mt-1">{{ $message }}</p>
+        @enderror
+        {{-- Password --}}
+        <div class="form-control">
+            <label class="label">
+                <span class="label-text">{{ __('Password') }}</span>
                 @if (Route::has('password.request'))
-                    <flux:link class="absolute top-0 text-sm end-0" :href="route('password.request')" wire:navigate>
+                    <a href="{{ route('password.request') }}" class="link link-hover text-sm" wire:navigate>
                         {{ __('Forgot your password?') }}
-                    </flux:link>
+                    </a>
                 @endif
+            </label>
+
+            {{-- Password input with MaryUI icons for visibility toggle --}}
+            <div x-data="{ show: false }" class="relative">
+                <input :type="show ? 'text' : 'password'" name="password" required autocomplete="current-password"
+                    placeholder="{{ __('Password') }}" class="input input-bordered w-full pr-10" />
+                <button type="button" @click="show = !show"
+                    class="absolute inset-y-0 right-0 flex items-center pr-3 opacity-70 hover:opacity-100 transition">
+                    <x-mary-icon name="o-eye" class="w-5 h-5" x-show="!show" />
+                    <x-mary-icon name="o-eye-slash" class="w-5 h-5" x-show="show" />
+                </button>
             </div>
+        </div>
+        @error('password')
+            <p class="text-error text-sm mt-1">{{ $message }}</p>
+        @enderror
+        {{-- Remember me --}}
+        <label class="label cursor-pointer gap-2">
+            <input type="checkbox" name="remember" class="checkbox checkbox-sm"
+                {{ old('remember') ? 'checked' : '' }} />
+            <span class="label-text">{{ __('Remember me') }}</span>
+        </label>
 
-            <!-- Remember Me -->
-            <flux:checkbox name="remember" :label="__('Remember me')" :checked="old('remember')" />
+        {{-- Submit --}}
+        <button type="submit" class="btn btn-primary w-full" data-test="login-button">
+            {{ __('Log in') }}
+        </button>
 
-            <div class="flex items-center justify-end">
-                <flux:button variant="primary" type="submit" class="w-full" data-test="login-button">
-                    {{ __('Log in') }}
-                </flux:button>
-            </div>
-        </form>
 
+    </form>
+
+    {{-- Secondary footer --}}
+    <x-slot:secondary>
         @if (Route::has('register'))
-            <div class="space-x-1 text-sm text-center rtl:space-x-reverse text-zinc-600 dark:text-zinc-400">
-                <span>{{ __('Don\'t have an account?') }}</span>
-                <flux:link :href="route('register')" wire:navigate>{{ __('Sign up') }}</flux:link>
+            <div class="text-sm text-center opacity-80">
+                <span>{{ __("Don't have an account?") }}</span>
+                <a href="{{ route('register') }}" class="link link-hover ml-1" wire:navigate>
+                    {{ __('Sign up') }}
+                </a>
             </div>
         @endif
-    </div>
-</x-layouts.auth>
+    </x-slot:secondary>
+</x-layouts.auth.mary>

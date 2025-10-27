@@ -66,13 +66,32 @@
                             <td class="px-4 py-3 text-left">{{ $user->email }}</td>
                             <td class="px-4 py-3">{{ $user->phone }}</td>
                             <td class="px-4 py-3 text-left">{{ $user->address }}</td>
-                            <td class="px-4 py-3">{{ $user->created_at?->format('Y-m-d') }}</td>
+                            <td class="px-4 py-3">{{ $user->created_at?->format('d-m-Y') }}</td>
                             <td class="px-4 py-3">
-                                <div class="flex justify-end gap-2">
-                                    <x-mary-button size="sm" label="Edit" class="btn-ghost" wire:navigate
-                                        href="{{ route('users.edit', $user) }}" />
+                                <div class="flex justify-end gap-3">
+                                    {{-- Edit Icon --}}
+                                    <a href="{{ route('users.edit', $user) }}" wire:navigate
+                                        class="text-primary hover:text-primary/80 transition-colors" title="Edit">
+                                        <x-mary-icon name="o-pencil-square" class="w-5 h-5" />
+                                    </a>
+
+                                    {{-- Delete Icon --}}
+                                    <button wire:click="delete({{ $user->id }})" wire:loading.attr="disabled"
+                                        class="relative text-error hover:text-error/80 transition-colors" title="Delete"
+                                        onclick="return confirm('Are you sure you want to delete {{ $user->name }}?')">
+                                        {{-- Trash icon (visible when not deleting) --}}
+                                        <x-mary-icon name="o-trash" class="w-5 h-5" wire:loading.remove
+                                            wire:target="delete({{ $user->id }})" />
+
+                                        {{-- MaryUI loader (visible while deleting this user) --}}
+                                        <x-mary-loading wire:loading wire:target="delete({{ $user->id }})"
+                                            class="w-5 h-5 text-error" />
+                                    </button>
+
+
                                 </div>
                             </td>
+
                         </tr>
                     @empty
                         <tr>
