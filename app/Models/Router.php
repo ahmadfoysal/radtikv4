@@ -3,22 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Crypt;
+use App\Models\User;
 
 class Router extends Model
 {
-    //  $table->id();
-    //         $table->string('name');
-    //         $table->string('address')->nullable();
-    //         $table->string('port');
-    //         $table->string('ssh_port')->nullable();
-    //         $table->boolean('use_radius')->default(false);
-    //         $table->string('username');
-    //         $table->string('password');
-    //         $table->string('router_login')->nullable();
-    //         $table->string('note')->nullable();
-    //         $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-    //         $table->foreignId('zone_id')->nullable()->constrained()->nullOnDelete();
-
 
     protected $fillable = [
         'name',
@@ -33,4 +22,16 @@ class Router extends Model
         'user_id',
         'zone_id',
     ];
+
+    public function decryptedPassword(): string
+    {
+        return Crypt::decryptString($this->password);
+    }
+
+    // Add any relationships or additional methods as needed
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

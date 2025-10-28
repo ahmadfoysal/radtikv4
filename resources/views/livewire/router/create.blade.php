@@ -26,7 +26,7 @@
             </div>
 
             <div class="md:col-span-2">
-                <x-mary-input label="Password" type="password" wire:model.live.debounce.500ms="password" />
+                <x-mary-password label="Password" type="password" wire:model.live.debounce.500ms="password" right />
 
             </div>
 

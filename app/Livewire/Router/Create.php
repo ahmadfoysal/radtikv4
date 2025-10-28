@@ -18,7 +18,7 @@ class Create extends Component
     #[Rule(['required', 'string', 'max:100'])]
     public string $name = '';
 
-    #[Rule(['required', 'string', 'max:191'])] // IP or hostname
+    #[Rule(['required', 'string', 'max:191', 'regex:/^(([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}|(\d{1,3}\.){3}\d{1,3})$/'])] // IP or hostname
     public string $address = '';
 
     #[Rule(['required', 'integer', 'between:1,65535'])]
