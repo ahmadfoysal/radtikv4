@@ -20,7 +20,9 @@
                         <x-mary-button icon="o-arrow-path" label="Refresh" class="btn-sm btn-ghost"
                             wire:click="refresh" />
                         <x-mary-button icon="o-plus" label="Add Router" class="btn-sm btn-primary"
-                            wire:click="openCreate" />
+                            href="{{ route('routers.create') }}" wire:navigate />
+                        <x-mary-button icon="o-document-arrow-down" label="Import Routers" class="btn-sm btn-success"
+                            href="{{ route('routers.import') }}" wire:navigate />
                     </div>
                 </div>
             </div>

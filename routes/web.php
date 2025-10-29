@@ -26,6 +26,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/routers', App\Livewire\Router\Index::class)->name('routers.index');
     Route::get('/router/add', App\Livewire\Router\Create::class)->name('routers.create');
     Route::get('/router/{router}/edit', App\Livewire\Router\Edit::class)->name('routers.edit');
+    Route::get('/router/import', App\Livewire\Router\Import::class)->name('routers.import');
 
     /* Voucher Routes */
     Route::get('/vouchers', App\Livewire\Voucher\Index::class)->name('vouchers.index');

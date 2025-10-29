@@ -55,6 +55,12 @@ class Create extends Component
         $this->success(title: 'Success', description: 'Router added successfully.');
     }
 
+
+    public function cancel()
+    {
+        $this->redirect(route('routers.index'), navigate: true);
+    }
+
     public function render()
     {
         return view('livewire.router.create')

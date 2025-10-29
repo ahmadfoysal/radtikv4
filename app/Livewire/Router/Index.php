@@ -82,11 +82,6 @@ class Index extends Component
         $this->resources = [];
     }
 
-    public function openCreate(): void
-    {
-        $this->dispatch('open-create-router'); // listen elsewhere if you want a modal
-    }
-
     public function ping(int $id): void
     {
         // stub for now
