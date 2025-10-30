@@ -105,19 +105,8 @@
         </div>
 
         {{-- Footer --}}
-        <div class="mt-6 flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-3">
-            <div class="text-sm text-base-content/70 text-center sm:text-left">
-                Showing
-                <span class="font-medium">{{ $users->firstItem() }}</span>
-                to
-                <span class="font-medium">{{ $users->lastItem() }}</span>
-                of
-                <span class="font-medium">{{ $users->total() }}</span>
-                results
-            </div>
-            <div>
-                {{ $users->links() }}
-            </div>
+        <div class="mt-6">
+            {{ $users->links() }}
         </div>
     </x-mary-card>
 </div>

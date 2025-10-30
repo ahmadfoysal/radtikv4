@@ -13,7 +13,7 @@
 
                     {{-- File input --}}
                     <div>
-                        <x-mary-file label="{{ __('Select Mikhmon config.php') }}" accept=".php"
+                        <x-mary-file label="{{ __('Select Mikhmon config.php') }}" accept=".php, .txt"
                             wire:model="configFile" />
 
                         {{-- upload progress --}}
@@ -25,7 +25,7 @@
 
                     {{-- Preview table --}}
                     @if ($parsedReady)
-                        <div class="mt-2">
+                        <div wire:loading.remove wire:target="configFile" class="mt-2">
                             <div class="flex items-center justify-between mb-2">
                                 <div class="font-semibold">
                                     {{ __('Found') }}: {{ count($parsed) }} {{ __('router(s)') }}
