@@ -7,17 +7,31 @@ use Livewire\WithPagination;
 use Illuminate\Contracts\View\View;
 use Illuminate\Pagination\LengthAwarePaginator;
 
+use Mary\Traits\Toast;
+
 class Index extends Component
 {
-    use WithPagination;
+    use WithPagination, Toast;
 
     public string $q = '';
     public int $perPage = 12;
+
+    public ?int $pingingId = null;
+    public ?int $pingedId = null;
+    public ?bool $pingSuccess = null;
+
 
     protected $queryString = [
         'q'    => ['except' => ''],
         'page' => ['except' => 1],
     ];
+
+    public function mount(): void
+    {
+        if (!auth()->user()->hasRole('admin')) {
+            abort(403, 'Unauthorized action.');
+        }
+    }
 
     public function updatingQ(): void
     {
@@ -26,6 +40,9 @@ class Index extends Component
 
     protected function paginatedRouters(): LengthAwarePaginator
     {
+
+        //redirect error if user in not  admin
+
         return auth()->user()
             ->routers()
             ->when($this->q !== '', function ($q) {
@@ -42,21 +59,49 @@ class Index extends Component
 
     public function ping(int $id): void
     {
-        // ভবিষ্যতে এখানে আসল পিং/হেলথচেক বসাবে
-        $this->dispatch('notify', type: 'info', message: "Ping router #{$id}");
+        $this->pingingId = $id;
+        $this->pingedId = null;
+        $this->pingSuccess = null;
+
+        try {
+            $router = auth()->user()->routers()->findOrFail($id);
+            $svc = app(\App\Services\MikrotikService::class);
+
+            $ok = $svc->pingRouter($router);
+
+            $this->pingedId = $id;
+            $this->pingSuccess = $ok;
+
+            if ($ok) {
+                $this->success("Ping to {$router->address} successful!");
+            } else {
+                $this->error("Ping to {$router->address} failed!");
+            }
+        } catch (\Throwable $e) {
+            $this->pingedId = $id;
+            $this->pingSuccess = false;
+            $this->error("Error: " . $e->getMessage());
+        } finally {
+            $this->pingingId = null;
+        }
     }
+
+
 
     public function delete(int $id): void
     {
         $router = auth()->user()->routers()->findOrFail($id);
         $router->delete();
 
-        if ($this->page > 1 && $this->paginatedRouters()->isEmpty()) {
-            $this->previousPage();
+        $paginator = $this->paginatedRouters();
+
+        if ($paginator->currentPage() > 1 && $paginator->isEmpty()) {
+            $this->previousPage(); // অথবা previousPage('page') যদি কাস্টম পেজ নেম থাকে
         }
 
-        $this->dispatch('notify', type: 'success', message: 'Router deleted.');
+        $this->success('Router deleted successfully.');
     }
+
 
     public function render(): View
     {

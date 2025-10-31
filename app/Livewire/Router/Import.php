@@ -9,10 +9,11 @@ use Illuminate\Support\Str;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Mary\Traits\Toast;
 
 class Import extends Component
 {
-    use WithFileUploads;
+    use WithFileUploads, Toast;
 
     public string $selectedTab = 'mikhmon';
     protected $queryString = ['selectedTab' => ['except' => 'mikhmon']];
@@ -34,7 +35,7 @@ class Import extends Component
         $this->parsed = $this->parseMikhmonConfig($contents);
 
         if (empty($this->parsed)) {
-            $this->addError('configFile', 'কোনো বৈধ রাউটার পাওয়া যায়নি। ফাইল ফরম্যাট চেক করুন।');
+            $this->addError('configFile', 'No valid router configurations found in the file.');
             return;
         }
 
@@ -46,7 +47,7 @@ class Import extends Component
         $this->validate();
 
         if (empty($this->parsed)) {
-            $this->addError('configFile', 'প্রথমে একটি বৈধ কনফিগ ফাইল সিলেক্ট করুন।');
+            $this->addError('configFile', 'Please select a valid config file first.');
             return;
         }
 
@@ -65,15 +66,14 @@ class Import extends Component
             }
 
             // UI তে base64 ছিল → এখানে ডিকোড
-            $pwdRaw = base64_decode($item['password_b64'] ?? '', true);
-            $pwd    = $pwdRaw !== false ? $pwdRaw : ($item['password_b64'] ?? '');
+            // $pwd = $this->decryptPassword($item['password_b64']);
 
             Router::updateOrCreate(
                 ['address' => $item['address'], 'port' => (int)$item['port']],
                 [
                     'name'     => $item['name'],
                     'username' => $item['username'],
-                    'password' => Crypt::encryptString($pwd),
+                    'password' => Crypt::encryptString($item['password']),
                     'note'     => $item['note'] ?? null,
                     'user_id'  => Auth::id(),
                 ]
@@ -168,7 +168,7 @@ class Import extends Component
                     'port'         => (int) $port,
                     'username'     => $username,
                     // ✅ JSON-safe: UI স্টেটে base64
-                    'password_b64' => base64_encode($passwordRaw),
+                    'password' => $this->decryptPassword($passwordRaw),
                     'note'         => implode(' | ', $noteParts),
                 ];
             }
@@ -177,9 +177,26 @@ class Import extends Component
         return $routers;
     }
 
+    public function decryptPassword($string, $key = 128): string
+    {
+        $result = '';
+        $string = base64_decode($string);
+        for ($i = 0, $k = strlen($string); $i < $k; $i++) {
+            $char = substr($string, $i, 1);
+            $keychar = substr($key, ($i % strlen($key)) - 1, 1);
+            $char = chr(ord($char) - ord($keychar));
+            $result .= $char;
+        }
+        return $result;
+    }
+
     public function importMikhmon()
     {
         $this->import();
+
+        $this->redirect(route('routers.index'), navigate: true);
+
+        $this->success('Routers imported successfully.');
     }
 
     public function cancel()

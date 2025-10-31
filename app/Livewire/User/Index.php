@@ -11,8 +11,7 @@ use Mary\Traits\Toast;
 
 class Index extends Component
 {
-    use WithPagination;
-    use Toast;
+    use WithPagination, Toast;
 
     public string $search = '';
     public int $perPage = 10;

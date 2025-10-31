@@ -53,17 +53,60 @@
                                 {{ $zone }}
                             </div>
                         </div>
+
+                        {{-- ✅ পিং ফলাফল UI --}}
+                        @if (isset($pingStatuses[$router->id]))
+                            @if ($pingStatuses[$router->id] === 'ok')
+                                <div class="tooltip tooltip-left" data-tip="Ping OK">
+                                    <x-mary-icon name="o-check-circle" class="w-5 h-5 text-success animate-pulse" />
+                                </div>
+                            @elseif ($pingStatuses[$router->id] === 'fail')
+                                <div class="tooltip tooltip-left" data-tip="Ping Failed">
+                                    <x-mary-icon name="o-x-circle" class="w-5 h-5 text-error animate-pulse" />
+                                </div>
+                            @endif
+                        @endif
                     </div>
 
                     <div class="mt-3 flex items-center justify-end gap-1.5">
-                        <x-mary-button icon="o-wifi" class="btn-ghost btn-xs hover:bg-base-100"
-                            wire:click="ping({{ $router->id }})" />
-                        <x-mary-button icon="o-pencil" class="btn-ghost btn-xs hover:bg-base-100"
-                            href="{{ route('routers.edit', $router) }}" wire:navigate />
-                        <x-mary-button icon="o-trash" class="btn-ghost btn-xs text-error hover:bg-base-100"
-                            wire:click="delete({{ $router->id }})" />
+
+                        {{-- 🟢 Ping result text --}}
+                        @if ($pingedId === $router->id)
+                            @if ($pingSuccess)
+                                <span class="text-xs font-semibold text-success">Ping OK</span>
+                            @else
+                                <span class="text-xs font-semibold text-error">Error</span>
+                            @endif
+                        @endif
+
+                        {{-- ✅ Tooltip সহ Ping বাটন --}}
+                        <div class="tooltip" data-tip="Ping Router">
+                            <x-mary-button icon="o-wifi" class="btn-ghost btn-xs !px-2"
+                                wire:click="ping({{ $router->id }})" spinner="ping({{ $router->id }})"
+                                wire:loading.attr="disabled" wire:target="ping({{ $router->id }})" />
+                        </div>
+
+                        {{-- Tooltip সহ Edit --}}
+                        <div class="tooltip" data-tip="Edit Router">
+                            <x-mary-button icon="o-pencil" class="btn-ghost btn-xs hover:bg-base-100"
+                                href="{{ route('routers.edit', $router) }}" wire:navigate />
+                        </div>
+
+                        {{-- Tooltip সহ Delete --}}
+                        <div class="tooltip" data-tip="Delete Router">
+                            <button wire:click="delete({{ $router->id }})" wire:loading.attr="disabled"
+                                class="relative text-error hover:text-error/80 transition-colors"
+                                onclick="return confirm('Are you sure you want to delete {{ $router->name }}?')">
+                                <x-mary-icon name="o-trash" class="w-5 h-5" wire:loading.remove
+                                    wire:target="delete({{ $router->id }})" />
+                                <x-mary-loading wire:loading wire:target="delete({{ $router->id }})"
+                                    class="w-5 h-5 text-error" />
+                            </button>
+                        </div>
                     </div>
+
                 </div>
+
             @empty
                 <x-mary-card class="col-span-full bg-base-200">
                     <div class="p-8 text-center opacity-70">No routers found.</div>

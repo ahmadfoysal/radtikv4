@@ -113,6 +113,22 @@ class MikrotikService
         return $this->firstRow($resp);
     }
 
+    /* Ping router */
+
+    public function pingRouter(Router $router): bool
+    {
+        try {
+            $client = $this->client($router);
+            // A simple query to check connectivity
+            $client->query(new Query('/system/resource/print'))->read();
+            return true;
+        } catch (Throwable $e) {
+            return false;
+        }
+    }
+
+
+
     // ----------------- helpers -----------------
 
     protected function setHotspotUserDisabled(Router $router, string $nameOrId, bool $disabled): array
