@@ -16,11 +16,15 @@ return new class extends Migration
             $table->string('name')->nullable();
             $table->string('router_profile')->nullable();
             $table->string('radius_profile')->nullable();
-            $table->foreignId('user_id')->constrained()->restrictOnDelete();
             $table->string('username');
             $table->string('password');
+            $table->enum('status', ['active', 'inactive', 'expired', 'disabled'])->default('active');
+            $table->string('mac_address')->nullable();
+            $table->dateTime('activated_at')->nullable();
             $table->dateTime('expires_at');
+            $table->foreignId('user_id')->constrained()->restrictOnDelete();
             $table->foreignId('router_id')->constrained()->restrictOnDelete();
+            $table->string('batch')->nullable();
             $table->timestamps();
         });
     }

@@ -3,7 +3,7 @@
     <x-slot:subheader>{{ __('Enter your email and password below to log in') }}</x-slot:subheader>
 
     {{-- Session status (Fortify flash message) --}}
-    <x-auth-session-status class="text-center" :status="session('status')" />
+    {{-- <x-auth-session-status class="text-center" :status="session('status')" /> --}}
 
     {{-- Login form (Fortify handles POST /login) --}}
     <form method="POST" action="{{ route('login') }}" class="grid gap-4" novalidate>

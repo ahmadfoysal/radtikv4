@@ -103,4 +103,16 @@ class User extends Authenticatable
     {
         return $this->hasMany(Router::class);
     }
+
+    //Radius Servers relation
+    public function radiusServers()
+    {
+        return $this->hasMany(RadiusServer::class);
+    }
+
+    //Radius Profiles relation
+    public function radiusProfiles()
+    {
+        return $this->hasMany(RadiusProfile::class);
+    }
 }
