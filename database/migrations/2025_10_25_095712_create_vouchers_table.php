@@ -25,6 +25,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->restrictOnDelete();
             $table->foreignId('router_id')->constrained()->restrictOnDelete();
             $table->foreignId('created_by')->constrained('users')->restrictOnDelete();
+            $table->boolean('is_radius')->default(false);
             $table->string('batch');
             $table->timestamps();
         });

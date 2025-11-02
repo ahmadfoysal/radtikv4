@@ -156,7 +156,7 @@ class Generate extends Component
                 'mac_address'     => null,
                 'activated_at'    => null,
                 'batch'           => $batch,
-                // 'delivery_channel' => $this->tab,
+                'is_radius'       => $this->tab === 'radius',
                 'created_at'      => now(),
                 'updated_at'      => now(),
             ];
