@@ -21,10 +21,11 @@ return new class extends Migration
             $table->enum('status', ['active', 'inactive', 'expired', 'disabled'])->default('active');
             $table->string('mac_address')->nullable();
             $table->dateTime('activated_at')->nullable();
-            $table->dateTime('expires_at');
+            $table->dateTime('expires_at')->nullable();
             $table->foreignId('user_id')->constrained()->restrictOnDelete();
             $table->foreignId('router_id')->constrained()->restrictOnDelete();
-            $table->string('batch')->nullable();
+            $table->foreignId('created_by')->constrained('users')->restrictOnDelete();
+            $table->string('batch');
             $table->timestamps();
         });
     }

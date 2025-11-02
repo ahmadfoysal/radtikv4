@@ -75,7 +75,7 @@
                             @if ($pingSuccess)
                                 <span class="text-xs font-semibold text-success">Ping OK</span>
                             @else
-                                <span class="text-xs font-semibold text-error">Error</span>
+                                <span class="text-xs font-semibold text-error">Ping Error</span>
                             @endif
                         @endif
 
@@ -94,15 +94,13 @@
 
                         {{-- Tooltip সহ Delete --}}
                         <div class="tooltip" data-tip="Delete Router">
-                            <button wire:click="delete({{ $router->id }})" wire:loading.attr="disabled"
-                                class="relative text-error hover:text-error/80 transition-colors"
-                                onclick="return confirm('Are you sure you want to delete {{ $router->name }}?')">
-                                <x-mary-icon name="o-trash" class="w-5 h-5" wire:loading.remove
-                                    wire:target="delete({{ $router->id }})" />
-                                <x-mary-loading wire:loading wire:target="delete({{ $router->id }})"
-                                    class="w-5 h-5 text-error" />
-                            </button>
+                            <x-mary-button icon="o-trash"
+                                class="btn-ghost btn-xs !px-2 text-error hover:text-error/80 transition-colors"
+                                wire:click="delete({{ $router->id }})" spinner="delete({{ $router->id }})"
+                                wire:loading.attr="disabled" wire:target="delete({{ $router->id }})"
+                                onclick="return confirm('Are you sure you want to delete {{ $router->name }}?')" />
                         </div>
+
                     </div>
 
                 </div>

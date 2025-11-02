@@ -3,6 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Router;
+use App\Models\User;
+use App\Models\RouterProfile;
 
 class Voucher extends Model
 {
@@ -15,6 +18,11 @@ class Voucher extends Model
         'expires_at',
         'user_id',
         'router_id',
+        'created_by',
+        'status',
+        'mac_address',
+        'activated_at',
+        'batch',
     ];
 
     public function user()
@@ -24,5 +32,15 @@ class Voucher extends Model
     public function router()
     {
         return $this->belongsTo(Router::class);
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function isExpired()
+    {
+        return $this->expires_at < now();
     }
 }

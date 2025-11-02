@@ -26,7 +26,7 @@
         {{-- VOUCHERS --}}
         <x-mary-menu-sub title="Vouchers" icon="o-ticket">
             <x-mary-menu-item title="Voucher List" icon="o-rectangle-stack" link="/vouchers" />
-            <x-mary-menu-item title="Generate Voucher" icon="o-plus" link="/vouchers/create" />
+            <x-mary-menu-item title="Generate Voucher" icon="o-plus" link="/vouchers/generate" />
             <x-mary-menu-item title="Voucher Templates" icon="o-document-text" link="/vouchers/templates" />
             <x-mary-menu-item title="Print Vouchers" icon="o-printer" link="/vouchers/print" />
         </x-mary-menu-sub>

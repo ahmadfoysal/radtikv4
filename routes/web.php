@@ -1,12 +1,7 @@
 <?php
 
-use App\Livewire\Dashboard;
-use App\Livewire\Settings\Appearance;
-use App\Livewire\Settings\Password;
-use App\Livewire\Settings\Profile;
-use App\Livewire\Settings\TwoFactor;
 use Illuminate\Support\Facades\Route;
-use Laravel\Fortify\Features;
+
 
 
 
@@ -32,6 +27,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/vouchers', App\Livewire\Voucher\Index::class)->name('vouchers.index');
     Route::get('/voucher/add', App\Livewire\Voucher\Create::class)->name('vouchers.create');
     Route::get('/voucher/{voucher}/edit', App\Livewire\Voucher\Edit::class)->name('vouchers.edit');
+    Route::get('/vouchers/generate', App\Livewire\Voucher\Generate::class)->name('vouchers.generate');
 
     /* Zone Routes */
     Route::get('/zones', App\Livewire\Zone\Index::class)->name('zones.index');
