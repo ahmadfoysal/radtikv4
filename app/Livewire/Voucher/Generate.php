@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 use Livewire\Attributes\Rule as V;
 use Livewire\Component;
 use Mary\Traits\Toast;
+use Illuminate\Support\Facades\Cache;
 
 class Generate extends Component
 {
@@ -15,7 +16,7 @@ class Generate extends Component
     public string $tab = 'mikrotik'; // 'mikrotik' | 'radius'
 
     // Inputs
-    #[V(['required', 'integer', 'min:1', 'max:10000'])]
+    #[V(['required', 'integer', 'min:1', 'max:1000'])]
     public int $quantity = 10;
     #[V(['required', 'integer', 'min:8', 'max:32'])]
     public int $length   = 8;
@@ -41,6 +42,9 @@ class Generate extends Component
     // RADIUS tab
     #[V(['required_if:tab,radius', 'nullable', 'string', 'max:64'])]
     public string $radius_profile = '';
+
+    /** frontend-ready options from MikroTik */
+    public array $mikrotik_profiles = [];
 
     /** Character set for the selected type */
     protected function charset(): string
@@ -177,6 +181,77 @@ class Generate extends Component
     }
 
 
+    /**
+     * Called automatically by Livewire when $router_id is updated.
+     * We'll fetch hotspot profiles from your MikroTik service and map to options.
+     */
+    public function updatedRouterId($value)
+    {
+        if (empty($value)) {
+            $this->mikrotik_profiles = [];
+            $this->mikrotik_profile  = '';
+            return;
+        }
+
+        $router = Router::find($value);
+        if (! $router) {
+            $this->error(title: 'Router not found', description: 'Selected router record not found.');
+            return;
+        }
+
+        try {
+            /** @var \App\Services\MikrotikService $service */
+            $service     = app(\App\Services\MikrotikService::class);
+            $rawProfiles = $service->getHotspotProfiles($router);   // may throw
+
+            //   dd($rawProfiles);
+            if (empty($rawProfiles)) {
+                $this->error(title: 'No profiles', description: 'Router reachable but no hotspot profiles found.');
+                return;
+            }
+
+            $this->mikrotik_profiles = collect($rawProfiles)->map(function ($p) {
+                if (is_array($p)) {
+                    $name = $p['name'] ?? ($p['.id'] ?? '');
+                    $id   = $p['name'] ?? ($p['.id'] ?? $name);
+                } elseif (is_object($p)) {
+                    $name = $p->name ?? ($p->{'.id'} ?? '');
+                    $id   = $p->name ?? ($p->{'.id'} ?? $name);
+                } else {
+                    $name = (string)$p;
+                    $id   = $name;
+                }
+                return ['id' => (string)$id, 'name' => (string)$name];
+            })->values()->all();
+
+            if (!collect($this->mikrotik_profiles)->firstWhere('id', $this->mikrotik_profile)) {
+                $this->mikrotik_profile = '';
+            }
+
+            $this->success(title: 'Profiles loaded', description: 'Loaded ' . count($this->mikrotik_profiles) . ' profiles.');
+        } catch (\Throwable $e) {
+            $this->mikrotik_profiles = [];
+            $this->mikrotik_profile  = '';
+            $msg = $e->getMessage() ?: 'MikroTik API error';
+            // timeout আলাদা করলে ইউজার আরও বুঝবে
+            if (stripos($msg, 'timeout') !== false) {
+                $this->error(title: 'Router timeout', description: 'API request timed out. Check API port/network.');
+            } else {
+                $this->error(title: 'Unable to load profiles', description: $msg);
+            }
+        }
+    }
+
+
+
+
+    // optional: if router_id set on mount (edit flow), load profiles initially
+    public function mount()
+    {
+        if ($this->router_id) {
+            $this->updatedRouterId($this->router_id);
+        }
+    }
 
     public function render()
     {

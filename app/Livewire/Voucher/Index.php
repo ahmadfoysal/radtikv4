@@ -115,4 +115,14 @@ class Index extends Component
             'channelColor' => fn($c) => $this->channelColor($c),
         ]);
     }
+
+    public function deleteSelected(array $voucherIds): void
+    {
+        Voucher::whereIn('id', $voucherIds)->delete();
+
+        $this->success(
+            title: 'Deleted',
+            description: 'Selected vouchers have been deleted.'
+        );
+    }
 }
