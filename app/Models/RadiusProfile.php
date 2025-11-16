@@ -20,4 +20,9 @@ class RadiusProfile extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function vouchers()
+    {
+        return $this->hasMany(Voucher::class);
+    }
 }

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name')->nullable();
             $table->string('router_profile')->nullable();
-            $table->string('radius_profile')->nullable();
+            $table->foreignId('radius_profile_id')->nullable()->constrained('radius_profiles')->restrictOnDelete();
             $table->string('username');
             $table->string('password');
             $table->enum('status', ['active', 'inactive', 'expired', 'disabled'])->default('active');

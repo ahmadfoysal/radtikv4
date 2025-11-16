@@ -29,6 +29,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/voucher/{voucher}/edit', App\Livewire\Voucher\Edit::class)->name('vouchers.edit');
     Route::get('/vouchers/generate', App\Livewire\Voucher\Generate::class)->name('vouchers.generate');
 
+    /* Radius Profile Routes */
+    Route::get('/radius/profiles', App\Livewire\Radius\Profile\Index::class)->name('radius.profiles');
+    Route::get('/radius/profile/add', App\Livewire\Radius\Profile\Create::class)->name('radius.profiles.create');
+    Route::get('/radius/profile/{profile}/edit', App\Livewire\Radius\Profile\Edit::class)->name('radius.profiles.edit');
+
+
+
     /* Zone Routes */
     Route::get('/zones', App\Livewire\Zone\Index::class)->name('zones.index');
 });

@@ -57,7 +57,8 @@
                     ->map(fn($r) => ['id' => $r->id, 'name' => $r->name . ' (' . $r->address . ')'])
                     ->toArray()" option-label="name"
                     option-value="id" wire:model="router_id" />
-                <x-mary-input label="RADIUS Profile ID" wire:model="radius_profile" placeholder="e.g. 10M-1d" />
+                <x-mary-select label="RADIUS Profile" wire:model="radius_profile_id" :options="$radiusProfiles"
+                    option-label="name" option-value="id" placeholder="Select RADIUS Profile" />
 
                 <x-mary-input type="number" label="Quantity" wire:model="quantity" min="1" />
                 <x-mary-select label="Length" wire:model="length" :options="[
@@ -89,9 +90,8 @@
         </x-mary-tab>
     </x-mary-tabs>
 
-    {{-- Actions --}}
-    <div class="mt-4 flex gap-2">
+    <x-slot:actions>
+        <x-mary-button label="Cancel" class="btn-ghost" type="button" wire:click="cancel" />
         <x-mary-button class="btn-primary" label="Generate" wire:click="save" spinner="save" />
-
-    </div>
+    </x-slot:actions>
 </x-mary-card>

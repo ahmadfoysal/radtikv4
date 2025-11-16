@@ -43,4 +43,9 @@ class Voucher extends Model
     {
         return $this->expires_at < now();
     }
+
+    public function radiusProfile()
+    {
+        return $this->belongsTo(RadiusProfile::class, 'radius_profile_id');
+    }
 }

@@ -40,8 +40,8 @@ class Generate extends Component
     public string $mikrotik_profile = '';
 
     // RADIUS tab
-    #[V(['required_if:tab,radius', 'nullable', 'string', 'max:64'])]
-    public string $radius_profile = '';
+    #[V(['required_if:tab,radius', 'nullable', 'integer', 'exists:radius_profiles,id'])]
+    public ?int $radius_profile_id = null;
 
     /** frontend-ready options from MikroTik */
     public array $mikrotik_profiles = [];
@@ -106,7 +106,7 @@ class Generate extends Component
                 throw new \RuntimeException('Router and MikroTik profile are required for MikroTik tab.');
             }
         } elseif ($this->tab === 'radius') {
-            if ($this->radius_profile === '') {
+            if ($this->radius_profile_id === '') {
                 throw new \RuntimeException('RADIUS profile is required for RADIUS tab.');
             }
         }
@@ -151,7 +151,7 @@ class Generate extends Component
                 'username'        => $code,
                 'password'        => $code,
                 'router_profile'  => $this->tab === 'mikrotik' ? $this->mikrotik_profile : null,
-                'radius_profile'  => $this->tab === 'radius'   ? $this->radius_profile   : null,
+                'radius_profile_id' => $this->tab === 'radius' ? $this->radius_profile_id : null,
                 'expires_at'      => null,
                 'user_id'         => $userId,
                 'router_id'       => $this->router_id,
@@ -178,6 +178,8 @@ class Generate extends Component
             title: 'Success!',
             description: 'Vouchers generated successfully.'
         );
+
+        $this->redirect(route('vouchers.index'));
     }
 
 
@@ -243,6 +245,10 @@ class Generate extends Component
     }
 
 
+    public function cancel()
+    {
+        $this->redirect(route('vouchers.index'));
+    }
 
 
     // optional: if router_id set on mount (edit flow), load profiles initially
@@ -257,6 +263,7 @@ class Generate extends Component
     {
         return view('livewire.voucher.generate', [
             'routers' => Router::orderBy('name')->get(['id', 'name', 'address']),
+            'radiusProfiles' => auth()->user()->radiusProfiles()->orderBy('name')->get(['id', 'name']),
         ]);
     }
 }

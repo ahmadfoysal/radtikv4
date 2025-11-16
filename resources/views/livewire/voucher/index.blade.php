@@ -1,63 +1,84 @@
 <section class="w-full">
-    {{-- Header + Filters --}}
-    <x-mary-card class="mb-4 bg-base-200 border-0 shadow-sm">
-        <div class="px-4 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div class="flex items-center gap-2">
-                <x-mary-icon name="o-ticket" class="w-6 h-6 text-primary" />
-                <span class="font-semibold text-lg">Vouchers</span>
-            </div>
 
-            <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-                {{-- search --}}
-                <x-mary-input placeholder="Search username/batch..." icon="o-magnifying-glass" class="w-full sm:w-64"
-                    input-class="input-sm" wire:model.live.debounce.400ms="q" />
-
-                {{-- channel --}}
-                <x-mary-select label="Channel" class="min-w-36" :options="[
-                    ['id' => 'all', 'name' => 'All'],
-                    ['id' => 'mikrotik', 'name' => 'MikroTik'],
-                    ['id' => 'radius', 'name' => 'Radius'],
-                ]" option-label="name" option-value="id"
-                    wire:model="channel" />
-
-                {{-- status --}}
-                <x-mary-select label="Status" class="min-w-36" :options="[
-                    ['id' => 'all', 'name' => 'All'],
-                    ['id' => 'new', 'name' => 'New'],
-                    ['id' => 'delivered', 'name' => 'Delivered'],
-                    ['id' => 'active', 'name' => 'Active'],
-                    ['id' => 'expired', 'name' => 'Expired'],
-                    ['id' => 'used', 'name' => 'Used'],
-                ]" option-label="name" option-value="id"
-                    wire:model="status" />
-
-                {{-- created by --}}
-                <x-mary-select label="Created By" class="min-w-40" :options="[
-                    ['id' => 'all', 'name' => 'All'],
-                    ['id' => 'me', 'name' => 'Me'],
-                    ...$creators->map(fn($u) => ['id' => (string) $u->id, 'name' => $u->name])->toArray(),
-                ]" option-label="name"
-                    option-value="id" wire:model="createdBy" />
-
-                <div class="flex items-center gap-2 sm:justify-end">
-                    <x-mary-button icon="o-plus" label="Generate" class="btn-sm btn-primary"
-                        href="{{ route('vouchers.generate') }}" wire:navigate />
-                </div>
-            </div>
+    {{-- Compact Filter Bar --}}
+    <div class="flex flex-wrap items-center justify-between gap-2 px-1 sm:px-0 mb-3">
+        <div class="flex items-center gap-2">
+            <x-mary-icon name="o-ticket" class="w-5 h-5 text-primary" />
+            <span class="font-semibold">Vouchers</span>
         </div>
-    </x-mary-card>
 
-    {{-- Voucher cards grid (same feel as Routers) --}}
+        <div class="flex flex-wrap items-center gap-2 justify-end">
+            {{-- Search --}}
+            <x-mary-input placeholder="Search..." icon="o-magnifying-glass" class="w-40" input-class="input-xs"
+                wire:model.live="q" />
+
+            {{-- Router Select --}}
+            <x-mary-select class="w-32 sm:w-40" placeholder="Router" :options="$routers->map(fn($r) => ['id' => $r->id, 'name' => $r->name])->toArray()" option-label="name"
+                option-value="id" wire:model.live="routerFilter" />
+
+            {{-- Status group: All | Active | Inactive | Disabled --}}
+            <div class="join">
+                <button class="btn btn-sm join-item {{ $status === 'all' ? 'btn-primary' : 'btn-ghost' }}"
+                    wire:click="$set('status','all')">
+                    All
+                </button>
+                <button class="btn btn-sm join-item {{ $status === 'active' ? 'btn-primary' : 'btn-ghost' }}"
+                    wire:click="$set('status','active')">
+                    Active
+                </button>
+                <button class="btn btn-sm join-item {{ $status === 'inactive' ? 'btn-primary' : 'btn-ghost' }}"
+                    wire:click="$set('status','inactive')">
+                    Inactive
+                </button>
+                <button class="btn btn-sm join-item {{ $status === 'disabled' ? 'btn-primary' : 'btn-ghost' }}"
+                    wire:click="$set('status','disabled')">
+                    Disabled
+                </button>
+            </div>
+
+            {{-- Channel group: All | MT | Radius --}}
+            <div class="join">
+                <button class="btn btn-sm join-item {{ $channel === 'all' ? 'btn-primary' : 'btn-ghost' }}"
+                    wire:click="$set('channel','all')">
+                    All
+                </button>
+                <button class="btn btn-sm join-item {{ $channel === 'mikrotik' ? 'btn-primary' : 'btn-ghost' }}"
+                    wire:click="$set('channel','mikrotik')">
+                    MT
+                </button>
+                <button class="btn btn-sm join-item {{ $channel === 'radius' ? 'btn-primary' : 'btn-ghost' }}"
+                    wire:click="$set('channel','radius')">
+                    Radius
+                </button>
+            </div>
+
+            {{-- Generate --}}
+            <x-mary-button icon="o-plus" label="Generate" class="btn-sm btn-primary"
+                href="{{ route('vouchers.generate') }}" wire:navigate />
+        </div>
+    </div>
+
+
+
+
+
+
+    {{-- Voucher Grid --}}
     <div class="px-2 sm:px-4">
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-            @forelse ($vouchers as $v)
+
+            @forelse($vouchers as $v)
                 @php
-                    $chan = $v->delivery_channel ?? '—';
-                    $badge = $statusColor($v->status ?? '');
-                    $iconC = $channelColor($v->delivery_channel ?? null);
+                    $badge = $statusColor($v->status);
+                    $iconC = $channelColor($v->is_radius);
+
+                    $profileLabel = $v->is_radius
+                        ? $v->radiusProfile->name ?? 'RADIUS Profile'
+                        : $v->router_profile ?? 'MikroTik Profile';
                 @endphp
 
-                <div class="bg-base-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition duration-300">
+                <div class="bg-base-200 rounded-2xl p-4 shadow-sm hover:shadow-md">
+
                     <div class="flex items-center gap-3">
                         <div class="p-3 rounded-xl bg-base-100">
                             <x-mary-icon name="s-ticket" class="w-6 h-6 {{ $iconC }}" />
@@ -67,72 +88,100 @@
                             <div class="font-semibold truncate text-base">
                                 {{ $v->username }}
                             </div>
-                            <div class="text-sm opacity-70 truncate">
-                                Batch: {{ $v->batch ?? '—' }}
+
+                            <div class="mt-1 flex items-center gap-1 text-xs">
+                                <span class="badge badge-xs {{ $v->is_radius ? 'badge-accent' : 'badge-primary' }}">
+                                    {{ $v->is_radius ? 'RADIUS' : 'MikroTik' }}
+                                </span>
+
+                                <span class="badge badge-xs {{ $badge }} capitalize">
+                                    {{ $v->status }}
+                                </span>
                             </div>
                         </div>
-
-                        {{-- status badge --}}
-                        <span class="badge badge-sm {{ $badge }} capitalize">
-                            {{ $v->status ?? '—' }}
-                        </span>
                     </div>
 
-                    <div class="mt-3 text-xs flex flex-wrap items-center gap-2">
-                        <span class="badge badge-ghost badge-sm">
-                            {{ strtoupper($chan) }}
-                        </span>
+                    <div class="mt-3 text-xs flex flex-wrap gap-x-4 gap-y-1">
 
-                        @if ($v->router_profile)
-                            <span class="badge badge-primary badge-sm">MT: {{ $v->router_profile }}</span>
-                        @endif
-                        @if ($v->radius_profile)
-                            <span class="badge badge-accent badge-sm">RADIUS: {{ $v->radius_profile }}</span>
-                        @endif
-                        @if ($v->router_id)
-                            <span class="badge badge-neutral badge-sm">Router #{{ $v->router_id }}</span>
-                        @endif
-                        @if ($v->activated_at)
-                            <span class="badge badge-success badge-outline badge-sm">
-                                Active: {{ \Illuminate\Support\Carbon::parse($v->activated_at)->diffForHumans() }}
-                            </span>
-                        @endif
-                        @if ($v->expires_at)
-                            <span class="badge badge-warning badge-outline badge-sm">
-                                Exp: {{ \Illuminate\Support\Carbon::parse($v->expires_at)->toDateString() }}
-                            </span>
-                        @endif
+                        {{-- Profile --}}
+                        <div class="flex items-center gap-1">
+                            <span class="opacity-60">Profile:</span>
+                            <span class="font-medium">{{ $profileLabel }}</span>
+                        </div>
+
+                        {{-- Expiry --}}
+                        <div class="flex items-center gap-1">
+                            <span class="opacity-60">Expiry:</span>
+                            @if ($v->expires_at)
+                                <span class="font-medium">
+                                    {{ \Illuminate\Support\Carbon::parse($v->expires_at)->toDateString() }}
+                                </span>
+                            @else
+                                <span class="opacity-50">Not activated</span>
+                            @endif
+                        </div>
+
+                        {{-- MAC --}}
+                        <div class="flex items-center gap-1">
+                            <span class="opacity-60">MAC:</span>
+                            @if ($v->mac_address)
+                                <span class="font-medium">{{ $v->mac_address }}</span>
+                            @else
+                                <span class="opacity-50">00:00:00:00:00:00</span>
+                            @endif
+                        </div>
+
                     </div>
+
+
 
                     <div class="mt-3 flex items-center justify-end gap-1.5">
-                        {{-- Optional actions (copy, delete etc.) --}}
+
+                        {{-- Copy --}}
                         <div class="tooltip" data-tip="Copy username">
-                            <button class="btn btn-ghost btn-xs !px-2" x-data
+                            <button class="btn btn-ghost btn-xs !px-2"
                                 x-on:click="navigator.clipboard.writeText('{{ $v->username }}')">
                                 <x-mary-icon name="o-clipboard" class="w-4 h-4" />
                             </button>
                         </div>
 
-                        {{-- (Optional) Delete --}}
-                        <div class="tooltip" data-tip="Delete Voucher">
-                            <x-mary-button icon="o-trash"
-                                class="btn-ghost btn-xs !px-2 text-error hover:text-error/80 transition-colors"
-                                wire:click="delete({{ $v->id }})" spinner="delete({{ $v->id }})"
-                                wire:loading.attr="disabled" wire:target="delete({{ $v->id }})"
-                                onclick="return confirm('Delete voucher {{ $v->username }}?')" />
-                        </div>
+                        {{-- Edit --}}
+                        <x-mary-button icon="o-pencil" class="btn-ghost btn-xs !px-2"
+                            href="{{ route('vouchers.edit', $v) }}" wire:navigate />
+
+                        {{-- Disable / Enable --}}
+                        <x-mary-button icon="o-no-symbol"
+                            class="btn-ghost btn-xs !px-2 {{ $v->status === 'disabled' ? 'text-success' : 'text-warning' }}"
+                            wire:click="toggleDisable({{ $v->id }})"
+                            spinner="toggleDisable({{ $v->id }})" />
+
+                        {{-- Delete --}}
+                        <x-mary-button icon="o-trash" class="btn-ghost btn-xs !px-2 text-error"
+                            wire:click="delete({{ $v->id }})" spinner="delete({{ $v->id }})"
+                            onclick="return confirm('Delete voucher {{ $v->username }}?')" />
+
                     </div>
                 </div>
+
             @empty
-                <x-mary-card class="col-span-full bg-base-200">
-                    <div class="p-8 text-center opacity-70">No vouchers found.</div>
+                <x-mary-card class="col-span-full bg-base-200 p-8 text-center opacity-70">
+                    No vouchers found.
                 </x-mary-card>
             @endforelse
+
         </div>
 
-        {{-- Pagination --}}
-        <div class="mt-6">
+        {{-- <div class="mt-6">
             {{ $vouchers->links() }}
-        </div>
+        </div> --}}
+
+        {{-- Lazy Load: Load more button --}}
+        @if ($vouchers->hasMorePages())
+            <div class="mt-6 flex justify-center">
+                <x-mary-button class="btn-outline btn-sm" wire:click="loadMore" spinner="loadMore">
+                    Load more
+                </x-mary-button>
+            </div>
+        @endif
     </div>
 </section>

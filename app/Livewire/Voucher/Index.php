@@ -8,20 +8,22 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Mary\Traits\Toast;
+use App\Models\Router;
 
 class Index extends Component
 {
     use WithPagination;
+    use Toast;
 
     public string $q = '';
     public int $perPage = 24;
 
     // Filters
-    public string $channel   = 'all';   // all|mikrotik|radius
-    public string $status    = 'all';   // all|new|delivered|active|expired|used
-    public string $createdBy = 'all';   // all|me|<user_id>
+    public string $channel   = 'all';  // all | mikrotik | radius
+    public string $status    = 'all';
+    public string $routerFilter = 'all';
 
-    // Keep these in URL (nice UX)
     protected $queryString = [
         'q'         => ['except' => ''],
         'channel'   => ['except' => 'all'],
@@ -42,87 +44,97 @@ class Index extends Component
     {
         $this->resetPage();
     }
-    public function updatingCreatedBy()
+    public function updatingRouterFilter()
     {
         $this->resetPage();
     }
 
+    public function loadMore(): void
+    {
+        $this->perPage += 24;
+    }
+
     protected function vouchers(): LengthAwarePaginator
     {
-        $user = auth()->user();
 
+        \Log::info('routerFilter', ['value' => $this->routerFilter]);
         return Voucher::query()
-            // Optional: limit to user's org/scope as needed
             ->when($this->q !== '', function ($q) {
-                $term = '%' . mb_strtolower($this->q) . '%';
-                $q->where(function ($sub) use ($term) {
-                    $sub->whereRaw('LOWER(username) LIKE ?', [$term])
+                $term = '%' . strtolower($this->q) . '%';
+                $q->where(function ($s) use ($term) {
+                    $s->whereRaw('LOWER(username) LIKE ?', [$term])
                         ->orWhereRaw('LOWER(batch) LIKE ?', [$term]);
                 });
             })
-            ->when($this->channel !== 'all', function ($q) {
-                $q->where('delivery_channel', $this->channel); // 'mikrotik' | 'radius'
-            })
-            ->when($this->status !== 'all', function ($q) {
-                $q->where('status', $this->status);
-            })
-            ->when($this->createdBy === 'me', function ($q) use ($user) {
-                $q->where('created_by', $user->id);
-            })
-            ->when($this->createdBy !== 'all' && $this->createdBy !== 'me', function ($q) {
-                if (ctype_digit($this->createdBy)) {
-                    $q->where('created_by', (int) $this->createdBy);
-                }
-            })
+
+            // channel filter from is_radius
+            ->when($this->channel === 'mikrotik', fn($q) => $q->where('is_radius', 0))
+            ->when($this->channel === 'radius',   fn($q) => $q->where('is_radius', 1))
+
+            // router filter
+            ->when(
+                $this->routerFilter !== 'all' && $this->routerFilter !== '' && $this->routerFilter !== null,
+                fn($q) => $q->where('router_id', (int) $this->routerFilter)
+            )
+
+
+            // status
+            ->when($this->status !== 'all', fn($q) => $q->where('status', $this->status))
+
             ->orderByDesc('id')
             ->paginate($this->perPage);
     }
 
-    protected function statusColor(string $status): string
+
+    protected function statusColor(string $s): string
     {
-        return match ($status) {
+        return match ($s) {
             'new'       => 'badge-info',
             'delivered' => 'badge-primary',
             'active'    => 'badge-success',
             'expired'   => 'badge-warning',
             'used'      => 'badge-neutral',
+            'disabled'  => 'badge-error',
             default     => 'badge-ghost',
         };
     }
 
-    protected function channelColor(?string $channel): string
+    protected function channelColor(int $is_radius): string
     {
-        return match ($channel) {
-            'mikrotik' => 'text-primary',
-            'radius'   => 'text-accent',
-            default    => 'text-base-content/60',
-        };
+        return $is_radius ? 'text-accent' : 'text-primary';
     }
 
-    public function render(): View
+    public function delete(int $id)
     {
-        $vouchers = $this->vouchers();
+        $v = Voucher::find($id);
+        if (!$v) return;
 
-        // Creator list for filter dropdown
-        $creatorIds = Voucher::query()->distinct()->pluck('created_by')->filter()->values();
-        $creators   = User::whereIn('id', $creatorIds)->orderBy('name')->get(['id', 'name']);
+        $v->delete();
 
+        $this->success(title: 'Deleted');
+        $this->resetPage();
+    }
+
+    public function toggleDisable(int $id)
+    {
+        $v = Voucher::find($id);
+        if (!$v) return;
+
+        $v->status = $v->status === 'disabled' ? 'new' : 'disabled';
+        $v->save();
+
+        $this->success(title: 'Updated');
+    }
+
+    public function render()
+    {
         return view('livewire.voucher.index', [
-            'vouchers'   => $vouchers,
-            'creators'   => $creators,
-            // helpers
-            'statusColor' => fn($s) => $this->statusColor($s),
+            'vouchers' => $this->vouchers(),
+            'routers'  => Router::orderBy('name')->get(['id', 'name']),
+
+            // send helpers to view
+            'statusColor'  => fn($s) => $this->statusColor($s),
             'channelColor' => fn($c) => $this->channelColor($c),
         ]);
-    }
-
-    public function deleteSelected(array $voucherIds): void
-    {
-        Voucher::whereIn('id', $voucherIds)->delete();
-
-        $this->success(
-            title: 'Deleted',
-            description: 'Selected vouchers have been deleted.'
-        );
     }
 }

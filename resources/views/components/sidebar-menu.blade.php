@@ -40,13 +40,33 @@
         </x-mary-menu-sub>
 
         {{-- RADIUS MANAGEMENT --}}
-        <x-mary-menu-sub title="Radius Server" icon="o-cloud">
-            <x-mary-menu-item title="Radius Clients" icon="o-computer-desktop" link="/radius/clients" />
-            <x-mary-menu-item title="Radacct Logs" icon="o-document-magnifying-glass" link="/radius/radacct" />
-            <x-mary-menu-item title="Sync PPP Secrets" icon="o-arrow-path" link="/radius/sync-ppp" />
-            <x-mary-menu-item title="Sync Hotspot Users" icon="o-arrow-path-rounded-square"
-                link="/radius/sync-hotspot" />
+        <x-mary-menu-sub title="RADIUS" icon="o-cloud">
+
+            {{-- Profiles --}}
+            <x-mary-menu-item title="Radius Profiles" icon="o-rectangle-group" link="/radius/profiles" wire:navigate />
+
+            <x-mary-menu-item title="Add Profile" icon="o-plus" link="/radius/profile/add" wire:navigate />
+
+
+
+            {{-- Radius Servers --}}
+            <x-mary-menu-item title="Radius Servers" icon="o-server" link="/radius/servers" wire:navigate />
+
+            <x-mary-menu-item title="Add Radius Server" icon="o-server-stack" link="/radius/servers/add"
+                wire:navigate />
+
+
+
+            {{-- Optional but VERY useful items --}}
+            <x-mary-menu-item title="RADIUS Logs" icon="o-document-magnifying-glass" link="/radius/logs"
+                wire:navigate />
+
+            <x-mary-menu-item title="Online Users" icon="o-users" link="/radius/online-users" wire:navigate />
+
+            <x-mary-menu-item title="Radacct Summary" icon="o-chart-bar" link="/radius/radacct" wire:navigate />
+
         </x-mary-menu-sub>
+
 
         {{-- RESELLERS --}}
         <x-mary-menu-sub title="Resellers" icon="o-user-group">
