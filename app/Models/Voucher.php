@@ -48,4 +48,9 @@ class Voucher extends Model
     {
         return $this->belongsTo(RadiusProfile::class, 'radius_profile_id');
     }
+
+    public function radiusServer()
+    {
+        return $this->belongsTo(RadiusServer::class, 'radius_server_id');
+    }
 }

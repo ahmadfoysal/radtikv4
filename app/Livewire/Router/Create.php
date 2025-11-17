@@ -44,6 +44,7 @@ class Create extends Component
             'username' => $this->username,
             'password' => Crypt::encryptString($this->password),
             'note'     => $this->note,
+            'app_key'  => Crypt::encryptString(bin2hex(random_bytes(16))),
             'user_id'  => Auth::id(),
         ]);
 

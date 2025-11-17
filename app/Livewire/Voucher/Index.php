@@ -120,7 +120,7 @@ class Index extends Component
         $v = Voucher::find($id);
         if (!$v) return;
 
-        $v->status = $v->status === 'disabled' ? 'new' : 'disabled';
+        $v->status = $v->status === 'disabled' ? 'active' : 'disabled';
         $v->save();
 
         $this->success(title: 'Updated');

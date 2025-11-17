@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\Api\MikrotikController;
 
 
 
@@ -39,3 +39,7 @@ Route::middleware(['auth'])->group(function () {
     /* Zone Routes */
     Route::get('/zones', App\Livewire\Zone\Index::class)->name('zones.index');
 });
+
+Route::get('/mikrotik/pull-inactive-users', [MikrotikController::class, 'pullInactiveUsers']);
+Route::get('/mikrotik/pull-active-users', [MikrotikController::class, 'pullActiveUsers']);
+Route::post('/mikrotik/push-usage', [MikrotikController::class, 'pushUsage']);

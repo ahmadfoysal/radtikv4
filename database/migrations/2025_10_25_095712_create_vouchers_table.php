@@ -25,8 +25,13 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->restrictOnDelete();
             $table->foreignId('router_id')->constrained()->restrictOnDelete();
             $table->foreignId('created_by')->constrained('users')->restrictOnDelete();
+            $table->bigInteger('bytes_in')->default(0);
+            $table->bigInteger('bytes_out')->default(0);
+            $table->string('up_time');
             $table->boolean('is_radius')->default(false);
+            $table->foreignId('radius_server_id')->nullable()->constrained('radius_servers')->restrictOnDelete();
             $table->string('batch');
+            $table->boolean('is_synced')->default(false);
             $table->timestamps();
         });
     }

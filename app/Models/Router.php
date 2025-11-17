@@ -21,6 +21,8 @@ class Router extends Model
         'note',
         'user_id',
         'zone_id',
+        'radius_id',
+        'app_key',
     ];
 
     public function decryptedPassword(): string
@@ -33,5 +35,15 @@ class Router extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function zone()
+    {
+        return $this->belongsTo(Zone::class);
+    }
+
+    public function vouchers()
+    {
+        return $this->hasMany(Voucher::class);
     }
 }

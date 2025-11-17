@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('routers', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('address')->nullable();
+            $table->string('address');
             $table->string('port');
             $table->string('ssh_port')->nullable();
             $table->string('username');
@@ -24,6 +24,7 @@ return new class extends Migration
             $table->foreignId('zone_id')->nullable()->constrained()->nullOnDelete();
             $table->boolean('use_radius')->default(false);
             $table->foreignId('radius_id')->nullable()->constrained('radius_servers')->nullOnDelete();
+            $table->string('app_key')->nullable();
             $table->timestamps();
         });
     }
