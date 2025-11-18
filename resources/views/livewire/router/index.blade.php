@@ -70,7 +70,7 @@
 
                     <div class="mt-3 flex items-center justify-end gap-1.5">
 
-                        {{-- 🟢 Ping result text --}}
+                        {{-- Ping result text --}}
                         @if ($pingedId === $router->id)
                             @if ($pingSuccess)
                                 <span class="text-xs font-semibold text-success">Ping OK</span>
@@ -79,20 +79,29 @@
                             @endif
                         @endif
 
-                        {{-- ✅ Tooltip সহ Ping বাটন --}}
+                        {{-- 🔧 Install Scripts button --}}
+                        <div class="tooltip" data-tip="Install Scripts">
+                            <x-mary-button icon="o-cog-6-tooth"
+                                class="btn-ghost btn-xs !px-2 text-primary hover:text-primary/80 transition-colors"
+                                wire:click="installScripts({{ $router->id }})"
+                                spinner="installScripts({{ $router->id }})" wire:loading.attr="disabled"
+                                wire:target="installScripts({{ $router->id }})" />
+                        </div>
+
+                        {{-- Ping Button --}}
                         <div class="tooltip" data-tip="Ping Router">
                             <x-mary-button icon="o-wifi" class="btn-ghost btn-xs !px-2"
                                 wire:click="ping({{ $router->id }})" spinner="ping({{ $router->id }})"
                                 wire:loading.attr="disabled" wire:target="ping({{ $router->id }})" />
                         </div>
 
-                        {{-- Tooltip সহ Edit --}}
+                        {{-- Edit --}}
                         <div class="tooltip" data-tip="Edit Router">
                             <x-mary-button icon="o-pencil" class="btn-ghost btn-xs hover:bg-base-100"
                                 href="{{ route('routers.edit', $router) }}" wire:navigate />
                         </div>
 
-                        {{-- Tooltip সহ Delete --}}
+                        {{-- Delete --}}
                         <div class="tooltip" data-tip="Delete Router">
                             <x-mary-button icon="o-trash"
                                 class="btn-ghost btn-xs !px-2 text-error hover:text-error/80 transition-colors"
@@ -102,6 +111,7 @@
                         </div>
 
                     </div>
+
 
                 </div>
 

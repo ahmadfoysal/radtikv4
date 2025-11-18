@@ -202,9 +202,9 @@ class Generate extends Component
         }
 
         try {
-            /** @var \App\Services\MikrotikService $service */
-            $service     = app(\App\Services\MikrotikService::class);
-            $rawProfiles = $service->getHotspotProfiles($router);   // may throw
+            $svc = app(\App\MikroTik\Actions\HotspotProfileManager::class);
+
+            $rawProfiles = $svc->listProfiles($router);   // may throw
 
             //   dd($rawProfiles);
             if (empty($rawProfiles)) {

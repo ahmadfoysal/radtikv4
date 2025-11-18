@@ -31,6 +31,11 @@
             <x-mary-menu-item title="Print Vouchers" icon="o-printer" link="/vouchers/print" />
         </x-mary-menu-sub>
 
+        <x-mary-menu-sub title="Profile" icon="o-rectangle-group">
+            <x-mary-menu-item title="Profile List" icon="o-list-bullet" link="/profiles" />
+            <x-mary-menu-item title="Add Profile" icon="o-plus" link="/profile/add" />
+        </x-mary-menu-sub>
+
         {{-- BANDWIDTH & MONITORING --}}
         <x-mary-menu-sub title="Bandwidth & Monitor" icon="o-chart-bar">
             <x-mary-menu-item title="Live Bandwidth" icon="o-chart-bar" link="/bandwidth/live" />

@@ -33,7 +33,7 @@ class Create extends Component
     #[Rule(['nullable', 'string', 'max:500'])]
     public string $note = '';
 
-    public function save(): void
+    public function save()
     {
         $this->validate();
 
@@ -44,7 +44,7 @@ class Create extends Component
             'username' => $this->username,
             'password' => Crypt::encryptString($this->password),
             'note'     => $this->note,
-            'app_key'  => Crypt::encryptString(bin2hex(random_bytes(16))),
+            'app_key'  => bin2hex(random_bytes(16)),
             'user_id'  => Auth::id(),
         ]);
 
@@ -54,6 +54,8 @@ class Create extends Component
 
         // Optional: toast/notify
         $this->success(title: 'Success', description: 'Router added successfully.');
+
+        return $this->redirect(route('routers.index'), navigate: true);
     }
 
 

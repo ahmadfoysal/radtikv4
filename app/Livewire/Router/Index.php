@@ -6,6 +6,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Contracts\View\View;
 use Illuminate\Pagination\LengthAwarePaginator;
+use App\MikroTik\Installer\ScriptInstaller;
 
 use Mary\Traits\Toast;
 
@@ -65,9 +66,8 @@ class Index extends Component
 
         try {
             $router = auth()->user()->routers()->findOrFail($id);
-            $svc = app(\App\Services\MikrotikService::class);
-
-            $ok = $svc->pingRouter($router);
+            $svc = app(\App\MikroTik\Actions\RouterManager::class);
+            $ok  = $svc->pingRouter($router);
 
             $this->pingedId = $id;
             $this->pingSuccess = $ok;
@@ -102,6 +102,52 @@ class Index extends Component
         $this->success('Router deleted successfully.');
     }
 
+    public function installScripts(int $routerId): void
+    {
+        try {
+            $router = auth()->user()->routers()->findOrFail($routerId);
+
+            /** @var ScriptInstaller $installer */
+            $installer = app(ScriptInstaller::class);
+
+            // Full URLs for API endpoints (with domain)
+            $pullUrl   = route('mikrotik.pullInactiveUsers');
+            $pushUrl   = route('mikrotik.pullActiveUsers');
+            $orphanUrl = route('mikrotik.checkUser');
+
+            // Install / update scripts on MikroTik
+            $installer->installPullInactiveUsersScript($router, $pullUrl);
+            $installer->installPushActiveUsersScript($router, $pushUrl);
+            $installer->installRemoveOrphanUsersScript($router, $orphanUrl);
+
+            // Install / update schedulers via ScriptInstaller
+            $installer->upsertScheduler(
+                $router,
+                'RADTik-PullInactive',
+                '5m',
+                '/system script run "RADTik-pull-inactive-users"'
+            );
+
+            $installer->upsertScheduler(
+                $router,
+                'RADTik-PushActive',
+                '1m',
+                '/system script run "RADTik-push-active-users"'
+            );
+
+            $installer->upsertScheduler(
+                $router,
+                'RADTik-RemoveOrphans',
+                '1h',
+                '/system script run "RADTik-remove-orphan-users"'
+            );
+
+            $this->success('All RADTik scripts and schedulers installed successfully.');
+        } catch (\Throwable $e) {
+            $this->error('Failed to install scripts: ' . $e->getMessage());
+        }
+    }
+
 
     public function render(): View
     {
@@ -109,4 +155,7 @@ class Index extends Component
             'routers' => $this->paginatedRouters(),
         ]);
     }
+    // use RouterOS\Query; // not needed if we use fully qualified name
+
+
 }

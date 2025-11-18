@@ -29,6 +29,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/voucher/{voucher}/edit', App\Livewire\Voucher\Edit::class)->name('vouchers.edit');
     Route::get('/vouchers/generate', App\Livewire\Voucher\Generate::class)->name('vouchers.generate');
 
+    /* User Profile list */
+    Route::get('/profiles', App\Livewire\Profile\Index::class)->name('profiles');
+    Route::get('/profile/add', App\Livewire\Profile\Create::class)->name('profiles.create');
+    Route::get('/profile/{profile}/edit', App\Livewire\Profile\Edit::class)->name('profiles.edit');
+
     /* Radius Profile Routes */
     Route::get('/radius/profiles', App\Livewire\Radius\Profile\Index::class)->name('radius.profiles');
     Route::get('/radius/profile/add', App\Livewire\Radius\Profile\Create::class)->name('radius.profiles.create');
@@ -40,6 +45,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/zones', App\Livewire\Zone\Index::class)->name('zones.index');
 });
 
-Route::get('/mikrotik/pull-inactive-users', [MikrotikController::class, 'pullInactiveUsers']);
-Route::get('/mikrotik/pull-active-users', [MikrotikController::class, 'pullActiveUsers']);
-Route::post('/mikrotik/push-usage', [MikrotikController::class, 'pushUsage']);
+Route::get('/mikrotik/api/pull-inactive-users', [MikrotikController::class, 'pullInactiveUsers'])->name('mikrotik.pullInactiveUsers');
+Route::get('/mikrotik/api/pull-active-users', [MikrotikController::class, 'pullActiveUsers'])->name('mikrotik.pullActiveUsers');
+Route::post('/mikrotik/api/push-usage', [MikrotikController::class, 'pushUsage'])->name('mikrotik.pushUsage');
+Route::get('/mikrotik/check-user', [MikrotikController::class, 'checkUser'])->name('mikrotik.checkUser');

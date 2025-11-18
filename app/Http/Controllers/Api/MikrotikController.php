@@ -17,21 +17,22 @@ class MikrotikController extends Controller
     {
         $token = $request->query('token');
 
+        //4c6a9141bbff1e9f24d467b42fe1509f
+        //  $token = '4c6a9141bbff1e9f24d467b42fe1509f';
         $router = Router::where('app_key', $token)->first();
         if (!$router) {
             return response()->json(['error' => 'Invalid token'], 401);
         }
-
         $vouchers = $router->vouchers()
             ->where('is_radius', false)
             ->where('status', 'inactive')
+            ->limit(10)
             ->get()
             ->map(function ($v) {
                 return [
                     'username'    => $v->username,
                     'password'    => $v->password,
                     'profile'     => $v->router_profile,
-                    'validity'    => $v->expires_at ? $v->expires_at->diffInMinutes($v->activated_at) : null,
                     'comments'    => 'RADTik-' . $v->batch,
                 ];
             });

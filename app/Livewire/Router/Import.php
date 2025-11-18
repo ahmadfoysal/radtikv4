@@ -75,6 +75,7 @@ class Import extends Component
                     'username' => $item['username'],
                     'password' => Crypt::encryptString($item['password']),
                     'note'     => $item['note'] ?? null,
+                    'app_key'  => bin2hex(random_bytes(16)),
                     'user_id'  => Auth::id(),
                 ]
             );
