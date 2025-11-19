@@ -110,22 +110,53 @@ class Index extends Component
             /** @var ScriptInstaller $installer */
             $installer = app(ScriptInstaller::class);
 
-            // Full URLs for API endpoints (with domain)
-            $pullUrl   = route('mikrotik.pullInactiveUsers');
-            $pushUrl   = route('mikrotik.pullActiveUsers');
-            $orphanUrl = route('mikrotik.checkUser');
+            // API URLs
+            $pullInactiveUrl = route('mikrotik.pullInactiveUsers');
+            $pullActiveUrl  = route('mikrotik.pullActiveUsers');
+            $pushUrl        = route('mikrotik.pushActiveUsers');
+            $orphanUserUrl  = route('mikrotik.checkUser');
 
-            // Install / update scripts on MikroTik
-            $installer->installPullInactiveUsersScript($router, $pullUrl);
+            $pullProfiles   = route('mikrotik.pullProfiles');       // full profile sync
+            $orphanProfiles = route('mikrotik.checkProfile');       // orphan cleanup
+
+
+            /*
+        |--------------------------------------------------------------------------
+        | Install / Update Scripts
+        |--------------------------------------------------------------------------
+        */
+
+            // User scripts
+            $installer->installPullInactiveUsersScript($router, $pullInactiveUrl);
+            $installer->installPullActiveUsersScript($router, $pullActiveUrl);
             $installer->installPushActiveUsersScript($router, $pushUrl);
-            $installer->installRemoveOrphanUsersScript($router, $orphanUrl);
+            $installer->installRemoveOrphanUsersScript($router, $orphanUserUrl);
 
-            // Install / update schedulers via ScriptInstaller
+            // Profile scripts
+            $installer->installProfileOnLoginScript($router);
+            $installer->installPullProfilesScript($router, $pullProfiles);
+            $installer->installRemoveOrphanProfilesScript($router, $orphanProfiles);
+
+
+            /*
+        |--------------------------------------------------------------------------
+        | Install Schedulers
+        |--------------------------------------------------------------------------
+        */
+
+            // User sync schedulers
             $installer->upsertScheduler(
                 $router,
                 'RADTik-PullInactive',
                 '5m',
                 '/system script run "RADTik-pull-inactive-users"'
+            );
+
+            $installer->upsertScheduler(
+                $router,
+                'RADTik-PullActiveUsers',
+                '30m',
+                '/system script run "RADTik-pull-active-users"'
             );
 
             $installer->upsertScheduler(
@@ -142,11 +173,31 @@ class Index extends Component
                 '/system script run "RADTik-remove-orphan-users"'
             );
 
+
+            // Profile sync every 10 min
+            $installer->upsertScheduler(
+                $router,
+                'RADTik-PullProfiles',
+                '10m',
+                '/system script run "RADTik-pull-profiles"'
+            );
+
+            // Remove orphan profiles every hour
+            $installer->upsertScheduler(
+                $router,
+                'RADTik-RemoveOrphanProfiles',
+                '1h',
+                '/system script run "RADTik-remove-orphan-profiles"'
+            );
+
+
             $this->success('All RADTik scripts and schedulers installed successfully.');
         } catch (\Throwable $e) {
             $this->error('Failed to install scripts: ' . $e->getMessage());
         }
     }
+
+
 
 
     public function render(): View
@@ -155,7 +206,4 @@ class Index extends Component
             'routers' => $this->paginatedRouters(),
         ]);
     }
-    // use RouterOS\Query; // not needed if we use fully qualified name
-
-
 }

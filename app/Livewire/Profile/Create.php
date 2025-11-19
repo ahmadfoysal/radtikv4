@@ -29,6 +29,9 @@ class Create extends Component
     ])]
     public ?string $rate_limit = null;
 
+    #[Rule(['nullable', 'integer', 'min:1'])]
+    public ?int $shared_users = null;
+
     #[Rule([
         'nullable',
         'string',
@@ -48,10 +51,9 @@ class Create extends Component
 
     public function save()
     {
-        // 1) সব attribute-based রুল রান করো
+
         $this->validate();
 
-        // 2) name + user_id কম্বিনেশন ইউনিক কিনা চেক করো
         $this->validate([
             'name' => [
                 'required',
@@ -66,6 +68,7 @@ class Create extends Component
             'name'        => $this->name,
             'rate_limit'  => $this->rate_limit,
             'validity'    => $this->validity ? strtolower($this->validity) : null,
+            'shared_users' => $this->shared_users,
             'mac_binding' => $this->mac_binding,
             'price'       => $this->price,
             'description' => $this->description,

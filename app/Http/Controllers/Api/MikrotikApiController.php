@@ -7,7 +7,7 @@ use App\Models\Router;
 use App\Models\Voucher;
 use Illuminate\Http\Request;
 
-class MikrotikController extends Controller
+class MikrotikApiController extends Controller
 {
     /**
      * MikroTik pulls new vouchers to create users.
@@ -65,7 +65,7 @@ class MikrotikController extends Controller
                     'password'    => $v->password,
                     'profile'     => $v->router_profile,
                     'validity'    => $v->expires_at ? $v->expires_at->diffInMinutes($v->activated_at) : null,
-                    'comments'    => 'RADTik-' . $v->batch,
+                    'comments'    => 'ACT' . ($v->activated_at ? '-ActivatedAt=' . $v->activated_at->format('Y-m-d_H:i:s') : ''),
                 ];
             });
 
@@ -81,7 +81,7 @@ class MikrotikController extends Controller
      * MikroTik sends usage, login, mac, uptime etc to Laravel.
      * POST /api/mikrotik/push-usage
      */
-    public function pushUsage(Request $request)
+    public function pushActiveUsers(Request $request)
     {
         $request->validate([
             'token' => 'required|string',
@@ -111,5 +111,67 @@ class MikrotikController extends Controller
         }
 
         return response()->json(['status' => 'success']);
+    }
+
+
+    public function pullProfiles(Request $request)
+    {
+        $token = $request->query('token');
+
+        $router = Router::where('app_key', $token)->first();
+
+        if (! $router) {
+            return response()->json(['error' => 'Invalid token'], 401);
+        }
+
+
+        // Adjust relation / table as needed
+        $profiles = auth()->user->profiles()
+            ->get()
+            ->map(function ($p) {
+                return [
+                    'name'             => $p->name,
+                    'shared_users'     => $p->shared_users,
+                    'rate_limit'       => $p->rate_limit,
+                    'session_timeout'  => $p->validity,
+                    'mac_bind'         => $p->mac_bingind ? '1' : 0,
+                    'comment'         => 'RADTik-PROFILE-' . $p->id . '|MB=' . ($p->mac_binding ? '1' : '0'),
+                ];
+            });
+
+        return response()->json([
+            'router_id' => $router->id,
+            'count'     => $profiles->count(),
+            'profiles'  => $profiles,
+        ]);
+    }
+
+    public function checkProfile(Request $request)
+    {
+        $token = $request->query('token');
+        $name  = $request->query('name');
+
+        if (! $token || ! $name) {
+            return response()->json([
+                'error' => 'Missing token or name',
+            ], 400);
+        }
+
+        $router = Router::where('app_key', $token)->first();
+
+        if (! $router) {
+            return response()->json([
+                'error' => 'Invalid token',
+            ], 401);
+        }
+
+        // Adjust relation / condition as needed
+        $exists = $router->profiles()
+            ->where('name', $name)
+            ->exists();
+
+        return response()->json([
+            'exists' => $exists,
+        ]);
     }
 }

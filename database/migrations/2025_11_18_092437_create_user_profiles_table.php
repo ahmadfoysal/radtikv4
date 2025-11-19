@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('rate_limit')->nullable();
             $table->string('validity')->nullable();
+            $table->integer('shared_users')->default(1);
             $table->boolean('mac_binding')->default(false);
             $table->decimal('price', 8, 2)->default(0);
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();

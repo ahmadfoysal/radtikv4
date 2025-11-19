@@ -28,6 +28,15 @@
                 </p>
             </div>
 
+            {{-- Shared Users --}}
+            <div>
+                <x-mary-input label="Shared Users (optional)" type="number" min="1"
+                    wire:model.live.debounce.500ms="shared_users" placeholder="e.g. 1" />
+                <p class="text-xs opacity-70 mt-1">
+                    Number of simultaneous logins allowed for this profile. Default is 1.
+                </p>
+            </div>
+
             {{-- Validity --}}
             <div>
                 <x-mary-input label="Validity (optional)" wire:model.live.debounce.500ms="validity"

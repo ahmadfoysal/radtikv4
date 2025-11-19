@@ -6,6 +6,10 @@ use App\MikroTik\Client\RouterClient;
 use App\MikroTik\Scripts\PullInactiveUsersScript;
 use App\MikroTik\Scripts\PushActiveUsersScript;
 use App\MikroTik\Scripts\RemoveOrphanUsersScript;
+use App\MikroTik\Scripts\PullProfilesScript;
+use App\MikroTik\Scripts\RemoveOrphanProfilesScript;
+use App\MikroTik\Scripts\ProfileOnLoginScript;
+use App\MikroTik\Scripts\PullActiveUsersScript;
 use App\Models\Router;
 use RouterOS\Query;
 
@@ -53,6 +57,14 @@ class ScriptInstaller
         return $this->upsertScript($router, $name, $source);
     }
 
+    public function installPullActiveUsersScript(Router $router, string $baseUrl): array
+    {
+        $name   = PullActiveUsersScript::name();
+        $source = PullActiveUsersScript::build($router, $baseUrl);
+
+        return $this->upsertScript($router, $name, $source);
+    }
+
     public function installPushActiveUsersScript(Router $router, string $baseUrl): array
     {
         $name   = PushActiveUsersScript::name();
@@ -65,6 +77,30 @@ class ScriptInstaller
     {
         $name   = RemoveOrphanUsersScript::name();
         $source = RemoveOrphanUsersScript::build($router, $baseUrl);
+
+        return $this->upsertScript($router, $name, $source);
+    }
+
+    public function installPullProfilesScript(Router $router, string $baseUrl): array
+    {
+        $name   = PullProfilesScript::name();
+        $source = PullProfilesScript::build($router, $baseUrl);
+
+        return $this->upsertScript($router, $name, $source);
+    }
+
+    public function installRemoveOrphanProfilesScript(Router $router, string $baseUrl): array
+    {
+        $name   = RemoveOrphanProfilesScript::name();
+        $source = RemoveOrphanProfilesScript::build($router, $baseUrl);
+
+        return $this->upsertScript($router, $name, $source);
+    }
+
+    public function installProfileOnLoginScript(Router $router): array
+    {
+        $name   = ProfileOnLoginScript::name();
+        $source = ProfileOnLoginScript::build($router);
 
         return $this->upsertScript($router, $name, $source);
     }

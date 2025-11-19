@@ -39,6 +39,8 @@ class Edit extends Component
     ])]
     public ?string $validity = null;
 
+    public ?int $shared_users = null;
+
     #[Rule(['boolean'])]
     public bool $mac_binding = false;
 
@@ -58,12 +60,13 @@ class Edit extends Component
         $this->mac_binding = (bool) $profile->mac_binding;
         $this->price       = (float) $profile->price;
         $this->description = $profile->description;
+        $this->shared_users = $profile->shared_users;
     }
 
 
     public function save(): void
     {
-        // শুধুই name-এর রুল override করছি (unique + per user + ignore current id)
+
         $this->validate([
             'name' => [
                 'required',
@@ -75,12 +78,11 @@ class Edit extends Component
             ],
         ]);
 
-        // বাকি ফিল্ডগুলো attribute rules অনুযায়ী validate হয়ে গেছে,
-        // সরাসরি প্রপার্টি থেকে আপডেট করছি
         $this->profile->update([
             'name'        => $this->name,
             'rate_limit'  => $this->rate_limit ?: null,
             'validity'    => $this->validity ? strtolower($this->validity) : null,
+            'shared_users' => $this->shared_users,
             'mac_binding' => $this->mac_binding,
             'price'       => $this->price !== null ? (float) $this->price : 0,
             'description' => $this->description ?: null,

@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\MikrotikController;
+use App\Http\Controllers\Api\MikrotikApiController;
 
 
 
@@ -45,7 +45,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/zones', App\Livewire\Zone\Index::class)->name('zones.index');
 });
 
-Route::get('/mikrotik/api/pull-inactive-users', [MikrotikController::class, 'pullInactiveUsers'])->name('mikrotik.pullInactiveUsers');
-Route::get('/mikrotik/api/pull-active-users', [MikrotikController::class, 'pullActiveUsers'])->name('mikrotik.pullActiveUsers');
-Route::post('/mikrotik/api/push-usage', [MikrotikController::class, 'pushUsage'])->name('mikrotik.pushUsage');
-Route::get('/mikrotik/check-user', [MikrotikController::class, 'checkUser'])->name('mikrotik.checkUser');
+/* Hotspot User sync */
+Route::get('/mikrotik/api/pull-inactive-users', [MikrotikApiController::class, 'pullInactiveUsers'])->name('mikrotik.pullInactiveUsers');
+Route::get('/mikrotik/pull-active-users', [MikrotikApiController::class, 'pullActiveUsers'])->name('mikrotik.pullActiveUsers');
+Route::post('/mikrotik/api/push-active-users', [MikrotikApiController::class, 'pushActiveUsers'])->name('mikrotik.pushActiveUsers');
+Route::get('/mikrotik/check-user', [MikrotikApiController::class, 'checkUser'])->name('mikrotik.checkUser');
+
+/* Hotspot profile sync */
+Route::get('/mikrotik/pull-profiles', [MikrotikApiController::class, 'pullProfiles'])->name('mikrotik.pullProfiles');
+Route::get('/mikrotik/check-profile', [MikrotikApiController::class, 'checkProfile'])->name('mikrotik.checkProfile');
+Route::get('/mikrotik/pull-updated-profiles', [MikrotikApiController::class, 'pullUpdatedProfiles'])->name('mikrotik.pullUpdatedProfiles');

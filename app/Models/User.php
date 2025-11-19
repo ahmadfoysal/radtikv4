@@ -9,6 +9,11 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Spatie\Permission\Traits\HasRoles;
+use App\Models\UserProfile;
+use App\Models\Voucher;
+use App\Models\Router;
+use App\Models\RadiusServer;
+use App\Models\RadiusProfile;
 
 class User extends Authenticatable
 {
@@ -114,5 +119,11 @@ class User extends Authenticatable
     public function radiusProfiles()
     {
         return $this->hasMany(RadiusProfile::class);
+    }
+
+    //Profiles relation
+    public function profiles()
+    {
+        return $this->hasMany(UserProfile::class);
     }
 }
