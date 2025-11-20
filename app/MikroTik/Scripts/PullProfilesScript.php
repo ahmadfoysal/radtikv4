@@ -68,56 +68,11 @@ class PullProfilesScript
     :local rlEnd [:find $data "\"" ($rlStart + 1)]
     :local rateLimit [:pick $data ($rlStart + 1) $rlEnd]
 
-    # session_timeout
-    :local stKey [:find $data "\"session_timeout\"" $rlEnd]
-    :local stStart [:find $data "\"" ($stKey + 18)]
-    :local stEnd [:find $data "\"" ($stStart + 1)]
-    :local sessionTimeout [:pick $data ($stStart + 1) $stEnd]
-
-    # comment
-    :local cKey [:find $data "\"comment\"" $stEnd]
+    # comment (already contains MB= flag)
+    :local cKey [:find $data "\"comment\"" $rlEnd]
     :local cStart [:find $data "\"" ($cKey + 11)]
     :local cEnd [:find $data "\"" ($cStart + 1)]
     :local comment [:pick $data ($cStart + 1) $cEnd]
-
-    # mac_binding
-    :local mbKey [:find $data "\"mac_binding\"" $cEnd]
-    :local mbStart [:find $data "\"" ($mbKey + 14)]
-    :local mbEnd [:find $data "\"" ($mbStart + 1)]
-    :local macBinding [:pick $data ($mbStart + 1) $mbEnd]
-
-    # Normalize mac_binding flag (MB=1 or MB=0 inside comment)
-    :local enableMacBind false
-    :if (($macBinding = "1") || ($macBinding = "true") || ($macBinding = "yes")) do={
-        :set enableMacBind true
-    }
-
-    # Build final comment with MB flag
-    :local baseComment $comment
-
-    # Strip existing MB=... if present
-    :local mbPosInComment [:find $baseComment "MB="]
-    :if ($mbPosInComment != nil) do={
-        :set baseComment [:pick $baseComment 0 $mbPosInComment]
-    }
-
-    # Trim possible trailing space / separator
-    :if ([:len $baseComment] > 0) do={
-        :local lastChar [:pick $baseComment ([:len $baseComment] - 1) [:len $baseComment]]
-        :if ($lastChar = " " || $lastChar = "|" || $lastChar = ",") do={
-            :set baseComment [:pick $baseComment 0 ([:len $baseComment] - 1)]
-        }
-    }
-
-    :local mbValue "0"
-    :if ($enableMacBind) do={ :set mbValue "1" }
-
-    :local finalComment $baseComment
-    :if ([:len $finalComment] > 0) do={
-        :set finalComment ($finalComment . " | MB=" . $mbValue)
-    } else={
-        :set finalComment ("MB=" . $mbValue)
-    }
 
     :local existing [/ip/hotspot/user/profile/find where name=$name]
 
@@ -127,8 +82,7 @@ class PullProfilesScript
             name=$name \
             shared-users=$sharedUsers \
             rate-limit=$rateLimit \
-            session-timeout=$sessionTimeout \
-            comment=$finalComment \
+            comment=$comment \
             on-login=$onLoginCmd
 
         :log info ("RADTik: Updated profile: " . $name)
@@ -139,14 +93,13 @@ class PullProfilesScript
             name=$name \
             shared-users=$sharedUsers \
             rate-limit=$rateLimit \
-            session-timeout=$sessionTimeout \
-            comment=$finalComment \
+            comment=$comment \
             on-login=$onLoginCmd
 
         :log info ("RADTik: Added profile: " . $name)
     }
 
-    :set pos [:find $data "{" $mbEnd]
+    :set pos [:find $data "{" $cEnd]
 }
 
 :log info "RADTik: Profile sync completed."

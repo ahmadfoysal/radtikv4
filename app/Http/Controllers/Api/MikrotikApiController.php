@@ -133,8 +133,6 @@ class MikrotikApiController extends Controller
                     'name'             => $p->name,
                     'shared_users'     => $p->shared_users,
                     'rate_limit'       => $p->rate_limit,
-                    'session_timeout'  => $p->validity,
-                    'mac_bind'         => $p->mac_bingind ? '1' : 0,
                     'comment'         => 'RADTik-PROFILE-' . $p->id . '|MB=' . ($p->mac_binding ? '1' : '0'),
                 ];
             });
