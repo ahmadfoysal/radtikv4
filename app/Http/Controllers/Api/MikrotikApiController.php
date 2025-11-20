@@ -126,7 +126,7 @@ class MikrotikApiController extends Controller
 
 
         // Adjust relation / table as needed
-        $profiles = auth()->user->profiles()
+        $profiles = $router->user->profiles()
             ->get()
             ->map(function ($p) {
                 return [
