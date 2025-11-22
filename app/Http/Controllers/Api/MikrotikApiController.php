@@ -118,30 +118,36 @@ class MikrotikApiController extends Controller
     {
         $token = $request->query('token');
 
+        if (! $token) {
+            return response()->json(['error' => 'Token is required'], 400);
+        }
+
+        /** @var \App\Models\Router|null $router */
         $router = Router::where('app_key', $token)->first();
 
         if (! $router) {
             return response()->json(['error' => 'Invalid token'], 401);
         }
 
-
-        // Adjust relation / table as needed
+        // এখানে ধরে নিচ্ছি: $router->user->profiles() রিলেশন ঠিকমতো সেট করা আছে
         $profiles = $router->user->profiles()
             ->get()
             ->map(function ($p) {
                 return [
-                    'name'             => $p->name,
-                    'shared_users'     => $p->shared_users,
-                    'rate_limit'       => $p->rate_limit,
-                    'comment'         => 'RADTik-PROFILE-' . $p->id . '|MB=' . ($p->mac_binding ? '1' : '0'),
+                    'name'         => $p->name,
+                    'shared_users' => (int) $p->shared_users,
+                    'rate_limit'   => (string) $p->rate_limit,
+                    // MB = mac_binding (true/false → 1/0)
+                    'comment'      => 'RADTik-PROFILE-' . $p->id . '|MB=' . ($p->mac_binding ? '1' : '0'),
                 ];
-            });
+            })
+            ->values(); // index reset
 
         return response()->json([
             'router_id' => $router->id,
             'count'     => $profiles->count(),
             'profiles'  => $profiles,
-        ]);
+        ], 200, [], JSON_UNESCAPED_SLASHES);
     }
 
     public function checkProfile(Request $request)
