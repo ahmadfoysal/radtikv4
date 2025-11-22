@@ -118,37 +118,46 @@ class MikrotikApiController extends Controller
     {
         $token = $request->query('token');
 
-        if (! $token) {
-            return response()->json(['error' => 'Token is required'], 400);
-        }
-
-        /** @var \App\Models\Router|null $router */
         $router = Router::where('app_key', $token)->first();
 
         if (! $router) {
             return response()->json(['error' => 'Invalid token'], 401);
         }
 
-        // এখানে ধরে নিচ্ছি: $router->user->profiles() রিলেশন ঠিকমতো সেট করা আছে
-        $profiles = $router->user->profiles()
-            ->get()
-            ->map(function ($p) {
-                return [
-                    'name'         => $p->name,
-                    'shared_users' => (int) $p->shared_users,
-                    'rate_limit'   => (string) $p->rate_limit,
-                    // MB = mac_binding (true/false → 1/0)
-                    'comment'      => 'RADTik-PROFILE-' . $p->id . '|MB=' . ($p->mac_binding ? '1' : '0'),
-                ];
-            })
-            ->values(); // index reset
+        $profiles = $router->user->profiles()->get();
+
+        // যদি format=flat আসে, তাহলে সিম্পল টেক্সট রিটার্ন করি
+        if ($request->query('format') === 'flat') {
+            $lines = $profiles->map(function ($p) {
+                return implode(';', [
+                    $p->name,
+                    (int) $p->shared_users,
+                    (string) $p->rate_limit,
+                    'RADTik-PROFILE-' . $p->id . '|MB=' . ($p->mac_binding ? '1' : '0'),
+                ]);
+            })->implode("\n");
+
+            return response($lines, 200)
+                ->header('Content-Type', 'text/plain');
+        }
+
+        // আগের JSON রেসপন্স যেমন ছিল, 그대로 থাকুক
+        $profilesJson = $profiles->map(function ($p) {
+            return [
+                'name'         => $p->name,
+                'shared_users' => $p->shared_users,
+                'rate_limit'   => $p->rate_limit,
+                'comment'      => 'RADTik-PROFILE-' . $p->id . '|MB=' . ($p->mac_binding ? '1' : '0'),
+            ];
+        });
 
         return response()->json([
             'router_id' => $router->id,
-            'count'     => $profiles->count(),
-            'profiles'  => $profiles,
-        ], 200, [], JSON_UNESCAPED_SLASHES);
+            'count'     => $profilesJson->count(),
+            'profiles'  => $profilesJson,
+        ]);
     }
+
 
     public function checkProfile(Request $request)
     {
