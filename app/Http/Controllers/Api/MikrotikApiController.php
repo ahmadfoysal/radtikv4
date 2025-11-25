@@ -126,7 +126,7 @@ class MikrotikApiController extends Controller
 
         $profiles = $router->user->profiles()->get();
 
-        // যদি format=flat আসে, তাহলে সিম্পল টেক্সট রিটার্ন করি
+
         if ($request->query('format') === 'flat') {
             $lines = $profiles->map(function ($p) {
                 return implode(';', [
@@ -141,7 +141,7 @@ class MikrotikApiController extends Controller
                 ->header('Content-Type', 'text/plain');
         }
 
-        // আগের JSON রেসপন্স যেমন ছিল, 그대로 থাকুক
+
         $profilesJson = $profiles->map(function ($p) {
             return [
                 'name'         => $p->name,
