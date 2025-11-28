@@ -12,7 +12,7 @@ git pull origin main >> storage/logs/deploy.log 2>&1
 
 # php artisan migrate --force >> storage/logs/deploy.log 2>&1
 
-php artisan optimize:clear >> storage/logs/deploy.log 2>&1
+#php artisan optimize:clear >> storage/logs/deploy.log 2>&1
 # php artisan optimize >> storage/logs/deploy.log 2>&1
 
 # php artisan queue:restart >> storage/logs/deploy.log 2>&1
