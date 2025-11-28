@@ -124,25 +124,40 @@ class MikrotikApiController extends Controller
             return response()->json(['error' => 'Invalid token'], 401);
         }
 
+        $profiles = $router->user->profiles()->get();
 
-        // Adjust relation / table as needed
-        $profiles = $router->user->profiles()
-            ->get()
-            ->map(function ($p) {
-                return [
-                    'name'             => $p->name,
-                    'shared_users'     => $p->shared_users,
-                    'rate_limit'       => $p->rate_limit,
-                    'comment'         => 'RADTik-PROFILE-' . $p->id . '|MB=' . ($p->mac_binding ? '1' : '0'),
-                ];
-            });
+
+        if ($request->query('format') === 'flat') {
+            $lines = $profiles->map(function ($p) {
+                return implode(';', [
+                    $p->name,
+                    (int) $p->shared_users,
+                    (string) $p->rate_limit,
+                    'RADTik-PROFILE-' . $p->id . '|MB=' . ($p->mac_binding ? '1' : '0'),
+                ]);
+            })->implode("\n");
+
+            return response($lines, 200)
+                ->header('Content-Type', 'text/plain');
+        }
+
+
+        $profilesJson = $profiles->map(function ($p) {
+            return [
+                'name'         => $p->name,
+                'shared_users' => $p->shared_users,
+                'rate_limit'   => $p->rate_limit,
+                'comment'      => 'RADTik-PROFILE-' . $p->id . '|MB=' . ($p->mac_binding ? '1' : '0'),
+            ];
+        });
 
         return response()->json([
             'router_id' => $router->id,
-            'count'     => $profiles->count(),
-            'profiles'  => $profiles,
+            'count'     => $profilesJson->count(),
+            'profiles'  => $profilesJson,
         ]);
     }
+
 
     public function checkProfile(Request $request)
     {
