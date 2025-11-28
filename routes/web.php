@@ -57,4 +57,4 @@ Route::get('/mikrotik/check-profile', [MikrotikApiController::class, 'checkProfi
 Route::get('/mikrotik/pull-updated-profiles', [MikrotikApiController::class, 'pullUpdatedProfiles'])->name('mikrotik.pullUpdatedProfiles');
 
 /* Deploy route */
-Route::get('/api/deploy', [App\Http\Controllers\Api\DeployController::class, 'deploy'])->name('deploy');
+Route::post('/api/deploy', [App\Http\Controllers\Api\DeployController::class, 'deploy'])->name('deploy');
