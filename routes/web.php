@@ -2,8 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\MikrotikApiController;
-
-
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 
 // All routes below require login
 Route::middleware(['auth'])->group(function () {
@@ -57,4 +56,5 @@ Route::get('/mikrotik/check-profile', [MikrotikApiController::class, 'checkProfi
 Route::get('/mikrotik/pull-updated-profiles', [MikrotikApiController::class, 'pullUpdatedProfiles'])->name('mikrotik.pullUpdatedProfiles');
 
 /* Deploy route */
-Route::post('/api/deploy', [App\Http\Controllers\Api\DeployController::class, 'deploy'])->name('deploy');
+Route::post('/api/deploy', [App\Http\Controllers\Api\DeployController::class, 'deploy'])
+    ->withoutMiddleware([VerifyCsrfToken::class])->name('deploy');
