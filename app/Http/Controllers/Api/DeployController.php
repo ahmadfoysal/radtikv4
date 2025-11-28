@@ -15,68 +15,31 @@ class DeployController extends Controller
 
     public function deploy(Request $request)
     {
-
-        $incomingToken =
-            $request->header('X-DEPLOY-TOKEN')
-            ?? $request->input('token');
-
+        // Token check
+        $incomingToken = $request->input('token');
         if ($incomingToken !== self::DEPLOY_TOKEN) {
-            Log::warning('Deploy webhook unauthorized', [
-                'ip'    => $request->ip(),
-                'token' => $incomingToken,
-            ]);
-
             return response()->json(['message' => 'Unauthorized'], 403);
         }
-
-
-        $event = $request->header('X-GitHub-Event');
-        if ($event && $event !== 'push') {
-            return response()->json(['message' => 'Event ignored'], 200);
-        }
-
 
         $scriptPath = base_path('deploy.sh');
 
         if (! file_exists($scriptPath)) {
-            Log::error('Deploy script not found', ['path' => $scriptPath]);
-
-            return response()->json([
-                'message' => 'Deploy script not found',
-                'path'    => $scriptPath,
-            ], 500);
+            return response()->json(['message' => 'deploy.sh not found'], 500);
         }
 
+        // Run script using exec() instead of Process
+        exec($scriptPath . " 2>&1", $output, $return_var);
 
-        try {
-            $process = Process::fromShellCommandline($scriptPath);
-            $process->setTimeout(300);
-
-            $process->run();
-
-            if (! $process->isSuccessful()) {
-                throw new ProcessFailedException($process);
-            }
-
-            $output = $process->getOutput();
-
-            Log::info('Deployment success', [
-                'output' => $output,
-            ]);
-
-            return response()->json([
-                'message' => 'Deployment success',
-                'output'  => $output,
-            ], 200);
-        } catch (\Throwable $e) {
-            Log::error('Deployment failed', [
-                'error' => $e->getMessage(),
-            ]);
-
+        if ($return_var !== 0) {
             return response()->json([
                 'message' => 'Deployment failed',
-                'error'   => $e->getMessage(),
+                'output'  => $output,
             ], 500);
         }
+
+        return response()->json([
+            'message' => 'Deployment success',
+            'output'  => $output,
+        ], 200);
     }
 }
