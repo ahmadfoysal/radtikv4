@@ -9,7 +9,7 @@ echo "Starting deployment at $(date)" >> storage/logs/deploy.log
 
 git pull origin main >> storage/logs/deploy.log 2>&1
 
-# commented out to speed up deployment, uncomment if needed
+
 # composer install --no-interaction --prefer-dist --optimize-autoloader >> storage/logs/deploy.log 2>&1
 
 # php artisan down || true
