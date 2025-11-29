@@ -17,7 +17,7 @@ class PullProfilesScript
      */
     public static function build(Router $router, string $baseUrl): string
     {
-        $token = $router->token;
+        $token = $router->app_key;
 
         // We use HEREDOC. Note: MikroTik variables ($var) must be escaped as \$var.
         // PHP variables ({$token}) are interpolated.
