@@ -22,7 +22,7 @@ class DeployController extends Controller
      */
     public function deploy(Request $request)
     {
-        // 1. Get Secret from config
+        // 1. Get Secret from config.services.php
         $secret = config(self::WEBHOOK_SECRET);
 
         // If secret is not set in .env, deployment is disabled or misconfigured.
