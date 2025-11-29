@@ -130,6 +130,7 @@ class MikrotikApiController extends Controller
 
     public function pullProfiles(Request $request)
     {
+        //changed
         $token = $request->query('token');
 
         $router = Router::where('app_key', $token)->first();
