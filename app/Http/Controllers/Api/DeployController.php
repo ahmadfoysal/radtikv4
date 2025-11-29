@@ -5,41 +5,121 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Symfony\Component\Process\Process;
-use Symfony\Component\Process\Exception\ProcessFailedException;
+// Process Facade টি Laravel 9+ এ exec() এর চেয়ে ভালো।
+use Illuminate\Support\Facades\Process;
 
 class DeployController extends Controller
 {
+    // config() ফাংশন ব্যবহার করে Secret অ্যাক্সেস করা হচ্ছে
+    private const WEBHOOK_SECRET = 'services.github.token';
+    private const GITHUB_SIGNATURE_HEADER = 'X-Hub-Signature-256';
 
-    private const DEPLOY_TOKEN = 'd9f1c0f3e6a94b8f93c72e51a7d4b28f9c3ad672';
-
+    /**
+     * Handles the incoming GitHub webhook request.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function deploy(Request $request)
     {
-        // Token check
-        $incomingToken = $request->input('token');
-        if ($incomingToken !== self::DEPLOY_TOKEN) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+        // 1. Get Secret from config
+        $secret = config(self::WEBHOOK_SECRET);
+
+        // If secret is not set in .env, deployment is disabled or misconfigured.
+        if (empty($secret)) {
+            Log::error('GitHub Webhook secret is not configured.');
+            return response()->json(['message' => 'Server misconfiguration'], 500);
         }
 
+        // 2. Signature Check (Security Validation)
+        $signature = $request->header(self::GITHUB_SIGNATURE_HEADER);
+
+        if (! $signature || ! $this->verifySignature($signature, $request->getContent(), $secret)) {
+            Log::warning('Unauthorized access attempt: Invalid signature.');
+            return response()->json(['message' => 'Unauthorized or Invalid Signature'], 403);
+        }
+
+        // 3. Event Check
+        $event = $request->header('X-GitHub-Event');
+
+        if ($event === 'ping') {
+            // Respond to GitHub's initial connection test
+            return response()->json(['message' => 'Pong! Webhook successfully received.'], 200);
+        }
+
+        if ($event !== 'push') {
+            // Ignore events other than 'push'
+            Log::info("Ignoring non-push event: {$event}");
+            return response()->json(['message' => "Ignoring event: {$event}"], 200);
+        }
+
+        // 4. Execute Deployment Script
         $scriptPath = base_path('deploy.sh');
 
         if (! file_exists($scriptPath)) {
+            Log::error('Deployment script not found.', ['path' => $scriptPath]);
             return response()->json(['message' => 'deploy.sh not found'], 500);
         }
 
-        // Run script using exec() instead of Process
-        exec($scriptPath . " 2>&1", $output, $return_var);
+        // Using Process Facade for better control and error handling
+        try {
+            // Run the script and capture output/errors
+            $process = Process::run($scriptPath);
 
-        if ($return_var !== 0) {
+            $output = $process->output();
+            $errorOutput = $process->errorOutput();
+
+            if ($process->failed()) {
+                Log::error('Deployment script failed.', [
+                    'exitCode' => $process->exitCode(),
+                    'output' => $output,
+                    'error' => $errorOutput
+                ]);
+
+                return response()->json([
+                    'message' => 'Deployment failed',
+                    'output'  => $output,
+                    'error'   => $errorOutput,
+                ], 500);
+            }
+
+            Log::info('Deployment success.', ['output' => $output]);
             return response()->json([
-                'message' => 'Deployment failed',
+                'message' => 'Deployment success',
                 'output'  => $output,
-            ], 500);
+            ], 200);
+        } catch (\Exception $e) {
+            Log::critical('Deployment execution error.', ['exception' => $e->getMessage()]);
+            return response()->json(['message' => 'Deployment execution error', 'details' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Verifies the GitHub Webhook signature.
+     *
+     * @param string $signature The signature from the X-Hub-Signature-256 header.
+     * @param string $payload The raw request body.
+     * @param string $secret The GitHub Webhook secret key.
+     * @return bool
+     */
+    protected function verifySignature(string $signature, string $payload, string $secret): bool
+    {
+        // $signature format: 'sha256=HASH'
+        if (strpos($signature, '=') === false) {
+            return false;
         }
 
-        return response()->json([
-            'message' => 'Deployment success',
-            'output'  => $output,
-        ], 200);
+        list($algo, $hash) = explode('=', $signature, 2);
+
+        // Ensure it's the expected algorithm
+        if ($algo !== 'sha256') {
+            return false;
+        }
+
+        // Generate the hash using the provided secret
+        $payloadHash = hash_hmac($algo, $payload, $secret);
+
+        // Use hash_equals() for timing-attack safe string comparison
+        return hash_equals($hash, $payloadHash);
     }
 }
