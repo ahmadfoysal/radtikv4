@@ -2,7 +2,7 @@
 
 cd /www/wwwroot/app.radtik.com || exit
 
-##check it out safe
+##check it out safe2
 git config --global --add safe.directory /www/wwwroot/app.radtik.com >> storage/logs/deploy.log 2>&1
 
 echo "Starting deployment at $(date)" >> storage/logs/deploy.log
