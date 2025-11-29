@@ -8,87 +8,59 @@ class ProfileOnLoginScript
 {
     public static function name(): string
     {
-        return 'RADTik-profile-on-login';
+        return 'RADTik_Login_Logic';
     }
 
     public static function build(Router $router): string
     {
-        $script = <<<'SCRIPT'
+        return <<<'SCRIPT'
 # RADTik - Profile On-Login Script
-# - Adds activation timestamp to user comment (once, for all users)
-# - Conditionally adds MAC binding based on profile comment flag "MB=1"
+# 1. Adds "ACT=" timestamp to user comment if missing.
+# 2. Checks USER comment for "LOCK=1". If found, locks MAC to user.
 
 :local u $user
-:local m $mac
+:local m $"mac-address"
 
-:if ([:len $u] = 0) do={
-    :log warning "RADTik: on-login called without user name"
-    :return
-}
+# Safety check
+:if ([:len $u] = 0) do={ :return }
 
-:local uid [/ip/hotspot/user/find where name=$u]
+:local uid [/ip hotspot user find name=$u]
 
 :if ([:len $uid] = 0) do={
-    :log warning ("RADTik: on-login user not found: " . $u)
+    :log warning ("RADTik: User not found: " . $u)
     :return
 }
 
-# -------- Activation timestamp (for all RADTik users) --------
-:local oldComment [/ip/hotspot/user/get $uid comment]
+# --- 1. Activation Timestamp Logic ---
+:local currentComment [/ip hotspot user get $uid comment]
 
-:local actPos [:find $oldComment "ACT="]
-
-:if ($actPos = nil) do={
+# Check if already activated
+:if ([:find $currentComment "ACT="] = nil) do={
     :local date [/system clock get date]
     :local time [/system clock get time]
     :local ts ($date . " " . $time)
+    
+    # Prepend activation time
+    :local newComment ("ACT=" . $ts . " | " . $currentComment)
+    
+    /ip hotspot user set $uid comment=$newComment
+    :set currentComment $newComment
+    :log info ("RADTik: Activation set for " . $u)
+}
 
-    :local newComment ("ACT=" . $ts)
-    :if ([:len $oldComment] > 0) do={
-        :set newComment ($newComment . " | " . $oldComment)
+# --- 2. MAC Lock Logic (Based on User Comment) ---
+
+# Check if User comment contains "LOCK=1"
+:if ([:find $currentComment "LOCK=1"] != nil) do={
+    
+    :local storedMac [/ip hotspot user get $uid mac-address]
+
+    # Only lock if the MAC field is currently empty
+    :if ([:len $storedMac] = 0) do={
+        /ip hotspot user set $uid mac-address=$m
+        :log info ("RADTik: MAC Locked for " . $u . " -> " . $m)
     }
-
-    /ip/hotspot/user/set $uid comment=$newComment
-    :log info ("RADTik: activation set for user " . $u . " at " . $ts)
-}
-
-# -------- Decide if MAC binding is enabled for this profile --------
-:local profileName [/ip/hotspot/user/get $uid profile]
-:local pid [/ip/hotspot/user/profile/find where name=$profileName]
-:local pComment ""
-
-:if ([:len $pid] > 0) do={
-    :set pComment [/ip/hotspot/user/profile/get $pid comment]
-}
-
-:local mbPos [:find $pComment "MB=1"]
-:local enableMacBind false
-
-:if ($mbPos != nil) do={
-    :set enableMacBind true
-}
-
-# -------- MAC binding (conditional) --------
-:if ($enableMacBind = false) do={
-    :log info ("RADTik: MAC binding disabled for profile " . $profileName)
-    :return
-}
-
-:if ([:len $m] = 0) do={
-    :log warning ("RADTik: no MAC for user " . $u)
-    :return
-}
-
-:local bind [/ip/hotspot/ip-binding/find where mac-address=$m]
-
-:if ([:len $bind] = 0) do={
-    /ip/hotspot/ip-binding/add mac-address=$m type=bypassed comment=$u
-    :log info ("RADTik: mac-binding added for user " . $u . " mac=" . $m)
-} else={
-    :log info ("RADTik: mac-binding already exists for " . $u)
 }
 SCRIPT;
-
-        return $script;
     }
 }

@@ -13,102 +13,114 @@ class PullProfilesScript
 
     /**
      * Build RouterOS script that pulls hotspot user profiles
-     * from the API and upserts them on MikroTik.
+     * using the robust flat-file format.
      */
     public static function build(Router $router, string $baseUrl): string
     {
-        $script = <<<'SCRIPT'
-# RADTik - Pull Hotspot Profiles
-# Fetch profiles from API and sync to MikroTik.
+        $token = $router->token;
 
-/* Configuration */
-:local BASE_URL "__BASE_URL__"
-:local TOKEN "__TOKEN__"
+        // We use HEREDOC. Note: MikroTik variables ($var) must be escaped as \$var.
+        // PHP variables ({$token}) are interpolated.
+        return <<<SCRIPT
+# RADTik - Pull & Sync Hotspot User Profiles
+# Method: Flat File Parsing (Robust)
+# Syncs profiles and sets the common on-login script "RADTik_Login_Logic"
 
-# Common on-login command for all RADTik profiles
-:local onLoginCmd "/system script run RADTik-profile-on-login"
+:local baseUrl "{$baseUrl}"
+:local token   "{$token}"
+:local onLoginCmd "/system script run RADTik_Login_Logic"
 
-:local url ($BASE_URL . "?token=" . $TOKEN)
-:log info ("RADTik: Pulling profiles from " . $url)
+# We request 'format=flat' for reliable parsing (Name;Shared;Rate)
+:local url (\$baseUrl . "?token=" . \$token . "&format=flat")
+:local dst "radtik_profiles.txt"
 
-:local data [/tool fetch url=$url http-method=get output=user]
+:log info ("RADTik: Fetching profiles from " . \$baseUrl)
 
-:if ([:len $data] = 0) do={
-    :log warning "RADTik: API returned empty response for profiles"
-    :error "No data"
+# Remove old file
+/file remove [find name=\$dst]
+
+# Fetch
+/tool fetch url=\$url mode=https http-method=get dst-path=\$dst check-certificate=no keep-result=yes
+:delay 2s;
+
+:if ([:len [/file find name=\$dst]] = 0) do={
+    :log error "RADTik: Fetch failed"
+    :error "fetch failed"
 }
 
-:local pos [:find $data "\"profiles\""]
+:local content [/file get \$dst contents]
+:local contentLen [:len \$content]
 
-:if ($pos = nil) do={
-    :log warning "RADTik: 'profiles' key not found in response"
-    :error "Invalid JSON"
+:if (\$contentLen = 0) do={
+    :log warning "RADTik: Empty response"
+    /file remove \$dst
+    :error "empty"
 }
 
-:set pos [:find $data "{" $pos]
+:local lineEnd 0
+:local line ""
+:local lastEnd 0
+:local processed 0
 
-:while ($pos != nil) do={
+:log info ("RADTik: Processing Profiles...")
 
-    # name
-    :local nKey [:find $data "\"name\"" $pos]
-    :if ($nKey = nil) do={ :break }
-    :local nStart [:find $data "\"" ($nKey + 7)]
-    :local nEnd [:find $data "\"" ($nStart + 1)]
-    :local name [:pick $data ($nStart + 1) $nEnd]
+# ---------- MAIN LOOP ----------
+:do {
+    :set lineEnd [:find \$content "\\n" \$lastEnd]
+    :if ([:typeof \$lineEnd] = "nil") do={ :set lineEnd \$contentLen }
+    :set line [:pick \$content \$lastEnd \$lineEnd]
+    :set lastEnd (\$lineEnd + 1)
 
-    # shared_users
-    :local suKey [:find $data "\"shared_users\"" $nEnd]
-    :local suStart [:find $data "\"" ($suKey + 15)]
-    :local suEnd [:find $data "\"" ($suStart + 1)]
-    :local sharedUsers [:pick $data ($suStart + 1) $suEnd]
-
-    # rate_limit
-    :local rlKey [:find $data "\"rate_limit\"" $suEnd]
-    :local rlStart [:find $data "\"" ($rlKey + 13)]
-    :local rlEnd [:find $data "\"" ($rlStart + 1)]
-    :local rateLimit [:pick $data ($rlStart + 1) $rlEnd]
-
-    # comment (already contains MB= flag)
-    :local cKey [:find $data "\"comment\"" $rlEnd]
-    :local cStart [:find $data "\"" ($cKey + 11)]
-    :local cEnd [:find $data "\"" ($cStart + 1)]
-    :local comment [:pick $data ($cStart + 1) $cEnd]
-
-    :local existing [/ip/hotspot/user/profile/find where name=$name]
-
-    :if ([:len $existing] > 0) do={
-
-        /ip/hotspot/user/profile/set $existing \
-            name=$name \
-            shared-users=$sharedUsers \
-            rate-limit=$rateLimit \
-            comment=$comment \
-            on-login=$onLoginCmd
-
-        :log info ("RADTik: Updated profile: " . $name)
-
-    } else={
-
-        /ip/hotspot/user/profile/add \
-            name=$name \
-            shared-users=$sharedUsers \
-            rate-limit=$rateLimit \
-            comment=$comment \
-            on-login=$onLoginCmd
-
-        :log info ("RADTik: Added profile: " . $name)
+    # Cleanup Carriage Return
+    :if ([:pick \$line ([:len \$line]-1)] = "\\r") do={
+        :set line [:pick \$line 0 ([:len \$line]-1)]
     }
 
-    :set pos [:find $data "{" $cEnd]
-}
+    :if ([:len \$line] > 0) do={
+        # Format Expectation: Name;Shared;Rate[;Extra]
+        
+        :local s1 [:find \$line ";"]
+        
+        :if ([:typeof \$s1] != "nil") do={
+            :local s2 [:find \$line ";" (\$s1 + 1)]
+            
+            # We need at least Name and Shared-Users delimiters
+            :if ([:typeof \$s2] != "nil") do={
+                
+                :local pName   [:pick \$line 0 \$s1]
+                :local pShared [:tonum [:pick \$line (\$s1+1) \$s2]]
+                
+                # Check for 3rd delimiter to determine where Rate ends
+                :local s3 [:find \$line ";" (\$s2 + 1)]
+                :local pRate ""
+                
+                :if ([:typeof \$s3] != "nil") do={
+                    :set pRate [:pick \$line (\$s2+1) \$s3]
+                } else={
+                    # If no extra data, Rate is until the end of the line
+                    :set pRate [:pick \$line (\$s2+1) [:len \$line]]
+                }
 
-:log info "RADTik: Profile sync completed."
+                # --- Update / Create Profile ---
+                :if (\$pName != "" && \$pName != "default") do={
+                    :local existingId [/ip hotspot user profile find name=\$pName]
+
+                    :if ([:len \$existingId] > 0) do={
+                        :log info ("RADTik: Updating " . \$pName)
+                        /ip hotspot user profile set \$existingId shared-users=\$pShared rate-limit=\$pRate on-login=\$onLoginCmd
+                    } else={
+                        :log info ("RADTik: Creating " . \$pName)
+                        /ip hotspot user profile add name=\$pName shared-users=\$pShared rate-limit=\$pRate on-login=\$onLoginCmd
+                    }
+                    :set processed (\$processed + 1)
+                }
+            }
+        }
+    }
+} while (\$lastEnd < \$contentLen)
+
+:log info ("RADTik: DONE. Total processed: " . \$processed)
+/file remove \$dst
 SCRIPT;
-
-        return str_replace(
-            ['__BASE_URL__', '__TOKEN__'],
-            [$baseUrl, $router->app_key],
-            $script
-        );
     }
 }
