@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#git ignored
 cd /www/wwwroot/app.radtik.com || exit
 
 ##file mode changed 
