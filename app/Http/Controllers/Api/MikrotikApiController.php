@@ -37,6 +37,20 @@ class MikrotikApiController extends Controller
                 ];
             });
 
+        if ($request->query('format') === 'flat') {
+            $lines = $vouchers->map(function ($v) {
+                return implode(';', [
+                    $v['username'],
+                    $v['password'],
+                    $v['profile'],
+                    $v['comments'],
+                ]);
+            })->implode("\n");
+
+            return response($lines, 200)
+                ->header('Content-Type', 'text/plain');
+        }
+
         return response()->json([
             'router_id' => $router->id,
             'count'     => $vouchers->count(),
