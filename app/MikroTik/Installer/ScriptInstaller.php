@@ -89,13 +89,6 @@ class ScriptInstaller
         return $this->upsertScript($router, $name, $source);
     }
 
-    public function installRemoveOrphanProfilesScript(Router $router, string $baseUrl): array
-    {
-        $name   = RemoveOrphanProfilesScript::name();
-        $source = RemoveOrphanProfilesScript::build($router, $baseUrl);
-
-        return $this->upsertScript($router, $name, $source);
-    }
 
     public function installProfileOnLoginScript(Router $router): array
     {

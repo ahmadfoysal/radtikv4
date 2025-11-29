@@ -135,7 +135,6 @@ class Index extends Component
             // Profile scripts
             $installer->installProfileOnLoginScript($router);
             $installer->installPullProfilesScript($router, $pullProfiles);
-            $installer->installRemoveOrphanProfilesScript($router, $orphanProfiles);
 
 
             /*
