@@ -25,4 +25,9 @@ class UserProfile extends Model
         'mac_binding' => 'boolean',
         'price' => 'decimal:2',
     ];
+
+    public function vouchers()
+    {
+        return $this->hasMany(Voucher::class, 'user_profile', 'id');
+    }
 }

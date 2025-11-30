@@ -28,7 +28,7 @@ class MikrotikApiController extends Controller
             ->with('profile')
             ->where('is_radius', false)
             ->where('status', 'inactive')
-            ->limit(50) // Adjusted limit
+            // ->limit(50) // Adjusted limit
             ->get();
 
         if ($request->query('format') === 'flat') {

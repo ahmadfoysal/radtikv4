@@ -46,6 +46,6 @@ class Voucher extends Model
 
     public function profile()
     {
-        return $this->belongsTo(UserProfile::class);
+        return $this->belongsTo(UserProfile::class, 'user_profile_id');
     }
 }
