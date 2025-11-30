@@ -14,11 +14,10 @@ return new class extends Migration
         Schema::create('vouchers', function (Blueprint $table) {
             $table->id();
             $table->string('name')->nullable();
-            $table->string('router_profile')->nullable();
-            $table->foreignId('radius_profile_id')->nullable()->constrained('radius_profiles')->restrictOnDelete();
+            $table->foreignId('user_profile_id')->constrained()->restrictOnDelete();
             $table->string('username');
             $table->string('password');
-            $table->enum('status', ['active', 'inactive', 'expired', 'disabled'])->default('active');
+            $table->enum('status', ['active', 'inactive', 'expired', 'disabled'])->default('inactive');
             $table->string('mac_address')->nullable();
             $table->dateTime('activated_at')->nullable();
             $table->dateTime('expires_at')->nullable();
@@ -29,9 +28,7 @@ return new class extends Migration
             $table->bigInteger('bytes_out')->default(0);
             $table->string('up_time')->nullable();
             $table->boolean('is_radius')->default(false);
-            $table->foreignId('radius_server_id')->nullable()->constrained('radius_servers')->restrictOnDelete();
             $table->string('batch');
-            $table->boolean('is_synced')->default(false);
             $table->timestamps();
         });
     }

@@ -17,33 +17,37 @@ class MikrotikApiController extends Controller
     {
         $token = $request->query('token');
 
-        //4c6a9141bbff1e9f24d467b42fe1509f
-        //  $token = '4c6a9141bbff1e9f24d467b42fe1509f';
         $router = Router::where('app_key', $token)->first();
+
         if (!$router) {
-            return response()->json(['error' => 'Invalid token'], 401);
+            return response('Invalid Token', 401);
         }
+
+        // Fetch vouchers with Profile relation
         $vouchers = $router->vouchers()
+            ->with('profile')
             ->where('is_radius', false)
             ->where('status', 'inactive')
-            ->limit(10)
-            ->get()
-            ->map(function ($v) {
-                return [
-                    'username'    => $v->username,
-                    'password'    => $v->password,
-                    'profile'     => $v->router_profile,
-                    'comments'    => 'RADTik-' . $v->batch,
-                ];
-            });
+            ->limit(50) // Adjusted limit
+            ->get();
 
         if ($request->query('format') === 'flat') {
             $lines = $vouchers->map(function ($v) {
+                // 1. Get Profile Name from relation
+                $pName = $v->profile->name ?? 'default';
+
+                // 2. Get Lock Status from Profile (Adjust 'is_mac_bind' to your actual column name)
+                $isLock = $v->profile->mac_binding ?? false ? '1' : '0';
+
+                // 3. Generate Comment
+                $comment = "RADTik | LOCK={$isLock}";
+
+                // 4. Return Flat Line: User;Pass;Profile;Comment
                 return implode(';', [
-                    $v['username'],
-                    $v['password'],
-                    $v['profile'],
-                    $v['comments'],
+                    $v->username,
+                    $v->password,
+                    $pName,
+                    $comment
                 ]);
             })->implode("\n");
 
@@ -51,10 +55,11 @@ class MikrotikApiController extends Controller
                 ->header('Content-Type', 'text/plain');
         }
 
+        // JSON Fallback
         return response()->json([
-            'router_id' => $router->id,
-            'count'     => $vouchers->count(),
-            'vouchers'  => $vouchers,
+            'router' => $router->name,
+            'count'  => $vouchers->count(),
+            'data'   => $vouchers,
         ]);
     }
 
@@ -148,7 +153,6 @@ class MikrotikApiController extends Controller
                     $p->name,
                     (int) $p->shared_users,
                     (string) $p->rate_limit,
-                    'RADTik-PROFILE-' . $p->id . '|MB=' . ($p->mac_binding ? '1' : '0'),
                 ]);
             })->implode("\n");
 
@@ -162,7 +166,6 @@ class MikrotikApiController extends Controller
                 'name'         => $p->name,
                 'shared_users' => $p->shared_users,
                 'rate_limit'   => $p->rate_limit,
-                'comment'      => 'RADTik-PROFILE-' . $p->id . '|MB=' . ($p->mac_binding ? '1' : '0'),
             ];
         });
 
