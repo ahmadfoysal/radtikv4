@@ -8,46 +8,70 @@ class PushActiveUsersScript
 {
     public static function name(): string
     {
-        return 'RADTik-push-active-users';
+        return 'RADTik-push-user-stats';
     }
 
     /**
-     * Build RouterOS script for pushing active user sessions to API.
+     * Build RouterOS script for pushing user statistics to API.
+     * Syncs: Mac, Bytes In/Out, Uptime, and Activation Comment.
      */
     public static function build(Router $router, string $baseUrl): string
     {
-        $script = <<<'SCRIPT'
-# RADTik - Push Active Users Script
-# Sends hotspot active user sessions to API endpoint.
+        $token = $router->token;
 
-:local BASE_URL "__BASE_URL__"
-:local TOKEN "__TOKEN__"
+        return <<<SCRIPT
+# RADTik - Push User Stats Script
+# Sends stats for ALL activated users (offline or online) to API.
+# Method: POST (to handle large data)
+# Format: username;mac;bytes-in;bytes-out;uptime;comment
 
-:local url ($BASE_URL . "?token=" . $TOKEN)
-:local result ""
+:local baseUrl "{$baseUrl}"
+:local token   "{$token}"
 
-:foreach u in=[/ip/hotspot/active/find] do={
+# Auth Header
+:local authHeader ("Authorization: Bearer " . \$token)
 
-    :local user [/ip/hotspot/active/get $u user]
-    :local mac  [/ip/hotspot/active/get $u mac-address]
-    :local ip   [/ip/hotspot/active/get $u address]
-    :local uptime [/ip/hotspot/active/get $u uptime]
+# URL (We use POST, so data goes in body)
+:local url (\$baseUrl . "?token=" . \$token)
 
-    :local line ("user=" . $user . ";mac=" . $mac . ";ip=" . $ip . ";uptime=" . $uptime . "|")
+:local payload ""
+:local count 0
 
-    :set result ($result . $line)
+:log info "RADTik: Collecting user stats..."
+
+# Loop through ALL hotspot users
+:foreach i in=[/ip hotspot user find] do={
+    
+    :local cmt [/ip hotspot user get \$i comment]
+
+    # Only sync if user is Activated (contains "Act:") OR has usage
+    :if ([:find \$cmt "Act:"] != nil || [/ip hotspot user get \$i bytes-out] > 0) do={
+        
+        :local name [/ip hotspot user get \$i name]
+        :local mac  [/ip hotspot user get \$i mac-address]
+        :local bin  [/ip hotspot user get \$i bytes-in]
+        :local bout [/ip hotspot user get \$i bytes-out]
+        :local upt  [/ip hotspot user get \$i uptime]
+
+        # Handle empty MAC (if any)
+        :if ([:len \$mac] = 0) do={ :set mac "" }
+
+        # Append to payload (newline separated)
+        # Format: user;mac;bin;bout;upt;comment
+        :set payload (\$payload . \$name . ";" . \$mac . ";" . \$bin . ";" . \$bout . ";" . \$upt . ";" . \$cmt . "\\n")
+        
+        :set count (\$count + 1)
+    }
 }
 
-# Call Laravel API
-/tool fetch url=($url . "&data=" . $result) http-method=get keep-result=no
-
-:log info "RADTik: Active hotspot users pushed to API"
+:if (\$count > 0) do={
+    :log info ("RADTik: Pushing stats for " . \$count . " users...")
+    
+    # Send via POST request
+    /tool fetch url=\$url http-header-field=\$authHeader http-method=post http-data=\$payload keep-result=no
+} else={
+    :log info "RADTik: No activated users to sync."
+}
 SCRIPT;
-
-        return str_replace(
-            ['__BASE_URL__', '__TOKEN__'],
-            [$baseUrl, $router->app_key],
-            $script
-        );
     }
 }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Router;
 use App\Models\Voucher;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class MikrotikApiController extends Controller
 {
@@ -102,34 +103,75 @@ class MikrotikApiController extends Controller
      */
     public function pushActiveUsers(Request $request)
     {
-        $request->validate([
-            'token' => 'required|string',
-            'data'  => 'required|array'
-        ]);
+        // 1. Authenticate Router (Check Header or Query)
+        $token = $request->bearerToken() ?? $request->query('token');
 
-        $router = Router::where('api_token', $request->token)->first();
+        // Note: Using 'app_key' to match your previous scripts
+        $router = Router::where('app_key', $token)->first();
+
         if (!$router) {
+            \Log::warning('Invalid token attempt in pushActiveUsers', ['token' => $token]);
+
             return response()->json(['error' => 'Invalid token'], 401);
         }
 
-        foreach ($request->data as $item) {
+        // 2. Get Raw Body Content (Since script sends raw text)
+        $content = $request->getContent();
 
-            $voucher = Voucher::where('username', $item['username'] ?? null)
+        if (empty($content)) {
+            return response()->json(['status' => 'no_data']);
+        }
+
+        // 3. Process Lines
+        $lines = explode("\n", $content);
+        $updatedCount = 0;
+
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if (empty($line)) continue;
+
+            // Parse CSV format: username;mac;bin;bout;uptime;comment
+            $parts = explode(';', $line);
+
+            // Safety check for column count
+            if (count($parts) < 6) continue;
+
+            [$username, $mac, $bytesIn, $bytesOut, $uptime, $comment] = $parts;
+
+            // 4. Find Voucher
+            $voucher = Voucher::where('username', $username)
                 ->where('router_id', $router->id)
                 ->first();
 
-            if (!$voucher) continue;
+            if ($voucher) {
+                $updateData = [
+                    'mac_address' => !empty($mac) ? $mac : $voucher->mac_address,
+                    'bytes_in'    => (int) $bytesIn,
+                    'bytes_out'   => (int) $bytesOut,
+                    'up_time'     => $uptime,
+                    'status'      => 'active', // Mark active as we received live stats
+                ];
 
-            // update db fields
-            $voucher->update([
-                'mac_address' => $item['mac']        ?? $voucher->mac_address,
-                'uptime'      => $item['uptime']     ?? null,
-                'download_mb' => isset($item['download']) ? round($item['download'] / 1024 / 1024, 2) : null,
-                'upload_mb'   => isset($item['upload']) ? round($item['upload'] / 1024 / 1024, 2) : null,
-            ]);
+                // 5. Parse Activation Date from Comment (if not already set)
+                // Logic: Looks for "Act: nov/30/2025..." in the comment string
+                if (is_null($voucher->activated_at) && preg_match('/Act:\s*([a-zA-Z0-9\/\s:]+)/', $comment, $matches)) {
+                    try {
+                        // MikroTik dates (e.g., nov/30/2025) are parseable by Carbon
+                        $updateData['activated_at'] = Carbon::parse($matches[1]);
+                    } catch (\Exception $e) {
+                        // Log error if date format is weird, but don't stop
+                    }
+                }
+
+                $voucher->update($updateData);
+                $updatedCount++;
+            }
         }
 
-        return response()->json(['status' => 'success']);
+        return response()->json([
+            'status' => 'success',
+            'processed' => $updatedCount
+        ]);
     }
 
 
@@ -173,36 +215,6 @@ class MikrotikApiController extends Controller
             'router_id' => $router->id,
             'count'     => $profilesJson->count(),
             'profiles'  => $profilesJson,
-        ]);
-    }
-
-
-    public function checkProfile(Request $request)
-    {
-        $token = $request->query('token');
-        $name  = $request->query('name');
-
-        if (! $token || ! $name) {
-            return response()->json([
-                'error' => 'Missing token or name',
-            ], 400);
-        }
-
-        $router = Router::where('app_key', $token)->first();
-
-        if (! $router) {
-            return response()->json([
-                'error' => 'Invalid token',
-            ], 401);
-        }
-
-        // Adjust relation / condition as needed
-        $exists = $router->profiles()
-            ->where('name', $name)
-            ->exists();
-
-        return response()->json([
-            'exists' => $exists,
         ]);
     }
 }
