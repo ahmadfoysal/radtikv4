@@ -47,7 +47,7 @@ Route::middleware(['auth'])->group(function () {
 /* Hotspot User sync */
 Route::get('/mikrotik/api/pull-inactive-users', [MikrotikApiController::class, 'pullInactiveUsers'])->name('mikrotik.pullInactiveUsers');
 Route::get('/mikrotik/pull-active-users', [MikrotikApiController::class, 'pullActiveUsers'])->name('mikrotik.pullActiveUsers');
-Route::post('/mikrotik/api/push-active-users', [MikrotikApiController::class, 'pushActiveUsers'])->name('mikrotik.pushActiveUsers');
+Route::post('/mikrotik/api/push-active-users', [MikrotikApiController::class, 'pushActiveUsers'])->name('mikrotik.pushActiveUsers')->withoutMiddleware([VerifyCsrfToken::class]);
 Route::get('/mikrotik/check-user', [MikrotikApiController::class, 'checkUser'])->name('mikrotik.checkUser');
 
 /* Hotspot profile sync */
