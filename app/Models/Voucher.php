@@ -25,6 +25,11 @@ class Voucher extends Model
         'batch',
     ];
 
+    protected $casts = [
+        'activated_at' => 'datetime',
+        'expires_at' => 'datetime',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);

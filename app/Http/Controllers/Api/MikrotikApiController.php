@@ -150,6 +150,11 @@ class MikrotikApiController extends Controller
 
         // 5. Iterate over fetched vouchers and update them
         foreach ($vouchers as $username => $voucher) {
+            // Add a check to prevent errors if username case mismatches
+            if (!isset($userData[$username])) {
+                continue;
+            }
+
             $data = $userData[$username];
             $updateData = [
                 'mac_address' => !empty($data['mac']) ? $data['mac'] : $voucher->mac_address,
@@ -171,6 +176,11 @@ class MikrotikApiController extends Controller
             }
 
             // 7. Calculate Expires At if not set
+            // Ensure activationTimestamp is a Carbon instance before using it.
+            if ($activationTimestamp && is_string($activationTimestamp)) {
+                $activationTimestamp = Carbon::parse($activationTimestamp);
+            }
+
             if (is_null($voucher->expires_at) && $activationTimestamp) {
                 $expiresAt = $this->calculateExpiryDate($voucher, $activationTimestamp);
                 if ($expiresAt) {
