@@ -110,6 +110,7 @@ class MikrotikApiController extends Controller
 
         if (!$router) {
             // Return 403 to prevent MikroTik "www-authenticate" header error
+            \Log::warning("MikroTik PushActiveUsers: Invalid token attempt.");
             return response()->json(['error' => 'Invalid token'], 403);
         }
 
@@ -117,6 +118,8 @@ class MikrotikApiController extends Controller
         $content = $request->getContent();
 
         if (empty($content)) {
+
+            \Log::info("MikroTik PushActiveUsers: No data received from router ID {$router->id}.");
             return response()->json(['status' => 'no_data']);
         }
 
@@ -154,7 +157,7 @@ class MikrotikApiController extends Controller
                     try {
                         $updateData['activated_at'] = Carbon::parse(trim($matches[1]));
                     } catch (\Exception $e) {
-                        // Ignore parse errors
+                        \Log::error("MikroTik PushActiveUsers: Failed to parse activation date for voucher ID {$voucher->id} - " . $e->getMessage());
                     }
                 }
 
