@@ -77,8 +77,7 @@
     </x-mary-table>
 
     {{-- Pagination --}}
-    <div class="mt-4">
-        {{ $vouchers->links() }}
-    </div>
+
+
 
 </x-mary-card>

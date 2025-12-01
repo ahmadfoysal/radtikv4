@@ -11,13 +11,6 @@
     {{-- === Content Area with Loading State === --}}
     <div class="relative">
 
-        {{-- Overlay Loading Spinner (Triggers on Type or Router change) --}}
-        <div wire:loading.flex wire:target="type, router_id"
-            class="absolute inset-0 bg-base-200/80 flex flex-col items-center justify-center z-20 rounded-xl backdrop-blur-sm">
-            <span class="loading loading-spinner loading-xl text-primary"></span>
-            <p class="mt-2 text-sm text-base-content/70">Syncing data...</p>
-        </div>
-
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
             {{-- Router Selection --}}

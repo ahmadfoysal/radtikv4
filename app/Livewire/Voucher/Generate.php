@@ -89,7 +89,8 @@ class Generate extends Component
         Voucher::insert($rows);
 
         $this->success('Vouchers generated successfully.');
-        $this->redirect(route('vouchers.index'));
+        //nevigat to route
+        $this->redirect(route('vouchers.index'), navigate: true);
     }
 
     protected function generateCodes(): array

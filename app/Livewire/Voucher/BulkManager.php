@@ -5,13 +5,12 @@ namespace App\Livewire\Voucher;
 use App\Models\Router;
 use App\Models\Voucher;
 use Livewire\Component;
-use Livewire\WithPagination;
 use Mary\Traits\Toast;
 use Illuminate\Database\Eloquent\Builder;
 
 class BulkManager extends Component
 {
-    use Toast, WithPagination;
+    use Toast;
 
     // Filters
     public $router_id;
@@ -25,26 +24,22 @@ class BulkManager extends Component
     public array $headers = [
         ['key' => 'username', 'label' => 'Username'],
         ['key' => 'password', 'label' => 'Password'],
-        ['key' => 'profile.name', 'label' => 'Profile', 'sortable' => false], // Assumes relationship
+        ['key' => 'profile.name', 'label' => 'Profile', 'sortable' => false],
         ['key' => 'batch', 'label' => 'Batch'],
         ['key' => 'status', 'label' => 'Status'],
     ];
 
     public function mount()
     {
-        // Initial load logic if needed
+        // No initial load needed, waiting for router selection
     }
 
-    // Reset pagination when filters update
     public function updated($prop)
     {
-        if (in_array($prop, ['router_id', 'batch', 'status'])) {
-            $this->resetPage();
-        }
-
+        // Load batches when router selected
         if ($prop === 'router_id') {
+            $this->batch = null; // Reset batch selection
             $this->loadBatches();
-            $this->batch = null;
         }
     }
 
@@ -55,10 +50,13 @@ class BulkManager extends Component
             return;
         }
 
+        // Fix for SQL Error 3065:
+        // To sort distinct batches by creation time, we group by batch
+        // and order by the MAX created_at of that group.
         $this->batches = Voucher::where('router_id', $this->router_id)
             ->select('batch')
-            ->distinct()
-            ->orderBy('created_at', 'desc')
+            ->groupBy('batch')
+            ->orderByRaw('MAX(created_at) DESC')
             ->limit(50)
             ->pluck('batch')
             ->map(fn($b) => ['id' => $b, 'name' => $b])
@@ -66,11 +64,16 @@ class BulkManager extends Component
     }
 
     // Central query logic
-    public function getQuery(): Builder
+    public function getQuery(): ?Builder
     {
+        // Requirement: Return nothing if router is not selected
+        if (!$this->router_id) {
+            return null;
+        }
+
         return Voucher::query()
-            ->with('profile') // Eager load profile
-            ->when($this->router_id, fn($q) => $q->where('router_id', $this->router_id))
+            ->with('profile')
+            ->where('router_id', $this->router_id) // Router is mandatory
             ->when($this->batch, fn($q) => $q->where('batch', $this->batch))
             ->when($this->status !== 'all', fn($q) => $q->where('status', $this->status))
             ->orderBy('id', 'desc');
@@ -78,7 +81,13 @@ class BulkManager extends Component
 
     public function delete()
     {
-        $count = $this->getQuery()->count();
+        $query = $this->getQuery();
+
+        if (!$query) {
+            return;
+        }
+
+        $count = $query->count();
 
         if ($count === 0) {
             $this->error('No vouchers found to delete.');
@@ -86,28 +95,25 @@ class BulkManager extends Component
         }
 
         // Bulk delete logic
-        $this->getQuery()->chunkById(1000, function ($vouchers) {
+        $query->chunkById(1000, function ($vouchers) {
             Voucher::whereIn('id', $vouchers->pluck('id'))->delete();
         });
 
         $this->success("{$count} Vouchers deleted successfully.");
 
-        // Reset specific filters safely
+        // Reset filters safely
         $this->reset(['batch', 'status']);
-        $this->resetPage();
     }
 
     public function print()
     {
-        $count = $this->getQuery()->count();
+        $query = $this->getQuery();
 
-        if ($count === 0) {
+        if (!$query || $query->count() === 0) {
             $this->error('No vouchers to print.');
             return;
         }
 
-        // Redirect to print controller. 
-        // Template will be fetched from Router model in the Controller.
         return redirect()->route('vouchers.print', [
             'router_id' => $this->router_id,
             'batch' => $this->batch,
@@ -117,10 +123,13 @@ class BulkManager extends Component
 
     public function render()
     {
+        $query = $this->getQuery();
+
         return view('livewire.voucher.bulk-manager', [
             'routers' => Router::orderBy('name')->get(['id', 'name']),
-            'vouchers' => $this->getQuery()->paginate(10), // Pagination for the table
-            'total_count' => $this->getQuery()->count(),   // Total found
+            // Use get() instead of paginate() to show all records
+            'vouchers' => $query ? $query->get() : [],
+            'total_count' => $query ? $query->count() : 0,
         ]);
     }
 }

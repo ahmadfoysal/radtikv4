@@ -28,7 +28,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/voucher/add', App\Livewire\Voucher\Create::class)->name('vouchers.create');
     Route::get('/voucher/{voucher}/edit', App\Livewire\Voucher\Edit::class)->name('vouchers.edit');
     Route::get('/vouchers/generate', App\Livewire\Voucher\Generate::class)->name('vouchers.generate');
-    Route::get('/vouchers/print', App\Livewire\Voucher\BulkManager::class)->name('vouchers.print');
+    Route::get('/vouchers/bulk-manager', App\Livewire\Voucher\BulkManager::class)->name('vouchers.print');
 
 
     /* User Profile list */

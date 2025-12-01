@@ -28,8 +28,8 @@
             <x-mary-menu-item title="Voucher List" icon="o-rectangle-stack" link="/vouchers" />
             <x-mary-menu-item title="Generate Voucher" icon="o-plus" link="/vouchers/generate" />
             <x-mary-menu-item title="Voucher Templates" icon="o-document-text" link="/vouchers/templates" />
-            <x-mary-menu-item title="Print Vouchers" icon="o-printer" link="/voucher/bulk-manager" />
-            <x-mary-menu-item title="Bulk Delete" icon="o-trash" link="/voucher/bulk-manager" />
+            <x-mary-menu-item title="Print Vouchers" icon="o-printer" link="/vouchers/bulk-manager" />
+            <x-mary-menu-item title="Bulk Delete" icon="o-trash" link="/vouchers/bulk-manager" />
 
         </x-mary-menu-sub>
 
