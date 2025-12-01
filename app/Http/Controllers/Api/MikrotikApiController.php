@@ -103,24 +103,24 @@ class MikrotikApiController extends Controller
      */
     public function pushActiveUsers(Request $request)
     {
-        // 1. Authenticate Router
-        $token = $request->bearerToken() ?? $request->query('token');
+        // 1. Authenticate via URL Query Token
+        $token = $request->query('token');
 
         $router = Router::where('app_key', $token)->first();
 
         if (!$router) {
-            \Log::warning('Invalid token in pushActiveUsers', ['token' => $token]);
-            return response()->json(['error' => 'Invalid token'], 401);
+            // Return 403 to prevent MikroTik "www-authenticate" header error
+            return response()->json(['error' => 'Invalid token'], 403);
         }
 
-        // 2. Get Raw Body Content
+        // 2. Get Raw Text Body
         $content = $request->getContent();
 
         if (empty($content)) {
             return response()->json(['status' => 'no_data']);
         }
 
-        // 3. Process Lines
+        // 3. Process Data
         $lines = explode("\n", $content);
         $updatedCount = 0;
 
@@ -128,15 +128,13 @@ class MikrotikApiController extends Controller
             $line = trim($line);
             if (empty($line)) continue;
 
-            // Parse CSV format: username;mac;bin;bout;uptime;comment
+            // Format: username;mac;bin;bout;uptime;comment
             $parts = explode(';', $line);
 
-            // Safety check for column count
             if (count($parts) < 6) continue;
 
             [$username, $mac, $bytesIn, $bytesOut, $uptime, $comment] = $parts;
 
-            // 4. Find Voucher
             $voucher = Voucher::where('username', $username)
                 ->where('router_id', $router->id)
                 ->first();
@@ -151,16 +149,12 @@ class MikrotikApiController extends Controller
                     'updated_at'  => now(),
                 ];
 
-                // 5. Parse Activation Date from Comment (only if not already set)
-                // Regex captures text after "Act:" until the next "|" or end of string
+                // Parse Activation Date from Comment if not set
                 if (is_null($voucher->activated_at) && preg_match('/Act:\s*([^|]+)/i', $comment, $matches)) {
                     try {
-                        $dateStr = trim($matches[1]);
-                        // Carbon smart parsing handles '2025-12-01' and 'dec/01/2025'
-                        $updateData['activated_at'] = Carbon::parse($dateStr);
+                        $updateData['activated_at'] = Carbon::parse(trim($matches[1]));
                     } catch (\Exception $e) {
-                        // Log error if format is unrecognizable
-                        \Log::error("Date parse error for user {$username}: " . $e->getMessage());
+                        // Ignore parse errors
                     }
                 }
 
