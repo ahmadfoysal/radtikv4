@@ -103,19 +103,17 @@ class MikrotikApiController extends Controller
      */
     public function pushActiveUsers(Request $request)
     {
-        // 1. Authenticate Router (Check Header or Query)
+        // 1. Authenticate Router
         $token = $request->bearerToken() ?? $request->query('token');
 
-        // Note: Using 'app_key' to match your previous scripts
         $router = Router::where('app_key', $token)->first();
 
         if (!$router) {
-            \Log::warning('Invalid token attempt in pushActiveUsers', ['token' => $token]);
-
+            \Log::warning('Invalid token in pushActiveUsers', ['token' => $token]);
             return response()->json(['error' => 'Invalid token'], 401);
         }
 
-        // 2. Get Raw Body Content (Since script sends raw text)
+        // 2. Get Raw Body Content
         $content = $request->getContent();
 
         if (empty($content)) {
@@ -149,17 +147,20 @@ class MikrotikApiController extends Controller
                     'bytes_in'    => (int) $bytesIn,
                     'bytes_out'   => (int) $bytesOut,
                     'up_time'     => $uptime,
-                    'status'      => 'active', // Mark active as we received live stats
+                    'status'      => 'active',
+                    'updated_at'  => now(),
                 ];
 
-                // 5. Parse Activation Date from Comment (if not already set)
-                // Logic: Looks for "Act: nov/30/2025..." in the comment string
-                if (is_null($voucher->activated_at) && preg_match('/Act:\s*([a-zA-Z0-9\/\s:]+)/', $comment, $matches)) {
+                // 5. Parse Activation Date from Comment (only if not already set)
+                // Regex captures text after "Act:" until the next "|" or end of string
+                if (is_null($voucher->activated_at) && preg_match('/Act:\s*([^|]+)/i', $comment, $matches)) {
                     try {
-                        // MikroTik dates (e.g., nov/30/2025) are parseable by Carbon
-                        $updateData['activated_at'] = Carbon::parse($matches[1]);
+                        $dateStr = trim($matches[1]);
+                        // Carbon smart parsing handles '2025-12-01' and 'dec/01/2025'
+                        $updateData['activated_at'] = Carbon::parse($dateStr);
                     } catch (\Exception $e) {
-                        // Log error if date format is weird, but don't stop
+                        // Log error if format is unrecognizable
+                        \Log::error("Date parse error for user {$username}: " . $e->getMessage());
                     }
                 }
 
