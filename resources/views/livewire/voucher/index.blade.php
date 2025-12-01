@@ -66,10 +66,6 @@
                 @php
                     $badge = $statusColor($v->status);
                     $iconC = $channelColor($v->is_radius);
-
-                    $profileLabel = $v->is_radius
-                        ? $v->radiusProfile->name ?? 'RADIUS Profile'
-                        : $v->router_profile ?? 'MikroTik Profile';
                 @endphp
 
                 <div class="bg-base-200 rounded-2xl p-4 shadow-sm hover:shadow-md">
@@ -101,7 +97,7 @@
                         {{-- Profile --}}
                         <div class="flex items-center gap-1">
                             <span class="opacity-60">Profile:</span>
-                            <span class="font-medium">{{ $profileLabel }}</span>
+                            <span class="font-medium">{{ $v->profile->name }}</span>
                         </div>
 
                         {{-- Expiry --}}
@@ -126,12 +122,25 @@
                             @endif
                         </div>
 
+                        {{-- Data Usage (Download / Upload) --}}
+                        @if ($v->bytes_out > 0 || $v->bytes_in > 0)
+                            <div class="flex items-center gap-1">
+                                <span class="opacity-60">Data:</span>
+                                <div class="flex items-center gap-0.5" title="Download / Upload">
+                                    <x-mary-icon name="o-arrow-down" class="w-3 h-3 text-success" />
+                                    <span
+                                        class="font-medium">{{ \Illuminate\Support\Number::fileSize($v->bytes_out ?? 0) }}</span>
+                                    <span class="opacity-40 px-1">/</span>
+                                    <x-mary-icon name="o-arrow-up" class="w-3 h-3 text-warning" />
+                                    <span
+                                        class="font-medium">{{ \Illuminate\Support\Number::fileSize($v->bytes_in ?? 0) }}</span>
+                                </div>
+                            </div>
+                        @endif
+
                     </div>
 
-
-
                     <div class="mt-3 flex items-center justify-end gap-1.5">
-
                         {{-- Copy --}}
                         <div class="tooltip" data-tip="Copy username">
                             <button class="btn btn-ghost btn-xs !px-2"
@@ -154,7 +163,6 @@
                         <x-mary-button icon="o-trash" class="btn-ghost btn-xs !px-2 text-error"
                             wire:click="delete({{ $v->id }})" spinner="delete({{ $v->id }})"
                             onclick="return confirm('Delete voucher {{ $v->username }}?')" />
-
                     </div>
                 </div>
 
