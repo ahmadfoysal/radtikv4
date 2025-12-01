@@ -110,60 +110,76 @@ class MikrotikApiController extends Controller
 
         if (!$router) {
             // Return 403 to prevent MikroTik "www-authenticate" header error
-            \Log::warning("MikroTik PushActiveUsers: Invalid token attempt.");
             return response()->json(['error' => 'Invalid token'], 403);
         }
 
-        // 2. Get Raw Text Body
         $content = $request->getContent();
-
         if (empty($content)) {
-
-            \Log::info("MikroTik PushActiveUsers: No data received from router ID {$router->id}.");
             return response()->json(['status' => 'no_data']);
         }
 
-        // 3. Process Data
         $lines = explode("\n", $content);
-        $updatedCount = 0;
+        $userData = [];
+        $usernames = [];
 
+        // 3. Pre-process all lines from the request
         foreach ($lines as $line) {
             $line = trim($line);
             if (empty($line)) continue;
 
-            // Format: username;mac;bin;bout;uptime;comment
             $parts = explode(';', $line);
-
             if (count($parts) < 6) continue;
 
             [$username, $mac, $bytesIn, $bytesOut, $uptime, $comment] = $parts;
+            $usernames[] = $username;
+            $userData[$username] = compact('mac', 'bytesIn', 'bytesOut', 'uptime', 'comment');
+        }
 
-            $voucher = Voucher::where('username', $username)
-                ->where('router_id', $router->id)
-                ->first();
+        if (empty($usernames)) {
+            return response()->json(['status' => 'no_valid_data_found']);
+        }
 
-            if ($voucher) {
-                $updateData = [
-                    'mac_address' => !empty($mac) ? $mac : $voucher->mac_address,
-                    'bytes_in'    => (int) $bytesIn,
-                    'bytes_out'   => (int) $bytesOut,
-                    'up_time'     => $uptime,
-                    'status'      => 'active',
-                    'updated_at'  => now(),
-                ];
+        // 4. Fetch all relevant vouchers in a single query
+        $vouchers = Voucher::with('profile')
+            ->where('router_id', $router->id)
+            ->whereIn('username', $usernames)
+            ->get()
+            ->keyBy('username');
 
-                // Parse Activation Date from Comment if not set
-                if (is_null($voucher->activated_at) && preg_match('/Act:\s*([^|]+)/i', $comment, $matches)) {
-                    try {
-                        $updateData['activated_at'] = Carbon::parse(trim($matches[1]));
-                    } catch (\Exception $e) {
-                        \Log::error("MikroTik PushActiveUsers: Failed to parse activation date for voucher ID {$voucher->id} - " . $e->getMessage());
-                    }
+        $updatedCount = 0;
+
+        // 5. Iterate over fetched vouchers and update them
+        foreach ($vouchers as $username => $voucher) {
+            $data = $userData[$username];
+            $updateData = [
+                'mac_address' => !empty($data['mac']) ? $data['mac'] : $voucher->mac_address,
+                'bytes_in'    => (int) $data['bytesIn'],
+                'bytes_out'   => (int) $data['bytesOut'],
+                'up_time'     => $data['uptime'],
+                'status'      => 'active',
+                'updated_at'  => now(),
+            ];
+
+            $activationTimestamp = $voucher->activated_at;
+
+            // 6. Parse Activation Date from Comment if not set in DB
+            if (is_null($activationTimestamp)) {
+                $activationTimestamp = $this->parseActivationTimestamp($data['comment'], $voucher->id);
+                if ($activationTimestamp) {
+                    $updateData['activated_at'] = $activationTimestamp;
                 }
-
-                $voucher->update($updateData);
-                $updatedCount++;
             }
+
+            // 7. Calculate Expires At if not set
+            if (is_null($voucher->expires_at) && $activationTimestamp) {
+                $expiresAt = $this->calculateExpiryDate($voucher, $activationTimestamp);
+                if ($expiresAt) {
+                    $updateData['expires_at'] = $expiresAt;
+                }
+            }
+
+            $voucher->update($updateData);
+            $updatedCount++;
         }
 
         return response()->json([
@@ -172,6 +188,56 @@ class MikrotikApiController extends Controller
         ]);
     }
 
+    /**
+     * Parse activation timestamp from a comment string.
+     */
+    private function parseActivationTimestamp(string $comment, int $voucherId): ?Carbon
+    {
+        if (preg_match('/Act:\s*([^|]+)/i', $comment, $matches)) {
+            $dateStr = trim($matches[1]);
+            try {
+                // MikroTik format "M/d/Y H:i:s" is tricky with Carbon::parse.
+                // createFromFormat is more reliable for non-standard formats.
+                return str_contains($dateStr, '/')
+                    ? Carbon::createFromFormat('M/d/Y H:i:s', $dateStr, config('app.timezone'))
+                    : Carbon::parse($dateStr);
+            } catch (\Exception $e) {
+                \Log::error("MikroTik PushActiveUsers: Failed to parse date '{$dateStr}' for voucher {$voucherId}", ['exception' => $e->getMessage()]);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Calculate the expiry date based on profile validity.
+     */
+    private function calculateExpiryDate(Voucher $voucher, Carbon $activationTimestamp): ?Carbon
+    {
+        if (!$voucher->profile || !$voucher->profile->validity) {
+            return null;
+        }
+
+        try {
+            $validity = strtolower(trim($voucher->profile->validity));
+            $expiresAt = $activationTimestamp->copy(); // Use copy to avoid mutating the original
+            $amount = (int) $validity;
+
+            if ($amount <= 0) return null;
+
+            if (str_contains($validity, 'h')) {
+                return $expiresAt->addHours($amount);
+            }
+            if (str_contains($validity, 'm') && !str_contains($validity, 'mo')) {
+                return $expiresAt->addMinutes($amount);
+            }
+            // Default to days (covers 'd', 'days', or just number)
+            return $expiresAt->addDays($amount);
+        } catch (\Exception $e) {
+            \Log::warning("Could not calculate expiry for voucher {$voucher->id}", ['validity' => $voucher->profile->validity, 'exception' => $e->getMessage()]);
+        }
+
+        return null;
+    }
 
     public function pullProfiles(Request $request)
     {
