@@ -29,7 +29,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/voucher/{voucher}/edit', App\Livewire\Voucher\Edit::class)->name('vouchers.edit');
     Route::get('/vouchers/generate', App\Livewire\Voucher\Generate::class)->name('vouchers.generate');
 
-    Route::get('/voucher/bulk-manager', BulkManager::class)->name('vouchers.bulkmanager');
+    //  Route::get('/voucher/bulk-manager', BulkManager::class)->name('vouchers.bulkmanager');
 
 
     /* User Profile list */
