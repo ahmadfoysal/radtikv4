@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\MikrotikApiController;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use App\livewire\Voucher\BulkManager;
 
 // All routes below require login
 Route::middleware(['auth'])->group(function () {
@@ -27,7 +28,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/voucher/add', App\Livewire\Voucher\Create::class)->name('vouchers.create');
     Route::get('/voucher/{voucher}/edit', App\Livewire\Voucher\Edit::class)->name('vouchers.edit');
     Route::get('/vouchers/generate', App\Livewire\Voucher\Generate::class)->name('vouchers.generate');
-    Route::get('/voucher/bulk-manager', App\Livewire\Voucher\BulkManager::class)->name('vouchers.bulkmanger');
+
+    Route::get('/voucher/bulk-manager', BulkManager::class)->name('vouchers.bulkmanager');
+
 
     /* User Profile list */
     Route::get('/profiles', App\Livewire\Profile\Index::class)->name('profiles');
