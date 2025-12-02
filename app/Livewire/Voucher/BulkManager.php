@@ -15,7 +15,9 @@ class BulkManager extends Component
     // Filters
     public $router_id;
     public $batch;
-    public $status = 'inactive';
+
+    // CHANGE: Default status 'all' ensures vouchers show up immediately after router selection
+    public $status = 'all';
 
     // Options for Selects
     public $batches = [];
@@ -103,8 +105,9 @@ class BulkManager extends Component
 
             $this->success("{$count} Vouchers deleted successfully.");
 
-            // Reset filters after bulk delete
+            // Reset filters after bulk delete (Keep router_id selected)
             $this->reset(['batch', 'status']);
+            $this->status = 'all'; // Reset status to all
         }
     }
 
