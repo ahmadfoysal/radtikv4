@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             PermissionSeed::class,
             UserSeed::class,
+            VoucherTemplateSeeder::class,
         ]);
     }
 }

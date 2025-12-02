@@ -26,6 +26,8 @@ return new class extends Migration
             $table->foreignId('radius_id')->nullable()->constrained('radius_servers')->nullOnDelete();
             $table->string('app_key')->nullable();
             $table->decimal('monthly_expense', 8, 2)->default(0);
+            $table->string('logo')->nullable();
+            $table->foreignId('voucher_template_id')->nullable()->constrained('voucher_templates')->nullOnDelete();
             $table->timestamps();
         });
     }

@@ -46,4 +46,9 @@ class Router extends Model
     {
         return $this->hasMany(Voucher::class);
     }
+
+    public function voucherTemplate()
+    {
+        return $this->belongsTo(VoucherTemplate::class);
+    }
 }
