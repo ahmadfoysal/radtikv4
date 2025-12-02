@@ -31,14 +31,14 @@ class BulkManager extends Component
 
     public function mount()
     {
-        // No initial load needed, waiting for router selection
+        // No initial load needed
     }
 
     public function updated($prop)
     {
         // Load batches when router selected
         if ($prop === 'router_id') {
-            $this->batch = null; // Reset batch selection
+            $this->batch = null;
             $this->loadBatches();
         }
     }
@@ -50,9 +50,8 @@ class BulkManager extends Component
             return;
         }
 
-        // Fix for SQL Error 3065:
-        // To sort distinct batches by creation time, we group by batch
-        // and order by the MAX created_at of that group.
+        // Fix for SQL Strict Mode (Error 3065):
+        // Group by batch and order by the latest created_at within that group
         $this->batches = Voucher::where('router_id', $this->router_id)
             ->select('batch')
             ->groupBy('batch')
@@ -66,43 +65,47 @@ class BulkManager extends Component
     // Central query logic
     public function getQuery(): ?Builder
     {
-        // Requirement: Return nothing if router is not selected
         if (!$this->router_id) {
             return null;
         }
 
         return Voucher::query()
             ->with('profile')
-            ->where('router_id', $this->router_id) // Router is mandatory
+            ->where('router_id', $this->router_id)
             ->when($this->batch, fn($q) => $q->where('batch', $this->batch))
             ->when($this->status !== 'all', fn($q) => $q->where('status', $this->status))
             ->orderBy('id', 'desc');
     }
 
-    public function delete()
+    // Handles both Bulk Delete (no arg) and Single Delete (id arg)
+    public function delete($id = null)
     {
-        $query = $this->getQuery();
+        if ($id) {
+            // Single Delete
+            Voucher::where('id', $id)->delete();
+            $this->success("Voucher deleted successfully.");
+        } else {
+            // Bulk Delete
+            $query = $this->getQuery();
 
-        if (!$query) {
-            return;
+            if (!$query) return;
+
+            $count = $query->count();
+
+            if ($count === 0) {
+                $this->error('No vouchers found to delete.');
+                return;
+            }
+
+            $query->chunkById(1000, function ($vouchers) {
+                Voucher::whereIn('id', $vouchers->pluck('id'))->delete();
+            });
+
+            $this->success("{$count} Vouchers deleted successfully.");
+
+            // Reset filters after bulk delete
+            $this->reset(['batch', 'status']);
         }
-
-        $count = $query->count();
-
-        if ($count === 0) {
-            $this->error('No vouchers found to delete.');
-            return;
-        }
-
-        // Bulk delete logic
-        $query->chunkById(1000, function ($vouchers) {
-            Voucher::whereIn('id', $vouchers->pluck('id'))->delete();
-        });
-
-        $this->success("{$count} Vouchers deleted successfully.");
-
-        // Reset filters safely
-        $this->reset(['batch', 'status']);
     }
 
     public function print()
@@ -127,7 +130,6 @@ class BulkManager extends Component
 
         return view('livewire.voucher.bulk-manager', [
             'routers' => Router::orderBy('name')->get(['id', 'name']),
-            // Use get() instead of paginate() to show all records
             'vouchers' => $query ? $query->get() : [],
             'total_count' => $query ? $query->count() : 0,
         ]);

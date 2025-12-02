@@ -6,8 +6,9 @@
         <x-mary-select label="Select Router" icon="o-server" wire:model.live="router_id" :options="$routers"
             option-label="name" option-value="id" placeholder="Filter by Router" />
 
+        {{-- Added :key to force re-render when router changes --}}
         <x-mary-select label="Select Batch" icon="o-archive-box" wire:model.live="batch" :options="$batches"
-            option-label="name" option-value="id" placeholder="All Batches" :disabled="empty($batches)" />
+            option-label="name" option-value="id" placeholder="All Batches" :disabled="empty($batches)" :key="'batch-select-' . $router_id" />
 
         <x-mary-select label="Status" icon="o-funnel" wire:model.live="status" :options="[
             ['id' => 'inactive', 'name' => 'Inactive (Unused)'],
@@ -43,41 +44,47 @@
         </div>
     </div>
 
-    {{-- === LIVE TABLE === --}}
-    <x-mary-table :headers="$headers" :rows="$vouchers" striped>
+    {{-- === LIVE TABLE WITH LOADING OVERLAY === --}}
+    <div class="relative min-h-[200px]">
 
-        {{-- Custom Status Badge --}}
-        @scope('cell_status', $voucher)
-            <span
-                class="badge badge-sm font-semibold {{ $voucher->status == 'active' ? 'badge-success' : ($voucher->status == 'inactive' ? 'badge-neutral' : 'badge-error') }}">
-                {{ ucfirst($voucher->status) }}
-            </span>
-        @endscope
+        {{-- Loading Overlay --}}
+        <div wire:loading.flex wire:target="router_id, batch, status"
+            class="absolute inset-0 z-10 bg-base-100/60  flex flex-col items-center justify-center rounded-lg">
+            <span class="loading loading-spinner loading-lg text-primary"></span>
+            <div class="text-sm font-medium mt-2 opacity-70">Loading Data...</div>
+        </div>
 
-        {{-- Custom Profile Name (Safe Check) --}}
-        @scope('cell_profile.name', $voucher)
-            <span class="font-medium text-xs opacity-80">
-                {{ $voucher->profile->name ?? '-' }}
-            </span>
-        @endscope
+        <x-mary-table :headers="$headers" :rows="$vouchers" striped>
 
-        {{-- Batch Badge --}}
-        @scope('cell_batch', $voucher)
-            <span class="badge badge-ghost badge-sm text-xs">
-                {{ $voucher->batch }}
-            </span>
-        @endscope
+            {{-- Custom Status Badge --}}
+            @scope('cell_status', $voucher)
+                <span
+                    class="badge badge-sm font-semibold {{ $voucher->status == 'active' ? 'badge-success' : ($voucher->status == 'inactive' ? 'badge-neutral' : 'badge-error') }}">
+                    {{ ucfirst($voucher->status) }}
+                </span>
+            @endscope
 
-        {{-- Actions per row (Optional single delete) --}}
-        @scope('actions', $voucher)
-            <x-mary-button icon="o-trash" wire:click="delete({{ $voucher->id }})" spinner
-                class="btn-xs btn-ghost text-error" />
-        @endscope
+            {{-- Custom Profile Name (Safe Check) --}}
+            @scope('cell_profile.name', $voucher)
+                <span class="font-medium text-xs opacity-80">
+                    {{ $voucher->profile->name ?? '-' }}
+                </span>
+            @endscope
 
-    </x-mary-table>
+            {{-- Batch Badge --}}
+            @scope('cell_batch', $voucher)
+                <span class="badge badge-ghost badge-sm text-xs">
+                    {{ $voucher->batch }}
+                </span>
+            @endscope
 
-    {{-- Pagination --}}
+            {{-- Actions per row --}}
+            @scope('actions', $voucher)
+                <x-mary-button icon="o-trash" wire:click="delete({{ $voucher->id }})" spinner
+                    class="btn-xs btn-ghost text-error" />
+            @endscope
 
-
+        </x-mary-table>
+    </div>
 
 </x-mary-card>
