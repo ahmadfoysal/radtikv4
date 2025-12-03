@@ -129,6 +129,25 @@ class BulkManager extends Component
         $this->js("window.open('$url', '_blank');");
     }
 
+    public function printVoucher(int $voucherId): void
+    {
+        if (!$this->router_id) {
+            $this->error('Select a router first.');
+            return;
+        }
+
+        $voucher = Voucher::where('router_id', $this->router_id)->find($voucherId);
+
+        if (!$voucher) {
+            $this->error('Voucher not found for the selected router.');
+            return;
+        }
+
+        $url = route('vouchers.print.single', ['voucher' => $voucherId]);
+
+        $this->js("window.open('$url', '_blank');");
+    }
+
 
     public function render()
     {

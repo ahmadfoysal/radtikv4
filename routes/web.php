@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\MikrotikApiController;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use App\Http\Controllers\Voucher\VoucherPrintController;
+use App\Http\Controllers\Voucher\SingleVoucherPrintController;
 
 
 
@@ -35,6 +36,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/vouchers/generate', App\Livewire\Voucher\Generate::class)->name('vouchers.generate');
     Route::get('/vouchers/bulk-manager', App\Livewire\Voucher\BulkManager::class)->name('vouchers.bulk-manager');
     Route::get('/vouchers/print', VoucherPrintController::class)->name('vouchers.print');
+    Route::get('/vouchers/{voucher}/print-single', SingleVoucherPrintController::class)->name('vouchers.print.single');
 
 
 

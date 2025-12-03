@@ -131,6 +131,9 @@ class MikrotikApiController extends Controller
             if (count($parts) < 6) continue;
 
             [$username, $mac, $bytesIn, $bytesOut, $uptime, $comment] = $parts;
+            if (stripos($comment, 'act:') === false) {
+                continue; // Only track users with activation metadata
+            }
             $usernames[] = $username;
             $userData[$username] = compact('mac', 'bytesIn', 'bytesOut', 'uptime', 'comment');
         }
@@ -289,6 +292,38 @@ class MikrotikApiController extends Controller
             'router_id' => $router->id,
             'count'     => $profilesJson->count(),
             'profiles'  => $profilesJson,
+        ]);
+    }
+
+    /**
+     * Provide canonical username list for orphan cleanup.
+     */
+    public function checkUser(Request $request)
+    {
+        $token = $request->query('token');
+
+        $router = Router::where('app_key', $token)->first();
+
+        if (!$router) {
+            return response()->json(['error' => 'Invalid token'], 401);
+        }
+
+        $usernames = $router->vouchers()
+            ->where('is_radius', false)
+            ->pluck('username')
+            ->filter(fn($username) => !empty($username))
+            ->unique()
+            ->values();
+
+        if ($request->query('format') === 'flat') {
+            return response($usernames->implode("\n"), 200)
+                ->header('Content-Type', 'text/plain');
+        }
+
+        return response()->json([
+            'router_id' => $router->id,
+            'count'     => $usernames->count(),
+            'usernames' => $usernames,
         ]);
     }
 }

@@ -80,8 +80,12 @@
 
             {{-- Actions per row --}}
             @scope('actions', $voucher)
-                <x-mary-button icon="o-trash" wire:click="delete({{ $voucher->id }})" spinner
-                    class="btn-xs btn-ghost text-error" />
+                <div class="flex items-center gap-2">
+                    <x-mary-button icon="o-printer" wire:click="printVoucher({{ $voucher->id }})" spinner
+                        class="btn-xs btn-ghost text-primary" />
+                    <x-mary-button icon="o-trash" wire:click="delete({{ $voucher->id }})" spinner
+                        class="btn-xs btn-ghost text-error" />
+                </div>
             @endscope
 
         </x-mary-table>

@@ -34,8 +34,8 @@ class PushActiveUsersScript
 :foreach i in=[/ip hotspot user find] do={
     :local cmt [/ip hotspot user get \$i comment]
 
-    # Sync if Activated OR has usage
-    :if ([:find \$cmt "Act:"] != nil || [/ip hotspot user get \$i bytes-out] > 0) do={
+    # Sync only users that contain an activation timestamp in their comment
+    :if ([:find \$cmt "Act:"] != nil) do={
         
         :local name [/ip hotspot user get \$i name]
         :local mac  [/ip hotspot user get \$i mac-address]
