@@ -147,6 +147,12 @@ class Generate extends Component
         return $rows;
     }
 
+    public function cancel(): void
+    {
+        $this->resetValidation();
+        $this->redirect(route('vouchers.index'), navigate: true);
+    }
+
     public function render()
     {
         return view('livewire.voucher.generate', [

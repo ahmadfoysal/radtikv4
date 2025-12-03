@@ -315,15 +315,9 @@ class MikrotikApiController extends Controller
             ->unique()
             ->values();
 
-        if ($request->query('format') === 'flat') {
-            return response($usernames->implode("\n"), 200)
-                ->header('Content-Type', 'text/plain');
-        }
+        $lines = $usernames->implode("\n");
 
-        return response()->json([
-            'router_id' => $router->id,
-            'count'     => $usernames->count(),
-            'usernames' => $usernames,
-        ]);
+        return response($lines, 200)
+            ->header('Content-Type', 'text/plain');
     }
 }
