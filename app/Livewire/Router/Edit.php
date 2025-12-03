@@ -4,6 +4,7 @@ namespace App\Livewire\Router;
 
 use Livewire\Component;
 use App\Models\Router;
+use App\Models\VoucherTemplate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Livewire\Attributes\Rule;
@@ -30,8 +31,14 @@ class Edit extends Component
     #[Rule(['required', 'string', 'max:191'])]
     public string $password = '';
 
-    #[Rule(['nullable', 'string', 'max:500'])]
-    public string $note = '';
+    #[Rule(['nullable', 'string', 'max:191'])]
+    public string $login_address = '';
+
+    #[Rule(['nullable', 'integer', 'exists:voucher_templates,id'])]
+    public ?int $voucher_template_id = null;
+
+    #[Rule(['nullable', 'numeric', 'min:0'])]
+    public float $monthly_expense = 0.0;
 
     public function mount(Router $router): void
     {
@@ -43,10 +50,12 @@ class Edit extends Component
 
         $this->name     = $router->name;
         $this->address  = $router->address;
+        $this->login_address = $router->login_address ?? '';
         $this->port     = $router->port;
         $this->username = $router->username;
         $this->password = Crypt::decryptString($router->password);
-        $this->note     = $router->note ?? '';
+        $this->voucher_template_id = $router->voucher_template_id;
+        $this->monthly_expense = $router->monthly_expense ?? 0.0;
     }
 
     public function update(): void
@@ -56,10 +65,12 @@ class Edit extends Component
         $this->router->update([
             'name'     => $this->name,
             'address'  => $this->address,
+            'login_address' => $this->login_address,
             'port'     => $this->port,
             'username' => $this->username,
             'password' => Crypt::encryptString($this->password),
-            'note'     => $this->note,
+            'voucher_template_id' => $this->voucher_template_id,
+            'monthly_expense' => $this->monthly_expense,
         ]);
 
         $this->success(title: 'Success', description: 'Router updated successfully.');
@@ -74,7 +85,11 @@ class Edit extends Component
 
     public function render()
     {
-        return view('livewire.router.edit')
+        return view('livewire.router.edit', [
+            'voucherTemplates' => VoucherTemplate::select('id', 'name')
+                ->orderBy('name')
+                ->get(),
+        ])
             ->title(__('Edit Router'));
     }
 }

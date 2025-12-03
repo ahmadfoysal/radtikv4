@@ -11,24 +11,32 @@
                 <x-mary-input label="IP / Host" wire:model.live.debounce.500ms="address"
                     placeholder="192.168.0.1 or router.example.com" />
             </div>
-
             <div>
                 <x-mary-input label="API Port" type="number" min="1" max="65535"
                     wire:model.live.debounce.500ms="port" />
             </div>
-
+            <div>
+                <x-mary-input label="Login Address" wire:model.live.debounce.500ms="login_address"
+                    placeholder="http://router.local or 10.0.0.1" />
+            </div>
             <div>
                 <x-mary-input label="Username" wire:model.live.debounce.500ms="username" />
             </div>
 
-            <div class="md:col-span-2">
+            <div>
                 <x-mary-password label="Password" type="password" wire:model.live.debounce.500ms="password" right />
             </div>
 
-            <div class="md:col-span-2">
-                <x-mary-textarea label="Note" rows="2" wire:model.live.debounce.500ms="note"
-                    placeholder="Short note about this router..." />
+            <div>
+                <x-mary-select label="Voucher Template" wire:model.live="voucher_template_id" :options="$voucherTemplates->map(fn($t) => ['id' => $t->id, 'name' => $t->name])->toArray()"
+                    option-label="name" option-value="id" placeholder="Select a voucher template" />
             </div>
+
+            <div>
+                <x-mary-input label="Monthly Expense" type="number" min="0" step="0.01"
+                    wire:model.live.debounce.500ms="monthly_expense" placeholder="0.00" />
+            </div>
+
         </div>
 
         <x-slot:actions>

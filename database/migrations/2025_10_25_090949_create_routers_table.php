@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('address');
+            $table->string('login_address')->nullable();
             $table->string('port');
             $table->string('ssh_port')->nullable();
             $table->string('username');

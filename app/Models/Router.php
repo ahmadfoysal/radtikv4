@@ -12,6 +12,7 @@ class Router extends Model
     protected $fillable = [
         'name',
         'address',
+        'login_address',
         'port',
         'ssh_port',
         'use_radius',
@@ -23,6 +24,9 @@ class Router extends Model
         'zone_id',
         'radius_id',
         'app_key',
+        'monthly_expense',
+        'logo',
+        'voucher_template_id',
     ];
 
     public function decryptedPassword(): string

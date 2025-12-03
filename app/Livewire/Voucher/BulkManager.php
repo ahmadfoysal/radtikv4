@@ -120,12 +120,15 @@ class BulkManager extends Component
             return;
         }
 
-        return redirect()->route('vouchers.print', [
+        $url = route('vouchers.print', [
             'router_id' => $this->router_id,
-            'batch' => $this->batch,
-            'status' => $this->status,
+            'batch'     => $this->batch,
+            'status'    => $this->status,
         ]);
+
+        $this->js("window.open('$url', '_blank');");
     }
+
 
     public function render()
     {

@@ -79,12 +79,12 @@ class Create extends Component
 
         $this->success(title: 'Success', description: 'User profile created successfully.');
 
-        $this->redirect(route('profiles'));
+        $this->redirect(route('profiles'), navigate: true);
     }
 
     public function cancel()
     {
-        $this->redirect(route('profiles'));
+        $this->redirect(route('profiles'), navigate: true);
     }
 
     public function render()
