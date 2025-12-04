@@ -55,4 +55,9 @@ class Router extends Model
     {
         return $this->belongsTo(VoucherTemplate::class);
     }
+
+    public function invoices()
+    {
+        return $this->hasMany(Invoice::class);
+    }
 }
