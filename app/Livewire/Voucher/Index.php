@@ -56,9 +56,8 @@ class Index extends Component
 
     protected function vouchers(): LengthAwarePaginator
     {
-
-        \Log::info('routerFilter', ['value' => $this->routerFilter]);
         return Voucher::query()
+            ->with(['router:id,name', 'profile:id,name']) // Eager load relations to avoid N+1 queries
             ->when($this->q !== '', function ($q) {
                 $term = '%' . strtolower($this->q) . '%';
                 $q->where(function ($s) use ($term) {

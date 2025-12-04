@@ -90,14 +90,13 @@ class BulkManager extends Component
             // Bulk Delete
             $query = $this->getQuery();
 
-            if (!$query) return;
-
-            $count = $query->count();
-
-            if ($count === 0) {
+            if (!$query || !$query->exists()) {
                 $this->error('No vouchers found to delete.');
                 return;
             }
+
+            // Clone the query before modifying it to get accurate count
+            $count = (clone $query)->count();
 
             $query->chunkById(1000, function ($vouchers) {
                 Voucher::whereIn('id', $vouchers->pluck('id'))->delete();
@@ -115,7 +114,7 @@ class BulkManager extends Component
     {
         $query = $this->getQuery();
 
-        if (!$query || $query->count() === 0) {
+        if (!$query || !$query->exists()) {
             $this->error('No vouchers to print.');
             return;
         }
@@ -148,15 +147,17 @@ class BulkManager extends Component
         $this->js("window.open('$url', '_blank');");
     }
 
-
     public function render()
     {
         $query = $this->getQuery();
+        
+        // Get the vouchers collection once and count from it to avoid double query
+        $vouchers = $query ? $query->get() : collect([]);
 
         return view('livewire.voucher.bulk-manager', [
             'routers' => Router::orderBy('name')->get(['id', 'name']),
-            'vouchers' => $query ? $query->get() : [],
-            'total_count' => $query ? $query->count() : 0,
+            'vouchers' => $vouchers,
+            'total_count' => $vouchers->count(),
         ]);
     }
 }
