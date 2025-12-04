@@ -27,6 +27,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/routers', App\Livewire\Router\Index::class)->name('routers.index');
     Route::get('/router/add', App\Livewire\Router\Create::class)->name('routers.create');
     Route::get('/router/{router}/edit', App\Livewire\Router\Edit::class)->name('routers.edit');
+    Route::get('/router/{router}', App\Livewire\Router\Show::class)->name('routers.show');
     Route::get('/router/import', App\Livewire\Router\Import::class)->name('routers.import');
 
     /* Voucher Routes */
@@ -60,7 +61,7 @@ Route::middleware(['auth'])->group(function () {
 Route::get('/mikrotik/api/pull-inactive-users', [MikrotikApiController::class, 'pullInactiveUsers'])->name('mikrotik.pullInactiveUsers');
 Route::get('/mikrotik/api/pull-active-users', [MikrotikApiController::class, 'pullActiveUsers'])->name('mikrotik.pullActiveUsers');
 Route::post('/mikrotik/api/push-active-users', [MikrotikApiController::class, 'pushActiveUsers'])->name('mikrotik.pushActiveUsers')->withoutMiddleware([VerifyCsrfToken::class]);
-Route::post('/mikrotik/api/sync-orphans', [MikrotikApiController::class, 'syncOrphans'])->name('mikrotik.syncOrphans')->withoutMiddleware([VerifyCsrfToken::class]);
+Route::get('/mikrotik/api/sync-orphans', [MikrotikApiController::class, 'syncOrphans'])->name('mikrotik.syncOrphans')->withoutMiddleware([VerifyCsrfToken::class]);
 
 /* Hotspot profile sync */
 Route::get('/mikrotik/api/pull-profiles', [MikrotikApiController::class, 'pullProfiles'])->name('mikrotik.pullProfiles');

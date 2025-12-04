@@ -66,34 +66,52 @@ class MikrotikApiController extends Controller
 
     /* Mikrotik pull active users */
 
+    /**
+     * Pull Active Users Endpoint
+     * Returns list of valid users to restore on router.
+     */
     public function pullActiveUsers(Request $request)
     {
         $token = $request->query('token');
-
         $router = Router::where('app_key', $token)->first();
+
         if (!$router) {
-            return response()->json(['error' => 'Invalid token'], 401);
+            return response('Invalid Token', 403);
         }
 
-        $vouchers = $router->vouchers()
+        // Fetch users that are NOT expired or disabled
+        // We include both 'active' and 'inactive' status because users might need to login again.
+        $vouchers = Voucher::with('profile')
+            ->where('router_id', $router->id)
+            ->whereIn('status', ['active', 'inactive'])
             ->where('is_radius', false)
-            ->whereNot('status', 'inactive')
-            ->get()
-            ->map(function ($v) {
-                return [
-                    'username'    => $v->username,
-                    'password'    => $v->password,
-                    'profile'     => $v->router_profile,
-                    'validity'    => $v->expires_at ? $v->expires_at->diffInMinutes($v->activated_at) : null,
-                    'comments'    => 'ACT' . ($v->activated_at ? '-ActivatedAt=' . $v->activated_at->format('Y-m-d_H:i:s') : ''),
-                ];
-            });
+            ->get();
 
-        return response()->json([
-            'router_id' => $router->id,
-            'count'     => $vouchers->count(),
-            'vouchers'  => $vouchers,
-        ]);
+        // Format: username;password;profile;comment
+        $lines = $vouchers->map(function ($v) {
+
+            // Determine Lock Flag from Profile
+            $isLock = $v->profile->is_mac_binding ?? false ? '1' : '0';
+
+            // Build Comment (preserve existing activation info if available)
+            $baseComment = "RADTik | LOCK={$isLock}";
+            if ($v->activated_at) {
+                // If already activated, send the date back so script doesn't reset it logic
+                // Format: "RADTik | LOCK=1 | Act: Dec/04/2025 10:00:00"
+                $actDate = \Carbon\Carbon::parse($v->activated_at)->format('M/d/Y H:i:s');
+                $baseComment .= " | Act: {$actDate}";
+            }
+
+            return implode(';', [
+                $v->username,
+                $v->password,
+                $v->profile->name ?? 'default',
+                $baseComment
+            ]);
+        })->implode("\n");
+
+        return response($lines, 200)
+            ->header('Content-Type', 'text/plain');
     }
 
 

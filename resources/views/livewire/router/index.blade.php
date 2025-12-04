@@ -95,6 +95,12 @@
                                 wire:loading.attr="disabled" wire:target="ping({{ $router->id }})" />
                         </div>
 
+                        {{-- View Details --}}
+                        <div class="tooltip" data-tip="View Router">
+                            <x-mary-button icon="o-eye" class="btn-ghost btn-xs hover:bg-base-100"
+                                href="{{ route('routers.show', $router) }}" wire:navigate />
+                        </div>
+
                         {{-- Edit --}}
                         <div class="tooltip" data-tip="Edit Router">
                             <x-mary-button icon="o-pencil" class="btn-ghost btn-xs hover:bg-base-100"

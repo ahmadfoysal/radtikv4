@@ -12,99 +12,102 @@ class PullActiveUsersScript
     }
 
     /**
-     * Build RouterOS script that pulls active users from API
+     * Build RouterOS script that pulls valid users from API
      * and upserts them into /ip/hotspot/user.
      */
     public static function build(Router $router, string $baseUrl): string
     {
-        $script = <<<'SCRIPT'
+        $token = $router->app_key; // Assuming app_key is the token
+
+        return <<<SCRIPT
 # RADTik - Pull Active Hotspot Users
-# Fetch active users from API and sync to MikroTik.
+# Fetches valid users from API and syncs to MikroTik.
+# Format: username;password;profile;comment
 
-/* Configuration */
-:local BASE_URL "__BASE_URL__"
-:local TOKEN "__TOKEN__"
+:local baseUrl "{$baseUrl}"
+:local token   "{$token}"
+:local dst     "radtik_active_users.txt"
 
-:local url ($BASE_URL . "?token=" . $TOKEN)
-:log info ("RADTik: Pulling active users from " . $url)
+# 1. Prepare Request
+:local url (\$baseUrl . "?token=" . \$token . "&format=flat")
+:log info "RADTik: Fetching active users list..."
 
-:local data [/tool fetch url=$url http-method=get output=user]
+/file remove [find name=\$dst]
 
-:if ([:len $data] = 0) do={
-    :log warning "RADTik: API returned empty response for active users"
-    :error "No data"
+# 2. Download File
+:do {
+    /tool fetch url=\$url mode=https http-method=get dst-path=\$dst check-certificate=no keep-result=yes
+} on-error={
+    :log error "RADTik: Download active users failed."
+    :error "stop"
 }
 
-:local pos [:find $data "\"users\""]
+:delay 2s;
 
-:if ($pos = nil) do={
-    :log warning "RADTik: 'users' key not found in response"
-    :error "Invalid JSON"
+:local content ""
+:if ([:len [/file find name=\$dst]] > 0) do={
+    :set content [/file get \$dst contents]
+} else={
+    :log error "RADTik: File missing."
+    :error "stop"
 }
 
-:set pos [:find $data "{" $pos]
-
+# 3. Process Data
+:local lastEnd 0
+:local fileLen [:len \$content]
 :local processed 0
 
-:while ($pos != nil) do={
+:log info "RADTik: Processing users..."
 
-    # username
-    :local uKey [:find $data "\"username\"" $pos]
-    :if ($uKey = nil) do={ :break }
-    :local uStart [:find $data "\"" ($uKey + 11)]
-    :local uEnd [:find $data "\"" ($uStart + 1)]
-    :local username [:pick $data ($uStart + 1) $uEnd]
-
-    # password
-    :local pKey [:find $data "\"password\"" $uEnd]
-    :local pStart [:find $data "\"" ($pKey + 11)]
-    :local pEnd [:find $data "\"" ($pStart + 1)]
-    :local password [:pick $data ($pStart + 1) $pEnd]
-
-    # profile
-    :local prKey [:find $data "\"profile\"" $pEnd]
-    :local prStart [:find $data "\"" ($prKey + 10)]
-    :local prEnd [:find $data "\"" ($prStart + 1)]
-    :local profile [:pick $data ($prStart + 1) $prEnd]
-
-    # comment
-    :local cKey [:find $data "\"comment\"" $prEnd]
-    :local cStart [:find $data "\"" ($cKey + 11)]
-    :local cEnd [:find $data "\"" ($cStart + 1)]
-    :local comment [:pick $data ($cStart + 1) $cEnd]
-
-    :local existing [/ip/hotspot/user/find where name=$username]
-
-    :if ([:len $existing] > 0) do={
-        /ip/hotspot/user/set $existing \
-            name=$username \
-            password=$password \
-            profile=$profile \
-            comment=$comment
-
-        :log info ("RADTik: Updated user from active list: " . $username)
-    } else={
-        /ip/hotspot/user/add \
-            name=$username \
-            password=$password \
-            profile=$profile \
-            comment=$comment
-
-        :log info ("RADTik: Added user from active list: " . $username)
+:while (\$lastEnd < \$fileLen) do={
+    :local lineEnd [:find \$content "\\n" \$lastEnd]
+    :if ([:typeof \$lineEnd] = "nil") do={ :set lineEnd \$fileLen }
+    
+    :local line [:pick \$content \$lastEnd \$lineEnd]
+    :set lastEnd (\$lineEnd + 1)
+    
+    # Cleanup Carriage Return
+    :if ([:len \$line] > 0 && [:pick \$line ([:len \$line]-1)] = "\\r") do={
+        :set line [:pick \$line 0 ([:len \$line]-1)]
     }
 
-    :set processed ($processed + 1)
+    # Parse Line: user;pass;profile;comment
+    :if ([:len \$line] > 0) do={
+        :local s1 [:find \$line ";"]
+        
+        :if ([:typeof \$s1] != "nil") do={
+            :local s2 [:find \$line ";" (\$s1 + 1)]
+            :local s3 [:find \$line ";" (\$s2 + 1)]
+            
+            :if ([:typeof \$s2] != "nil" && [:typeof \$s3] != "nil") do={
+                
+                :local uName [:pick \$line 0 \$s1]
+                :local uPass [:pick \$line (\$s1+1) \$s2]
+                :local uProf [:pick \$line (\$s2+1) \$s3]
+                :local uComm [:pick \$line (\$s3+1) [:len \$line]]
 
-    :set pos [:find $data "{" $cEnd]
+                # Validate
+                :if (\$uName != "") do={
+                    :local existingId [/ip hotspot user find name=\$uName]
+
+                    :if ([:len \$existingId] > 0) do={
+                        # Update existing
+                        /ip hotspot user set \$existingId password=\$uPass profile=\$uProf comment=\$uComm
+                        :log debug ("RADTik: Updated " . \$uName)
+                    } else={
+                        # Create new
+                        /ip hotspot user add name=\$uName password=\$uPass profile=\$uProf comment=\$uComm
+                        :log info ("RADTik: Added " . \$uName)
+                    }
+                    :set processed (\$processed + 1)
+                }
+            }
+        }
+    }
 }
 
-:log info ("RADTik: Active user sync completed. Total=" . $processed)
+/file remove \$dst
+:log info ("RADTik: Active user sync completed. Total processed: " . \$processed)
 SCRIPT;
-
-        return str_replace(
-            ['__BASE_URL__', '__TOKEN__'],
-            [$baseUrl, $router->app_key],
-            $script
-        );
     }
 }

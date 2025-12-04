@@ -3,11 +3,10 @@
 namespace App\MikroTik\Installer;
 
 use App\MikroTik\Client\RouterClient;
+use App\MikroTik\Scripts\CleanOrphanUsersScript;
 use App\MikroTik\Scripts\PullInactiveUsersScript;
 use App\MikroTik\Scripts\PushActiveUsersScript;
-use App\MikroTik\Scripts\RemoveOrphanUsersScript;
 use App\MikroTik\Scripts\PullProfilesScript;
-use App\MikroTik\Scripts\RemoveOrphanProfilesScript;
 use App\MikroTik\Scripts\ProfileOnLoginScript;
 use App\MikroTik\Scripts\PullActiveUsersScript;
 use App\Models\Router;
@@ -75,8 +74,8 @@ class ScriptInstaller
 
     public function installRemoveOrphanUsersScript(Router $router, string $baseUrl): array
     {
-        $name   = RemoveOrphanUsersScript::name();
-        $source = RemoveOrphanUsersScript::build($router, $baseUrl);
+        $name   = CleanOrphanUsersScript::name();
+        $source = CleanOrphanUsersScript::build($router, $baseUrl);
 
         return $this->upsertScript($router, $name, $source);
     }
