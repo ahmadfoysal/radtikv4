@@ -14,6 +14,7 @@ use App\Models\Voucher;
 use App\Models\Router;
 use App\Models\RadiusServer;
 use App\Models\RadiusProfile;
+use App\Models\Invoice;
 
 class User extends Authenticatable
 {
@@ -69,6 +70,7 @@ class User extends Authenticatable
             'is_phone_verified' => 'boolean',
             'expiration_date' => 'date',
             'password' => 'hashed',
+            'balance' => 'decimal:2',
         ];
     }
 
@@ -125,5 +127,11 @@ class User extends Authenticatable
     public function profiles()
     {
         return $this->hasMany(UserProfile::class);
+    }
+
+    //Invoices relation
+    public function invoices()
+    {
+        return $this->hasMany(Invoice::class);
     }
 }

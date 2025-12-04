@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Crypt;
 use App\Models\User;
+use App\Models\Invoice;
 
 class Router extends Model
 {
@@ -54,5 +55,10 @@ class Router extends Model
     public function voucherTemplate()
     {
         return $this->belongsTo(VoucherTemplate::class);
+    }
+
+    public function invoices()
+    {
+        return $this->hasMany(Invoice::class);
     }
 }
