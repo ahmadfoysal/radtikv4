@@ -296,28 +296,45 @@ class MikrotikApiController extends Controller
     }
 
     /**
-     * Provide canonical username list for orphan cleanup.
+     * Smart Cleanup Endpoint
+     * Receives comma-separated usernames from router.
+     * Returns newline-separated usernames that should be deleted.
      */
-    public function checkUser(Request $request)
+    public function syncOrphans(Request $request)
     {
+        // 1. Authenticate Router
         $token = $request->query('token');
-
         $router = Router::where('app_key', $token)->first();
 
         if (!$router) {
-            return response()->json(['error' => 'Invalid token'], 401);
+            return response('Invalid Token', 403);
         }
 
-        $usernames = $router->vouchers()
-            ->where('is_radius', false)
+        // 2. Get Router's User List from Body
+        $content = $request->getContent();
+
+        if (empty($content)) {
+            // No users sent means nothing to check
+            return response('', 200);
+        }
+
+        // Convert comma-separated string to array
+        $routerUsers = explode(',', $content);
+
+        // 3. Find which of these users exist in Database
+        // We only check against the users sent by the router to be efficient
+        $validUsers = Voucher::where('router_id', $router->id)
+            ->whereIn('username', $routerUsers)
             ->pluck('username')
-            ->filter(fn($username) => !empty($username))
-            ->unique()
-            ->values();
+            ->toArray();
 
-        $lines = $usernames->implode("\n");
+        // 4. Calculate Orphans
+        // Orphans = (Router List) - (Database List)
+        $orphans = array_diff($routerUsers, $validUsers);
 
-        return response($lines, 200)
+        // 5. Return Orphans as Flat List (Line by line)
+        // If array is empty, it returns empty string (which stops the router script correctly)
+        return response(implode("\n", $orphans), 200)
             ->header('Content-Type', 'text/plain');
     }
 }
