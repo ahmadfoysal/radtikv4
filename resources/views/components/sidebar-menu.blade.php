@@ -86,7 +86,8 @@
         <x-mary-menu-sub title="Billing" icon="o-credit-card">
             <x-mary-menu-item title="Balance & Top-up" icon="o-banknotes" link="/billing/balance" />
             <x-mary-menu-item title="Transactions" icon="o-receipt-percent" link="/billing/transactions" />
-            <x-mary-menu-item title="Plans & Packages" icon="o-cube" link="/billing/plans" />
+            <x-mary-menu-item title="Packages" icon="o-cube" link="/packages" wire:navigate />
+            <x-mary-menu-item title="Add Package" icon="o-plus" link="/package/add" wire:navigate />
             <x-mary-menu-item title="Payment Methods" icon="o-wallet" link="/billing/methods" />
         </x-mary-menu-sub>
 

@@ -1,0 +1,78 @@
+<?php
+
+namespace App\Livewire\Package;
+
+use App\Models\Package;
+use Livewire\Attributes\Validate;
+use Livewire\Component;
+use Mary\Traits\Toast;
+
+class Create extends Component
+{
+    use Toast;
+
+    #[Validate('required|string|max:255')]
+    public string $name = '';
+
+    #[Validate('required|numeric|min:0')]
+    public string $price_monthly = '';
+
+    #[Validate('nullable|numeric|min:0')]
+    public ?string $price_yearly = null;
+
+    #[Validate('required|integer|min:1')]
+    public string $user_limit = '';
+
+    #[Validate('required|string|in:monthly,yearly')]
+    public string $billing_cycle = 'monthly';
+
+    #[Validate('nullable|integer|min:0')]
+    public ?string $early_pay_days = null;
+
+    #[Validate('nullable|integer|min:0|max:100')]
+    public ?string $early_pay_discount_percent = null;
+
+    #[Validate('boolean')]
+    public bool $auto_renew_allowed = true;
+
+    #[Validate('nullable|string|max:1000')]
+    public ?string $description = null;
+
+    #[Validate('boolean')]
+    public bool $is_active = true;
+
+    public function save(): void
+    {
+        $this->validate();
+
+        Package::create([
+            'name'                       => $this->name,
+            'price_monthly'              => $this->price_monthly,
+            'price_yearly'               => $this->price_yearly ?: null,
+            'user_limit'                 => $this->user_limit,
+            'billing_cycle'              => $this->billing_cycle,
+            'early_pay_days'             => $this->early_pay_days ?: null,
+            'early_pay_discount_percent' => $this->early_pay_discount_percent ?: null,
+            'auto_renew_allowed'         => $this->auto_renew_allowed,
+            'description'                => $this->description ?: null,
+            'is_active'                  => $this->is_active,
+        ]);
+
+        $this->success(
+            title: 'Success!',
+            description: 'Package created successfully.'
+        );
+
+        $this->redirect(route('packages.index'), navigate: true);
+    }
+
+    public function cancel(): void
+    {
+        $this->redirect(route('packages.index'), navigate: true);
+    }
+
+    public function render()
+    {
+        return view('livewire.package.create');
+    }
+}

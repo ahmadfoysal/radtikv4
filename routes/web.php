@@ -55,6 +55,11 @@ Route::middleware(['auth'])->group(function () {
 
     /* Zone Routes */
     Route::get('/zones', App\Livewire\Zone\Index::class)->name('zones.index');
+
+    /* Package Routes */
+    Route::get('/packages', App\Livewire\Package\Index::class)->name('packages.index');
+    Route::get('/package/add', App\Livewire\Package\Create::class)->name('packages.create');
+    Route::get('/package/{package}/edit', App\Livewire\Package\Edit::class)->name('packages.edit');
 });
 
 /* Hotspot User sync */
