@@ -97,7 +97,7 @@ class BillingService
 
             // Check if user has sufficient balance
             if ($oldBalance < $amount) {
-                throw new RuntimeException('Insufficient balance. Current balance: '.$oldBalance.', Required: '.$amount);
+                throw new RuntimeException('Insufficient balance for transaction.');
             }
 
             $newBalance = $oldBalance - $amount;

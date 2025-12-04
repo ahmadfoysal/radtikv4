@@ -96,7 +96,7 @@ class BillingServiceTest extends TestCase
         $user = User::factory()->create(['balance' => 50.00]);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Insufficient balance.');
+        $this->expectExceptionMessage('Insufficient balance for transaction.');
 
         $this->billingService->debit($user, 100.00, 'subscription');
     }
