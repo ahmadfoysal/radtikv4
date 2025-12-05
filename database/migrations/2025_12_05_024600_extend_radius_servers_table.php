@@ -29,8 +29,8 @@ return new class extends Migration
             $table->string('ssh_key_name')->nullable()->after('ssh_password'); // optional identifier/path
 
             // RADIUS connectivity (file-based, NOT DB)
-            $table->integer('radius_auth_port')->default(1812)->after('ssh_key_name');
-            $table->integer('radius_acct_port')->default(1813)->after('radius_auth_port');
+            $table->unsignedSmallInteger('radius_auth_port')->default(1812)->after('ssh_key_name');
+            $table->unsignedSmallInteger('radius_acct_port')->default(1813)->after('radius_auth_port');
             $table->text('radius_secret')->nullable()->after('radius_acct_port');
 
             // Subscription package (store JSON/array)

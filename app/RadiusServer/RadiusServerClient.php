@@ -14,9 +14,28 @@ class RadiusServerClient
 
     protected bool $connected = false;
 
+    /**
+     * Default FreeRADIUS users file path.
+     */
+    protected string $usersFilePath = '/etc/freeradius/3.0/users';
+
+    /**
+     * Default FreeRADIUS service name.
+     */
+    protected string $serviceName = 'freeradius';
+
     public function __construct(
         protected RadiusServer $server,
-    ) {}
+        ?string $usersFilePath = null,
+        ?string $serviceName = null,
+    ) {
+        if ($usersFilePath !== null) {
+            $this->usersFilePath = $usersFilePath;
+        }
+        if ($serviceName !== null) {
+            $this->serviceName = $serviceName;
+        }
+    }
 
     /**
      * Test SSH connection to the RADIUS server.
@@ -80,8 +99,10 @@ class RadiusServerClient
         try {
             $this->connect();
 
+            $serviceName = escapeshellarg($this->serviceName);
+
             // Try systemctl first, fallback to service command
-            $output = $this->ssh->exec('sudo systemctl reload freeradius 2>/dev/null || sudo service freeradius reload');
+            $output = $this->ssh->exec("sudo systemctl reload {$serviceName} 2>/dev/null || sudo service {$serviceName} reload");
 
             Log::info('RadiusServerClient: FreeRADIUS reloaded', [
                 'server_id' => $this->server->id,
@@ -119,11 +140,12 @@ class RadiusServerClient
             // Build the user entry for FreeRADIUS users file
             $userEntry = $this->buildUserEntry($attributes);
 
-            // Escape single quotes for shell
-            $escapedEntry = str_replace("'", "'\\''", $userEntry);
+            // Use base64 encoding to safely transfer content without shell escaping issues
+            $base64Entry = base64_encode($userEntry);
+            $usersFilePath = escapeshellarg($this->usersFilePath);
 
-            // Append to users file (default FreeRADIUS location)
-            $command = "echo '{$escapedEntry}' | sudo tee -a /etc/freeradius/3.0/users > /dev/null";
+            // Decode base64 and append to users file
+            $command = "echo {$base64Entry} | base64 -d | sudo tee -a {$usersFilePath} > /dev/null";
             $this->ssh->exec($command);
 
             Log::info('RadiusServerClient: User added to FreeRADIUS', [
@@ -150,12 +172,18 @@ class RadiusServerClient
         try {
             $this->connect();
 
-            // Escape username for sed pattern
+            // Validate username contains only safe characters for sed pattern
+            if (! preg_match('/^[a-zA-Z0-9_\-\.@]+$/', $username)) {
+                throw new RuntimeException('Invalid username format');
+            }
+
+            // Escape username for sed pattern (only safe characters allowed)
             $escapedUsername = preg_quote($username, '/');
+            $usersFilePath = escapeshellarg($this->usersFilePath);
 
             // Remove user entry from users file using sed
             // This removes the user line and any following reply attributes until blank line
-            $command = "sudo sed -i '/^{$escapedUsername}[[:space:]]/,/^$/d' /etc/freeradius/3.0/users";
+            $command = "sudo sed -i '/^{$escapedUsername}[[:space:]]/,/^$/d' {$usersFilePath}";
             $this->ssh->exec($command);
 
             Log::info('RadiusServerClient: User removed from FreeRADIUS', [
