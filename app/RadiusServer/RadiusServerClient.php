@@ -141,7 +141,7 @@ class RadiusServerClient
             $userEntry = $this->buildUserEntry($attributes);
 
             // Use base64 encoding to safely transfer content without shell escaping issues
-            $base64Entry = base64_encode($userEntry);
+            $base64Entry = escapeshellarg(base64_encode($userEntry));
             $usersFilePath = escapeshellarg($this->usersFilePath);
 
             // Decode base64 and append to users file
@@ -183,7 +183,8 @@ class RadiusServerClient
 
             // Remove user entry from users file using sed
             // This removes the user line and any following reply attributes until blank line
-            $command = "sudo sed -i '/^{$escapedUsername}[[:space:]]/,/^$/d' {$usersFilePath}";
+            // The pattern handles both spaces and tabs as delimiters
+            $command = "sudo sed -i '/^{$escapedUsername}[[:space:][:blank:]]/,/^$/d' {$usersFilePath}";
             $this->ssh->exec($command);
 
             Log::info('RadiusServerClient: User removed from FreeRADIUS', [

@@ -34,7 +34,7 @@ class RadiusService
      * Sync a voucher to the RADIUS server.
      *
      * @param  RadiusServer  $server  The RADIUS server instance
-     * @param  array  $voucher  Voucher data (username, password, profile, etc.)
+     * @param  array  $voucher  Voucher data with required 'username' and 'password' keys, or 'code' as fallback for both
      *
      * @throws RuntimeException
      */
@@ -43,10 +43,19 @@ class RadiusService
         try {
             $client = new RadiusServerClient($server);
 
+            // For vouchers, 'code' can serve as both username and password if not explicitly provided
+            // This is intentional for voucher-based systems where the voucher code is the credential
+            $username = $voucher['username'] ?? $voucher['code'] ?? null;
+            $password = $voucher['password'] ?? $voucher['code'] ?? null;
+
+            if (! $username || ! $password) {
+                throw new RuntimeException('Voucher must have username/password or code');
+            }
+
             // Add the user to FreeRADIUS
             $client->addUser([
-                'username' => $voucher['username'] ?? $voucher['code'] ?? null,
-                'password' => $voucher['password'] ?? $voucher['code'] ?? null,
+                'username' => $username,
+                'password' => $password,
                 'profile' => $voucher['profile'] ?? null,
                 'reply_items' => $voucher['reply_items'] ?? [],
             ]);
@@ -56,7 +65,7 @@ class RadiusService
 
             Log::info('RadiusService: Voucher synced to RADIUS', [
                 'server_id' => $server->id,
-                'username' => $voucher['username'] ?? $voucher['code'] ?? 'unknown',
+                'username' => $username,
             ]);
         } catch (Throwable $e) {
             Log::error('RadiusService: Failed to sync voucher', [
