@@ -4,12 +4,16 @@ namespace App\Livewire\Router;
 
 use App\MikroTik\Actions\HotspotProfileManager;
 use App\MikroTik\Actions\RouterDiagnostics;
+use App\MikroTik\Actions\SchedulerManager;
+use App\MikroTik\Client\RouterClient;
 use App\MikroTik\Installer\ScriptInstaller;
+use App\MikroTik\Scripts\PullProfilesScript;
 use App\Models\Router;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 use Mary\Traits\Toast;
+use RouterOS\Query;
 
 class Show extends Component
 {
@@ -42,6 +46,7 @@ class Show extends Component
 
     public ?string $lastUpdated = null;
     public ?string $errorMessage = null;
+    public array $schedulerStatuses = [];
 
     protected $queryString = [
         'interface' => ['except' => ''],
@@ -72,20 +77,16 @@ class Show extends Component
             $this->hotspotCounts = $diag->hotspotCounts($this->router);
             // $this->logs = $diag->hotspotLogs($this->router, 10);
             $this->profiles = $this->loadProfiles();
+            $this->schedulerStatuses = $this->loadSchedulerStatuses();
             $this->hotspotUserStats = $this->computeHotspotUserStats();
             $this->activityStats = $this->computeActivityStats();
-            $this->interfaces = $this->fetchInterfaces();
+            if (empty($this->interfaces)) {
+                $this->interfaces = $this->fetchInterfaces();
+            }
             $this->formattedUptime = $this->formatUptime($this->resource['uptime'] ?? null);
 
             $this->interface = $this->interface ?: ($this->interfaces[0]['name'] ?? '');
-            if ($this->interface) {
-                $traffic = $diag->interfaceTraffic($this->router, $this->interface);
-                if ($traffic) {
-                    $traffic['label'] = now()->format('H:i:s');
-                    $this->trafficSeries[] = $traffic;
-                    $this->trafficSeries = array_slice($this->trafficSeries, -12);
-                }
-            }
+            $this->recordTrafficSample($diag);
 
             $this->trafficChart = $this->buildChartData();
             $this->lastUpdated = now()->toDateTimeString();
@@ -96,13 +97,26 @@ class Show extends Component
         }
     }
 
+    public function refreshTrafficData(): void
+    {
+        try {
+            $this->recordTrafficSample();
+            $this->trafficChart = $this->buildChartData();
+            $this->lastUpdated = now()->toDateTimeString();
+            $this->errorMessage = null;
+        } catch (\Throwable $e) {
+            $this->errorMessage = $e->getMessage();
+            $this->error('Traffic refresh failed: ' . $e->getMessage());
+        }
+    }
+
     /**
      * Reset traffic series when user selects another interface.
      */
     public function updatedInterface(): void
     {
         $this->trafficSeries = [];
-        $this->refreshRealtimeData();
+        $this->refreshTrafficData();
     }
 
     protected function fetchInterfaces(): array
@@ -121,11 +135,24 @@ class Show extends Component
         return app(RouterDiagnostics::class);
     }
 
+    protected function routerClient(): RouterClient
+    {
+        return app(RouterClient::class);
+    }
+
+    protected function schedulerManager(): SchedulerManager
+    {
+        return app(SchedulerManager::class);
+    }
+
     protected function buildChartData(): array
     {
         $labels = array_map(fn($row) => $row['label'] ?? '', $this->trafficSeries);
         $rx = array_map(fn($row) => round(($row['rx'] ?? 0) / 1_000_000, 2), $this->trafficSeries);
         $tx = array_map(fn($row) => round(($row['tx'] ?? 0) / 1_000_000, 2), $this->trafficSeries);
+
+        $lastRx = !empty($rx) ? end($rx) : 0;
+        $lastTx = !empty($tx) ? end($tx) : 0;
 
         return [
             'type' => 'line',
@@ -133,18 +160,31 @@ class Show extends Component
                 'labels'   => $labels,
                 'datasets' => [
                     [
-                        'label'           => 'Rx Mbps',
+                        'label'           => 'Rx Mbps ' . ($lastRx !== null ? " ({$lastRx})" : ''),
                         'data'            => $rx,
-                        'borderColor'     => '#2563eb',
-                        'backgroundColor' => 'rgba(37,99,235,0.2)',
+                        'borderColor'     => '#fe51b6ff',
+                        'backgroundColor' => 'rgba(247, 12, 145, 0.2)',
+                        'borderWidth'     => 2,
+                        'pointRadius'     => 6,  // bigger point
+                        'pointHoverRadius' => 8,  // hover size
+                        'pointBackgroundColor' => '#fe51b6ff', // filled dot
+                        'pointBorderColor' => '#ffffff', // optional border
+                        'pointBorderWidth' => 1,
                         'tension'         => 0.3,
                         'fill'            => true,
                     ],
+
                     [
-                        'label'           => 'Tx Mbps',
+                        'label'           => 'Tx Mbps' . ($lastTx !== null ? " ({$lastTx})" : ''),
                         'data'            => $tx,
-                        'borderColor'     => '#16a34a',
-                        'backgroundColor' => 'rgba(22,163,74,0.2)',
+                        'borderColor'     => '#51a7feff',
+                        'backgroundColor' => 'rgba(81, 167, 254, 0.2)',
+                        'borderWidth'     => 2,
+                        'pointRadius'     => 6,  // bigger point
+                        'pointHoverRadius' => 8,  // hover size
+                        'pointBackgroundColor' => '#51a7feff', // filled dot
+                        'pointBorderColor' => '#ffffff', // optional border
+                        'pointBorderWidth' => 1,
                         'tension'         => 0.3,
                         'fill'            => true,
                     ],
@@ -156,7 +196,12 @@ class Show extends Component
                 'plugins'    => [
                     'legend' => [
                         'display' => true,
-                        'position' => 'bottom',
+                        'position' => 'top',
+                        //mathe legen circle instead of box
+                        'labels'  => [
+                            'usePointStyle' => true,
+                            'pointStyle'   => 'circle',
+                        ],
                     ],
                 ],
                 'scales' => [
@@ -165,6 +210,10 @@ class Show extends Component
                     ],
                     'y' => [
                         'display' => true,
+                        'ticks'   => [
+                            'beginAtZero' => true,
+                            'stepSize' => 5,
+                        ],
                         'title'   => [
                             'display' => true,
                             'text'    => 'Mbps',
@@ -191,6 +240,34 @@ class Show extends Component
             $this->error('Failed to load profiles: ' . $e->getMessage());
             return [];
         }
+    }
+
+    protected function loadSchedulerStatuses(): array
+    {
+        $definitions = $this->schedulerDefinitions();
+
+        try {
+            $names = array_column($definitions, 'name');
+            $remote = collect($this->schedulerManager()->list($this->router, $names))->keyBy('name');
+        } catch (\Throwable $e) {
+            $this->error('Failed to load schedulers: ' . $e->getMessage());
+            $remote = collect();
+        }
+
+        return array_map(function (array $definition) use ($remote) {
+            $status = $remote->get($definition['name']);
+
+            return [
+                'name'     => $definition['name'],
+                'label'    => $definition['label'] ?? $definition['name'],
+                'interval' => $status['interval'] ?? $definition['interval'],
+                'next_run' => $status['next_run'] ?? null,
+                'last_run' => $status['last_run'] ?? null,
+                'on_event' => $status['on_event'] ?? $definition['on_event'],
+                'disabled' => $status['disabled'] ?? false,
+                'missing'  => $status === null,
+            ];
+        }, $definitions);
     }
 
     protected function computeHotspotUserStats(): array
@@ -262,6 +339,21 @@ class Show extends Component
         return implode(' ', $parts);
     }
 
+    protected function recordTrafficSample(?RouterDiagnostics $diag = null): void
+    {
+        if (!$this->interface) {
+            return;
+        }
+
+        $diag = $diag ?? $this->diagnostics();
+        $traffic = $diag->interfaceTraffic($this->router, $this->interface);
+        if ($traffic) {
+            $traffic['label'] = now()->format('H:i:s');
+            $this->trafficSeries[] = $traffic;
+            $this->trafficSeries = array_slice($this->trafficSeries, -8);
+        }
+    }
+
     public function render(): View
     {
         return view('livewire.router.show');
@@ -274,29 +366,88 @@ class Show extends Component
             $installer = app(ScriptInstaller::class);
             $router = $this->router;
 
-            $pullInactiveUrl = route('mikrotik.pullInactiveUsers');
-            $pullActiveUrl  = route('mikrotik.pullActiveUsers');
-            $pushUrl        = route('mikrotik.pushActiveUsers');
-            $orphanUserUrl  = route('mikrotik.checkUser');
-            $pullProfiles   = route('mikrotik.pullProfiles');
-
-            $installer->installPullInactiveUsersScript($router, $pullInactiveUrl);
-            $installer->installPullActiveUsersScript($router, $pullActiveUrl);
-            $installer->installPushActiveUsersScript($router, $pushUrl);
-            $installer->installRemoveOrphanUsersScript($router, $orphanUserUrl);
-            $installer->installProfileOnLoginScript($router);
-            $installer->installPullProfilesScript($router, $pullProfiles);
-
-            $installer->upsertScheduler($router, 'RADTik-PullInactive', '5m', '/system script run "RADTik-pull-inactive-users"');
-            $installer->upsertScheduler($router, 'RADTik-PullActiveUsers', '30m', '/system script run "RADTik-pull-active-users"');
-            $installer->upsertScheduler($router, 'RADTik-PushActive', '1m', '/system script run "RADTik-push-active-users"');
-            $installer->upsertScheduler($router, 'RADTik-RemoveOrphans', '1h', '/system script run "RADTik-remove-orphan-users"');
-            $installer->upsertScheduler($router, 'RADTik-PullProfiles', '10m', '/system script run "RADTik-pull-profiles"');
-            $installer->upsertScheduler($router, 'RADTik-RemoveOrphanProfiles', '1h', '/system script run "RADTik-remove-orphan-profiles"');
+            $installer->installAllScriptsAndSchedulers($router);
+            $this->schedulerStatuses = $this->loadSchedulerStatuses();
+            $this->scriptStatuses = $this->diagnostics()->scriptStatuses($router);
 
             $this->success('Scripts synced successfully.');
         } catch (\Throwable $e) {
             $this->error('Failed to sync scripts: ' . $e->getMessage());
+        }
+    }
+
+    public function syncSchedulers(): void
+    {
+        try {
+            /** @var ScriptInstaller $installer */
+            $installer = app(ScriptInstaller::class);
+
+            $this->upsertConfiguredSchedulers($installer);
+            $this->schedulerStatuses = $this->loadSchedulerStatuses();
+
+            $this->success('Schedulers synced successfully.');
+        } catch (\Throwable $e) {
+            $this->error('Failed to sync schedulers: ' . $e->getMessage());
+        }
+    }
+
+    public function runScheduler(string $name): void
+    {
+        try {
+            $this->schedulerManager()->run($this->router, $name);
+            $this->schedulerStatuses = $this->loadSchedulerStatuses();
+            $this->success("Scheduler {$name} triggered.");
+        } catch (\Throwable $e) {
+            $this->error('Failed to run scheduler: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Return tracked scheduler definitions.
+     *
+     * @return array<int,array{name:string,label:string,interval:string,on_event:string}>
+     */
+    protected function schedulerDefinitions(): array
+    {
+        return ScriptInstaller::schedulerDefinitions();
+    }
+
+    protected function upsertConfiguredSchedulers(ScriptInstaller $installer): void
+    {
+        foreach ($this->schedulerDefinitions() as $scheduler) {
+            $installer->upsertScheduler(
+                $this->router,
+                $scheduler['name'],
+                $scheduler['interval'],
+                $scheduler['on_event']
+            );
+        }
+    }
+
+    public function syncProfiles(): void
+    {
+        try {
+            /** @var ScriptInstaller $installer */
+            $installer = app(ScriptInstaller::class);
+            $router = $this->router;
+
+            $pullProfilesUrl = route('mikrotik.pullProfiles');
+            $installer->installProfileOnLoginScript($router);
+            $installer->installPullProfilesScript($router, $pullProfilesUrl);
+
+            $client = $this->routerClient();
+            $ros = $client->make($router);
+
+            $client->safeRead(
+                $ros,
+                (new Query('/system/script/run'))
+                    ->equal('number', PullProfilesScript::name())
+            );
+
+            $this->profiles = $this->loadProfiles();
+            $this->success('Profiles synced successfully.');
+        } catch (\Throwable $e) {
+            $this->error('Failed to sync profiles: ' . $e->getMessage());
         }
     }
 }

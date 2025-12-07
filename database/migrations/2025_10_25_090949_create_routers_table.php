@@ -29,6 +29,7 @@ return new class extends Migration
             $table->decimal('monthly_expense', 8, 2)->default(0);
             $table->string('logo')->nullable();
             $table->foreignId('voucher_template_id')->nullable()->constrained('voucher_templates')->nullOnDelete();
+            $table->json('package')->nullable();
             $table->timestamps();
         });
     }

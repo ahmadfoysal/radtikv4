@@ -5,6 +5,7 @@ namespace App\Livewire\Router;
 use Livewire\Component;
 use App\Models\Router;
 use App\Models\VoucherTemplate;
+use App\Models\Package;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Livewire\Attributes\Rule;
@@ -40,6 +41,9 @@ class Create extends Component
     #[Rule(['nullable', 'numeric', 'min:0'])]
     public float $monthly_expense = 0.0;
 
+    #[Rule(['nullable', 'integer', 'exists:packages,id'])]
+    public ?int $package_id = null;
+
     public function mount(): void
     {
         $this->voucher_template_id = VoucherTemplate::query()
@@ -66,6 +70,7 @@ class Create extends Component
             'user_id'  => Auth::id(),
             'voucher_template_id' => $voucherTemplateId,
             'monthly_expense' => $this->monthly_expense,
+            'package'  => $this->packagePayload($this->package_id),
         ]);
 
         // Reset form (keep port default)
@@ -77,6 +82,7 @@ class Create extends Component
             'password',
             'voucher_template_id',
             'monthly_expense',
+            'package_id',
         ]);
         $this->port = 8728;
         $this->voucher_template_id = VoucherTemplate::query()
@@ -102,7 +108,32 @@ class Create extends Component
             'voucherTemplates' => VoucherTemplate::select('id', 'name')
                 ->orderBy('name')
                 ->get(),
+            'packages' => Package::orderBy('name')->get(['id', 'name', 'billing_cycle']),
         ])
             ->title(__('Add Router'));
+    }
+
+    protected function packagePayload(?int $packageId): ?array
+    {
+        if (!$packageId) {
+            return null;
+        }
+
+        $package = Package::find($packageId);
+
+        if (!$package) {
+            return null;
+        }
+
+        return [
+            'id' => $package->id,
+            'name' => $package->name,
+            'price_monthly' => $package->price_monthly,
+            'price_yearly' => $package->price_yearly,
+            'user_limit' => $package->user_limit,
+            'billing_cycle' => $package->billing_cycle,
+            'auto_renew_allowed' => $package->auto_renew_allowed,
+            'description' => $package->description,
+        ];
     }
 }

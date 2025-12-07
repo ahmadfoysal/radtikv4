@@ -98,6 +98,34 @@ class ScriptInstaller
     }
 
     /**
+     * Install every standard RADTik script and scheduler for the given router.
+     */
+    public function installAllScriptsAndSchedulers(Router $router): void
+    {
+        $pullInactiveUrl = route('mikrotik.pullInactiveUsers');
+        $pullActiveUrl   = route('mikrotik.pullActiveUsers');
+        $pushUrl         = route('mikrotik.pushActiveUsers');
+        $orphanUserUrl   = route('mikrotik.syncOrphans');
+        $pullProfilesUrl = route('mikrotik.pullProfiles');
+
+        $this->installPullInactiveUsersScript($router, $pullInactiveUrl);
+        $this->installPullActiveUsersScript($router, $pullActiveUrl);
+        $this->installPushActiveUsersScript($router, $pushUrl);
+        $this->installRemoveOrphanUsersScript($router, $orphanUserUrl);
+        $this->installProfileOnLoginScript($router);
+        $this->installPullProfilesScript($router, $pullProfilesUrl);
+
+        foreach (self::schedulerDefinitions() as $scheduler) {
+            $this->upsertScheduler(
+                $router,
+                $scheduler['name'],
+                $scheduler['interval'],
+                $scheduler['on_event']
+            );
+        }
+    }
+
+    /**
      * Upsert a scheduler entry on MikroTik.
      */
     public function upsertScheduler(
@@ -133,5 +161,52 @@ class ScriptInstaller
         }
 
         return $this->client->safeRead($ros, $q);
+    }
+
+    /**
+     * Default RADTik scheduler definitions used across the app.
+     *
+     * @return array<int,array{name:string,label:string,interval:string,on_event:string}>
+     */
+    public static function schedulerDefinitions(): array
+    {
+        return [
+            [
+                'name'      => 'RADTik-PullInactive',
+                'label'     => 'Pull Inactive Users',
+                'interval'  => '5m',
+                'on_event'  => '/system script run "RADTik-pull-inactive-users"',
+            ],
+            [
+                'name'      => 'RADTik-PullActiveUsers',
+                'label'     => 'Pull Active Users',
+                'interval'  => '30m',
+                'on_event'  => '/system script run "RADTik-pull-active-users"',
+            ],
+            [
+                'name'      => 'RADTik-PushActive',
+                'label'     => 'Push Active Users',
+                'interval'  => '1m',
+                'on_event'  => '/system script run "RADTik-push-active-users"',
+            ],
+            [
+                'name'      => 'RADTik-RemoveOrphans',
+                'label'     => 'Remove Orphan Users',
+                'interval'  => '1h',
+                'on_event'  => '/system script run "RADTik-remove-orphan-users"',
+            ],
+            [
+                'name'      => 'RADTik-PullProfiles',
+                'label'     => 'Pull Profiles',
+                'interval'  => '10m',
+                'on_event'  => '/system script run "RADTik-pull-profiles"',
+            ],
+            [
+                'name'      => 'RADTik-RemoveOrphanProfiles',
+                'label'     => 'Remove Orphan Profiles',
+                'interval'  => '1h',
+                'on_event'  => '/system script run "RADTik-remove-orphan-profiles"',
+            ],
+        ];
     }
 }

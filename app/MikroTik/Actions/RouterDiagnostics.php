@@ -146,7 +146,13 @@ class RouterDiagnostics
                 ->equal('.proplist', 'name,type,comment,disabled')
         );
 
-        return $resp;
+        // Keep only physical ethernet interfaces (RouterOS reports them with type "ether*").
+        $physical = array_values(array_filter($resp, function ($row) {
+            $type = strtolower($row['type'] ?? '');
+            return str_starts_with($type, 'ether');
+        }));
+
+        return $physical;
     }
 
     /**

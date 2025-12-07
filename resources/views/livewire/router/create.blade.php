@@ -44,6 +44,12 @@
             </div>
 
             <div>
+                <x-mary-select label="Subscription Package" wire:model.live="package_id"
+                    :options="$packages->map(fn($p) => ['id' => $p->id, 'name' => $p->name . ' (' . ucfirst($p->billing_cycle) . ')'])->toArray()"
+                    option-label="name" option-value="id" placeholder="Select a package (optional)" />
+            </div>
+
+            <div>
                 <x-mary-input label="Monthly Expense" type="number" min="0" step="0.01"
                     wire:model.live.debounce.500ms="monthly_expense" placeholder="0.00" />
             </div>

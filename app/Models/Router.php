@@ -28,6 +28,7 @@ class Router extends Model
         'monthly_expense',
         'logo',
         'voucher_template_id',
+        'package',
     ];
 
     public function decryptedPassword(): string
@@ -61,4 +62,8 @@ class Router extends Model
     {
         return $this->hasMany(Invoice::class);
     }
+
+    protected $casts = [
+        'package' => 'array',
+    ];
 }
