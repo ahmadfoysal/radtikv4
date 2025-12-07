@@ -50,16 +50,6 @@ class RouterSubscriptionService
                 throw new RuntimeException('Insufficient balance for package subscription.');
             }
 
-            // Debit the user's balance
-            $this->billingService->debit(
-                $user,
-                $price,
-                'router_subscription',
-                "Router subscription: {$package->name}",
-                ['package_id' => $package->id],
-                null // router will be set after creation
-            );
-
             // Calculate subscription dates
             $startDate = Carbon::now();
             $endDate = $this->calculateEndDate($startDate, $package->billing_cycle);
@@ -73,13 +63,15 @@ class RouterSubscriptionService
                 'auto_renew' => $package->auto_renew_allowed ?? false,
             ]));
 
-            // Update the invoice to link to the router
-            $user->invoices()
-                ->where('category', 'router_subscription')
-                ->whereNull('router_id')
-                ->latest()
-                ->first()
-                ?->update(['router_id' => $router->id]);
+            // Debit the user's balance with router reference
+            $this->billingService->debit(
+                $user,
+                $price,
+                'router_subscription',
+                "Router subscription: {$package->name}",
+                ['package_id' => $package->id],
+                $router
+            );
 
             return $router;
         });
@@ -131,11 +123,7 @@ class RouterSubscriptionService
             );
 
             // Calculate new subscription dates
-            // If not expired, extend from current end date, otherwise start from now
-            $startDate = $router->package_end_date && $router->package_end_date->isFuture()
-                ? $router->package_end_date
-                : Carbon::now();
-
+            $startDate = $this->calculateRenewalStartDate($router);
             $endDate = $this->calculateEndDate($startDate, $package->billing_cycle);
 
             // Update router with new package snapshot and dates
@@ -183,6 +171,22 @@ class RouterSubscriptionService
             'auto_renew_allowed' => $package->auto_renew_allowed,
             'description' => $package->description,
         ];
+    }
+
+    /**
+     * Calculate the renewal start date for a router subscription.
+     * If not expired, extends from current end date, otherwise starts from now.
+     *
+     * @param  Router  $router  The router being renewed
+     * @return Carbon The start date for the renewal
+     */
+    protected function calculateRenewalStartDate(Router $router): Carbon
+    {
+        if ($router->package_end_date && $router->package_end_date->isFuture()) {
+            return $router->package_end_date;
+        }
+
+        return Carbon::now();
     }
 
     /**
