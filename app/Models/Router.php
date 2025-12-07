@@ -29,6 +29,9 @@ class Router extends Model
         'logo',
         'voucher_template_id',
         'package',
+        'package_start_date',
+        'package_end_date',
+        'auto_renew',
     ];
 
     public function decryptedPassword(): string
@@ -65,5 +68,8 @@ class Router extends Model
 
     protected $casts = [
         'package' => 'array',
+        'package_start_date' => 'datetime',
+        'package_end_date' => 'datetime',
+        'auto_renew' => 'boolean',
     ];
 }

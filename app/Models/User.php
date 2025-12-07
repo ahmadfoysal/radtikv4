@@ -16,11 +16,12 @@ use App\Models\RadiusServer;
 use App\Models\RadiusProfile;
 use App\Models\Invoice;
 use App\Models\Traits\HasBilling;
+use App\Models\Traits\HasRouterBilling;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, TwoFactorAuthenticatable, HasRoles, HasBilling;
+    use HasFactory, Notifiable, TwoFactorAuthenticatable, HasRoles, HasBilling, HasRouterBilling;
 
     /**
      * The attributes that are mass assignable.

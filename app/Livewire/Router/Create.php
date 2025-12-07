@@ -55,23 +55,61 @@ class Create extends Component
     {
         $this->validate();
 
+        $user = Auth::user();
         $voucherTemplateId = $this->voucher_template_id
             ?? VoucherTemplate::query()->where('is_active', true)->value('id')
             ?? VoucherTemplate::query()->value('id');
 
-        Router::create([
-            'name'     => $this->name,
-            'address'  => $this->address,
-            'login_address' => $this->login_address,
-            'port'     => $this->port,
-            'username' => $this->username,
-            'password' => Crypt::encryptString($this->password),
-            'app_key'  => bin2hex(random_bytes(16)),
-            'user_id'  => Auth::id(),
-            'voucher_template_id' => $voucherTemplateId,
-            'monthly_expense' => $this->monthly_expense,
-            'package'  => $this->packagePayload($this->package_id),
-        ]);
+        // If package is selected, use the subscription service
+        if ($this->package_id) {
+            $package = Package::find($this->package_id);
+
+            if (! $package) {
+                $this->error(title: 'Error', description: 'Selected package not found.');
+
+                return;
+            }
+
+            // Check if user has enough balance
+            if (! $user->hasBalanceForPackage($package)) {
+                $this->error(title: 'Insufficient Balance', description: 'You do not have enough balance to subscribe to this package.');
+
+                return;
+            }
+
+            try {
+                // Use the subscription service to create router with billing
+                $user->subscribeRouterWithPackage([
+                    'name' => $this->name,
+                    'address' => $this->address,
+                    'login_address' => $this->login_address,
+                    'port' => $this->port,
+                    'username' => $this->username,
+                    'password' => Crypt::encryptString($this->password),
+                    'app_key' => bin2hex(random_bytes(16)),
+                    'voucher_template_id' => $voucherTemplateId,
+                    'monthly_expense' => $this->monthly_expense,
+                ], $package);
+            } catch (\RuntimeException $e) {
+                $this->error(title: 'Error', description: $e->getMessage());
+
+                return;
+            }
+        } else {
+            // Create router without package (no billing)
+            Router::create([
+                'name' => $this->name,
+                'address' => $this->address,
+                'login_address' => $this->login_address,
+                'port' => $this->port,
+                'username' => $this->username,
+                'password' => Crypt::encryptString($this->password),
+                'app_key' => bin2hex(random_bytes(16)),
+                'user_id' => Auth::id(),
+                'voucher_template_id' => $voucherTemplateId,
+                'monthly_expense' => $this->monthly_expense,
+            ]);
+        }
 
         // Reset form (keep port default)
         $this->reset([
@@ -111,29 +149,5 @@ class Create extends Component
             'packages' => Package::orderBy('name')->get(['id', 'name', 'billing_cycle']),
         ])
             ->title(__('Add Router'));
-    }
-
-    protected function packagePayload(?int $packageId): ?array
-    {
-        if (!$packageId) {
-            return null;
-        }
-
-        $package = Package::find($packageId);
-
-        if (!$package) {
-            return null;
-        }
-
-        return [
-            'id' => $package->id,
-            'name' => $package->name,
-            'price_monthly' => $package->price_monthly,
-            'price_yearly' => $package->price_yearly,
-            'user_limit' => $package->user_limit,
-            'billing_cycle' => $package->billing_cycle,
-            'auto_renew_allowed' => $package->auto_renew_allowed,
-            'description' => $package->description,
-        ];
     }
 }
