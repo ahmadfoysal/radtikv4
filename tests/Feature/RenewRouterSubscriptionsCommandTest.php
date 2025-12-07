@@ -52,7 +52,7 @@ class RenewRouterSubscriptionsCommandTest extends TestCase
                 'start_date' => $startDate->toDateTimeString(),
                 'end_date' => $endDate->toDateTimeString(),
                 'auto_renew' => true,
-                'price' => 500.00,
+                'price' => $package->price_monthly,
             ],
         ]);
 
@@ -115,7 +115,7 @@ class RenewRouterSubscriptionsCommandTest extends TestCase
                 'start_date' => $startDate->toDateTimeString(),
                 'end_date' => $endDate->toDateTimeString(),
                 'auto_renew' => false,
-                'price' => 500.00,
+                'price' => $package->price_monthly,
             ],
         ]);
 
@@ -170,7 +170,7 @@ class RenewRouterSubscriptionsCommandTest extends TestCase
                 'start_date' => $startDate->toDateTimeString(),
                 'end_date' => $endDate->toDateTimeString(),
                 'auto_renew' => true,
-                'price' => 500.00,
+                'price' => $package->price_monthly,
             ],
         ]);
 
@@ -225,7 +225,7 @@ class RenewRouterSubscriptionsCommandTest extends TestCase
                 'start_date' => $startDate->toDateTimeString(),
                 'end_date' => $endDate->toDateTimeString(),
                 'auto_renew' => true,
-                'price' => 500.00,
+                'price' => $package->price_monthly,
             ],
         ]);
 
@@ -281,7 +281,7 @@ class RenewRouterSubscriptionsCommandTest extends TestCase
                 'start_date' => $startDate->toDateTimeString(),
                 'end_date' => $endDate->toDateTimeString(),
                 'auto_renew' => true,
-                'price' => 500.00,
+                'price' => $package->price_monthly,
             ],
         ]);
 
