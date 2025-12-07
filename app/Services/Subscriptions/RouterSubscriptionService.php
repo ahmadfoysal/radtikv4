@@ -14,8 +14,7 @@ class RouterSubscriptionService
 {
     public function __construct(
         protected BillingService $billingService
-    ) {
-    }
+    ) {}
 
     /**
      * Check if a user has enough balance for a given package.
@@ -71,7 +70,7 @@ class RouterSubscriptionService
                 'package' => $this->createPackageSnapshot($package),
                 'package_start_date' => $startDate,
                 'package_end_date' => $endDate,
-                'auto_renew' => $package->auto_renew_allowed,
+                'auto_renew' => $package->auto_renew_allowed ?? false,
             ]));
 
             // Update the invoice to link to the router
@@ -144,7 +143,7 @@ class RouterSubscriptionService
                 'package' => $this->createPackageSnapshot($package),
                 'package_start_date' => $startDate,
                 'package_end_date' => $endDate,
-                'auto_renew' => $package->auto_renew_allowed,
+                'auto_renew' => $package->auto_renew_allowed ?? false,
             ]);
 
             return $router;

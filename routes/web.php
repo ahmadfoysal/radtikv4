@@ -1,15 +1,12 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\MikrotikApiController;
-use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
-use App\Http\Controllers\Voucher\VoucherPrintController;
 use App\Http\Controllers\Voucher\SingleVoucherPrintController;
-
-
-
-//use request
+use App\Http\Controllers\Voucher\VoucherPrintController;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Http\Request;
+// use request
+use Illuminate\Support\Facades\Route;
 
 // All routes below require login
 Route::middleware(['auth'])->group(function () {
@@ -39,8 +36,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/vouchers/print', VoucherPrintController::class)->name('vouchers.print');
     Route::get('/vouchers/{voucher}/print-single', SingleVoucherPrintController::class)->name('vouchers.print.single');
 
-
-
     /* User Profile list */
     Route::get('/profiles', App\Livewire\Profile\Index::class)->name('profiles');
     Route::get('/profile/add', App\Livewire\Profile\Create::class)->name('profiles.create');
@@ -50,8 +45,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/radius/profiles', App\Livewire\Radius\Profile\Index::class)->name('radius.profiles');
     Route::get('/radius/profile/add', App\Livewire\Radius\Profile\Create::class)->name('radius.profiles.create');
     Route::get('/radius/profile/{profile}/edit', App\Livewire\Radius\Profile\Edit::class)->name('radius.profiles.edit');
-
-
 
     /* Zone Routes */
     Route::get('/zones', App\Livewire\Zone\Index::class)->name('zones.index');

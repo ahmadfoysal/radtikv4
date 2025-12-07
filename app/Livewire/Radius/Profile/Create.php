@@ -2,35 +2,38 @@
 
 namespace App\Livewire\Radius\Profile;
 
-
-use Livewire\Component;
 use Livewire\Attributes\Rule;
+use Livewire\Component;
 use Mary\Traits\Toast;
 
 class Create extends Component
 {
     use Toast;
 
-    //validate
+    // validate
     #[Rule(['required', 'string', 'max:100'])]
     public string $name = '';
+
     #[Rule([
         'nullable',
         'string',
         'max:50',
         // allow:  "128k"  or  "64k/128M"
-        'regex:/^\s*\d+(?:\.\d+)?[kKmMgG]?(?:\/\d+(?:\.\d+)?[kKmMgG]?)?\s*$/'
+        'regex:/^\s*\d+(?:\.\d+)?[kKmMgG]?(?:\/\d+(?:\.\d+)?[kKmMgG]?)?\s*$/',
     ])]
     public ?string $rate_limit = null;
+
     #[Rule([
         'nullable',
         'string',
         'max:50',
-        'regex:/^(?:(\d+d)?(\d+h)?(\d+m)?(\d+s)?)$/i'
+        'regex:/^(?:(\d+d)?(\d+h)?(\d+m)?(\d+s)?)$/i',
     ])]
     public ?string $validity = null;
+
     #[Rule(['boolean'])]
     public bool $mac_binding = false;
+
     #[Rule(['nullable', 'string', 'max:255'])]
     public ?string $description = null;
 
@@ -57,14 +60,10 @@ class Create extends Component
         $this->redirect(route('radius.profiles'));
     }
 
-
     public function cancel()
     {
         $this->redirect(route('radius.profiles'));
     }
-
-
-
 
     public function render()
     {

@@ -3,9 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Router;
-use App\Models\User;
-use App\Models\RouterProfile;
 
 class Voucher extends Model
 {
@@ -34,6 +31,7 @@ class Voucher extends Model
     {
         return $this->belongsTo(User::class);
     }
+
     public function router()
     {
         return $this->belongsTo(Router::class);

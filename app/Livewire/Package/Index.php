@@ -10,17 +10,20 @@ use Mary\Traits\Toast;
 
 class Index extends Component
 {
-    use WithPagination, Toast;
+    use Toast, WithPagination;
 
     public string $search = '';
+
     public int $perPage = 10;
+
     public string $sortField = 'name';
+
     public string $sortDirection = 'asc';
 
     protected $queryString = [
-        'search'        => ['except' => ''],
-        'perPage'       => ['except' => 10],
-        'sortField'     => ['except' => 'name'],
+        'search' => ['except' => ''],
+        'perPage' => ['except' => 10],
+        'sortField' => ['except' => 'name'],
         'sortDirection' => ['except' => 'asc'],
     ];
 
@@ -28,8 +31,8 @@ class Index extends Component
     protected function filteredQuery(): Builder
     {
         return Package::query()->when($this->search !== '', function (Builder $q) {
-            $s = '%' . trim($this->search) . '%';
-            $q->where(fn($qq) => $qq->where('name', 'like', $s)
+            $s = '%'.trim($this->search).'%';
+            $q->where(fn ($qq) => $qq->where('name', 'like', $s)
                 ->orWhere('description', 'like', $s)
                 ->orWhere('billing_cycle', 'like', $s));
         });
@@ -59,6 +62,7 @@ class Index extends Component
         if ($this->sortField !== $field) {
             return 'o-arrows-up-down';
         }
+
         return $this->sortDirection === 'asc' ? 'o-arrow-up' : 'o-arrow-down';
     }
 
@@ -69,13 +73,14 @@ class Index extends Component
 
         if (! $package) {
             $this->error('Package not found.');
+
             return;
         }
 
         $package->delete();
 
         // Calculate last page after deletion
-        $total    = $this->filteredQuery()->count();
+        $total = $this->filteredQuery()->count();
         $lastPage = max(1, (int) ceil($total / $this->perPage));
 
         $current = (int) request()->query('page', 1);

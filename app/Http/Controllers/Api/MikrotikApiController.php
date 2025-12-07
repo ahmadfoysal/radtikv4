@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Router;
 use App\Models\Voucher;
-use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class MikrotikApiController extends Controller
 {
@@ -20,7 +20,7 @@ class MikrotikApiController extends Controller
 
         $router = Router::where('app_key', $token)->first();
 
-        if (!$router) {
+        if (! $router) {
             return response('Invalid Token', 401);
         }
 
@@ -48,7 +48,7 @@ class MikrotikApiController extends Controller
                     $v->username,
                     $v->password,
                     $pName,
-                    $comment
+                    $comment,
                 ]);
             })->implode("\n");
 
@@ -59,8 +59,8 @@ class MikrotikApiController extends Controller
         // JSON Fallback
         return response()->json([
             'router' => $router->name,
-            'count'  => $vouchers->count(),
-            'data'   => $vouchers,
+            'count' => $vouchers->count(),
+            'data' => $vouchers,
         ]);
     }
 
@@ -75,7 +75,7 @@ class MikrotikApiController extends Controller
         $token = $request->query('token');
         $router = Router::where('app_key', $token)->first();
 
-        if (!$router) {
+        if (! $router) {
             return response('Invalid Token', 403);
         }
 
@@ -106,14 +106,13 @@ class MikrotikApiController extends Controller
                 $v->username,
                 $v->password,
                 $v->profile->name ?? 'default',
-                $baseComment
+                $baseComment,
             ]);
         })->implode("\n");
 
         return response($lines, 200)
             ->header('Content-Type', 'text/plain');
     }
-
 
     /**
      * MikroTik sends usage, login, mac, uptime etc to Laravel.
@@ -126,7 +125,7 @@ class MikrotikApiController extends Controller
 
         $router = Router::where('app_key', $token)->first();
 
-        if (!$router) {
+        if (! $router) {
             // Return 403 to prevent MikroTik "www-authenticate" header error
             return response()->json(['error' => 'Invalid token'], 403);
         }
@@ -143,10 +142,14 @@ class MikrotikApiController extends Controller
         // 3. Pre-process all lines from the request
         foreach ($lines as $line) {
             $line = trim($line);
-            if (empty($line)) continue;
+            if (empty($line)) {
+                continue;
+            }
 
             $parts = explode(';', $line);
-            if (count($parts) < 6) continue;
+            if (count($parts) < 6) {
+                continue;
+            }
 
             [$username, $mac, $bytesIn, $bytesOut, $uptime, $comment] = $parts;
             if (stripos($comment, 'act:') === false) {
@@ -172,18 +175,18 @@ class MikrotikApiController extends Controller
         // 5. Iterate over fetched vouchers and update them
         foreach ($vouchers as $username => $voucher) {
             // Add a check to prevent errors if username case mismatches
-            if (!isset($userData[$username])) {
+            if (! isset($userData[$username])) {
                 continue;
             }
 
             $data = $userData[$username];
             $updateData = [
-                'mac_address' => !empty($data['mac']) ? $data['mac'] : $voucher->mac_address,
-                'bytes_in'    => (int) $data['bytesIn'],
-                'bytes_out'   => (int) $data['bytesOut'],
-                'up_time'     => $data['uptime'],
-                'status'      => 'active',
-                'updated_at'  => now(),
+                'mac_address' => ! empty($data['mac']) ? $data['mac'] : $voucher->mac_address,
+                'bytes_in' => (int) $data['bytesIn'],
+                'bytes_out' => (int) $data['bytesOut'],
+                'up_time' => $data['uptime'],
+                'status' => 'active',
+                'updated_at' => now(),
             ];
 
             $activationTimestamp = $voucher->activated_at;
@@ -215,7 +218,7 @@ class MikrotikApiController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'processed' => $updatedCount
+            'processed' => $updatedCount,
         ]);
     }
 
@@ -236,6 +239,7 @@ class MikrotikApiController extends Controller
                 \Log::error("MikroTik PushActiveUsers: Failed to parse date '{$dateStr}' for voucher {$voucherId}", ['exception' => $e->getMessage()]);
             }
         }
+
         return null;
     }
 
@@ -244,7 +248,7 @@ class MikrotikApiController extends Controller
      */
     private function calculateExpiryDate(Voucher $voucher, Carbon $activationTimestamp): ?Carbon
     {
-        if (!$voucher->profile || !$voucher->profile->validity) {
+        if (! $voucher->profile || ! $voucher->profile->validity) {
             return null;
         }
 
@@ -253,14 +257,17 @@ class MikrotikApiController extends Controller
             $expiresAt = $activationTimestamp->copy(); // Use copy to avoid mutating the original
             $amount = (int) $validity;
 
-            if ($amount <= 0) return null;
+            if ($amount <= 0) {
+                return null;
+            }
 
             if (str_contains($validity, 'h')) {
                 return $expiresAt->addHours($amount);
             }
-            if (str_contains($validity, 'm') && !str_contains($validity, 'mo')) {
+            if (str_contains($validity, 'm') && ! str_contains($validity, 'mo')) {
                 return $expiresAt->addMinutes($amount);
             }
+
             // Default to days (covers 'd', 'days', or just number)
             return $expiresAt->addDays($amount);
         } catch (\Exception $e) {
@@ -272,7 +279,7 @@ class MikrotikApiController extends Controller
 
     public function pullProfiles(Request $request)
     {
-        //changed
+        // changed
         $token = $request->query('token');
 
         $router = Router::where('app_key', $token)->first();
@@ -282,7 +289,6 @@ class MikrotikApiController extends Controller
         }
 
         $profiles = $router->user->profiles()->get();
-
 
         if ($request->query('format') === 'flat') {
             $lines = $profiles->map(function ($p) {
@@ -297,19 +303,18 @@ class MikrotikApiController extends Controller
                 ->header('Content-Type', 'text/plain');
         }
 
-
         $profilesJson = $profiles->map(function ($p) {
             return [
-                'name'         => $p->name,
+                'name' => $p->name,
                 'shared_users' => $p->shared_users,
-                'rate_limit'   => $p->rate_limit,
+                'rate_limit' => $p->rate_limit,
             ];
         });
 
         return response()->json([
             'router_id' => $router->id,
-            'count'     => $profilesJson->count(),
-            'profiles'  => $profilesJson,
+            'count' => $profilesJson->count(),
+            'profiles' => $profilesJson,
         ]);
     }
 
@@ -324,7 +329,7 @@ class MikrotikApiController extends Controller
         $token = $request->query('token');
         $router = Router::where('app_key', $token)->first();
 
-        if (!$router) {
+        if (! $router) {
             return response('Invalid Token', 403);
         }
 

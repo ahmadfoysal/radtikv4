@@ -10,28 +10,28 @@ use Throwable;
 class MikrotikService
 {
     public function __construct(
-        private int   $timeout        = 4,    // connect timeout (s)
-        private int $socketTimeout  = 3,  // read timeout (s)
-        private int   $attempts       = 1,    // reconnect attempts
-        private int $retryDelay     = 0,  // seconds
+        private int $timeout = 4,    // connect timeout (s)
+        private int $socketTimeout = 3,  // read timeout (s)
+        private int $attempts = 1,    // reconnect attempts
+        private int $retryDelay = 0,  // seconds
     ) {}
 
     /** Build a RouterOS client using credentials from the Router model */
     protected function client(Router $router): Client
     {
         $host = $router->address;                  // prefer IP
-        $port = (int)($router->port ?: 8728);      // ensure correct field
-        $useSSL = ($port === 8729) || (bool)($router->use_tls ?? false);
+        $port = (int) ($router->port ?: 8728);      // ensure correct field
+        $useSSL = ($port === 8729) || (bool) ($router->use_tls ?? false);
 
         $options = [
-            'host'           => $host,
-            'user'           => $router->username,
-            'pass'           => $router->decryptedPassword(),
-            'port'           => $port,
-            'timeout'        => $this->timeout,
+            'host' => $host,
+            'user' => $router->username,
+            'pass' => $router->decryptedPassword(),
+            'port' => $port,
+            'timeout' => $this->timeout,
             'socket_timeout' => $this->socketTimeout,
-            'attempts'       => $this->attempts,
-            'delay'          => $this->retryDelay,
+            'attempts' => $this->attempts,
+            'delay' => $this->retryDelay,
         ];
 
         if ($useSSL) {
@@ -39,8 +39,8 @@ class MikrotikService
             // self-signed dev/edge cases; in prod prefer proper cert
             $options['ssl_context'] = stream_context_create([
                 'ssl' => [
-                    'verify_peer'       => false,
-                    'verify_peer_name'  => false,
+                    'verify_peer' => false,
+                    'verify_peer_name' => false,
                     'allow_self_signed' => true,
                 ],
             ]);
@@ -57,8 +57,10 @@ class MikrotikService
         $fp = @fsockopen($host, $port, $errno, $errstr, 1.2); // ~1s
         if ($fp) {
             fclose($fp);
+
             return true;
         }
+
         return false;
     }
 
@@ -67,6 +69,7 @@ class MikrotikService
     {
         try {
             $resp = $client->query($query)->read();
+
             return is_array($resp) ? $resp : [];
         } catch (Throwable $e) {
             // Bubble up a clean message; caller shows toast/logs
@@ -82,6 +85,7 @@ class MikrotikService
     {
         $client = $this->client($router);
         $data = $this->safeRead($client, new Query('/system/resource/print'));
+
         return $this->firstRow($data);
     }
 
@@ -127,7 +131,7 @@ class MikrotikService
         $client = $this->client($router);
         $activeId = $this->resolveActiveUserId($client, $usernameOrActiveId);
 
-        if (!$activeId) {
+        if (! $activeId) {
             return ['ok' => false, 'message' => 'Active user not found'];
         }
 
@@ -143,6 +147,7 @@ class MikrotikService
         $client = $this->client($router);
         $q = (new Query('/ip/hotspot/active/print'))
             ->equal('.proplist', 'user,mac-address,address,.id');
+
         return $this->safeRead($client, $q);
     }
 
@@ -151,7 +156,9 @@ class MikrotikService
     {
         $client = $this->client($router);
         $id = str_starts_with($nameOrId, '*') ? $nameOrId : $this->resolveUserIdByName($client, $nameOrId);
-        if (!$id) return ['ok' => false, 'message' => 'User not found'];
+        if (! $id) {
+            return ['ok' => false, 'message' => 'User not found'];
+        }
 
         return $this->safeRead(
             $client,
@@ -167,6 +174,7 @@ class MikrotikService
             ->where('name', $name)
             ->equal('.proplist', 'name,.id,disabled,comment,profile');
         $resp = $this->safeRead($client, $q);
+
         return $this->firstRow($resp);
     }
 
@@ -176,6 +184,7 @@ class MikrotikService
         try {
             $client = $this->client($router);
             $this->safeRead($client, new Query('/system/identity/print'));
+
             return true;
         } catch (Throwable) {
             return false;
@@ -183,12 +192,13 @@ class MikrotikService
     }
 
     /** --- Helpers --- */
-
     protected function setHotspotUserDisabled(Router $router, string $nameOrId, bool $disabled): array
     {
         $client = $this->client($router);
         $id = str_starts_with($nameOrId, '*') ? $nameOrId : $this->resolveUserIdByName($client, $nameOrId);
-        if (!$id) return ['ok' => false, 'message' => 'User not found'];
+        if (! $id) {
+            return ['ok' => false, 'message' => 'User not found'];
+        }
 
         return $this->safeRead(
             $client,
@@ -204,6 +214,7 @@ class MikrotikService
             ->where('name', $name)
             ->equal('.proplist', '.id');
         $row = $this->firstRow($this->safeRead($client, $q));
+
         return $row['.id'] ?? null;
     }
 
@@ -216,6 +227,7 @@ class MikrotikService
             ->where('user', $usernameOrActiveId)
             ->equal('.proplist', '.id');
         $row = $this->firstRow($this->safeRead($client, $q));
+
         return $row['.id'] ?? null;
     }
 

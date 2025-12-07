@@ -12,16 +12,16 @@ class VoucherPrintController extends Controller
     {
         $data = $request->validate([
             'router_id' => 'required|integer|exists:routers,id',
-            'batch'     => 'nullable|string',
-            'status'    => 'nullable|string|in:inactive,active,expired,all',
+            'batch' => 'nullable|string',
+            'status' => 'nullable|string|in:inactive,active,expired,all',
         ]);
 
         $router = Router::with(['voucherTemplate'])->findOrFail($data['router_id']);
 
         $vouchers = $router->vouchers()
             ->with('profile')
-            ->when($data['batch'] ?? null, fn($q) => $q->where('batch', $data['batch']))
-            ->when(($data['status'] ?? 'all') !== 'all', fn($q) => $q->where('status', $data['status']))
+            ->when($data['batch'] ?? null, fn ($q) => $q->where('batch', $data['batch']))
+            ->when(($data['status'] ?? 'all') !== 'all', fn ($q) => $q->where('status', $data['status']))
             ->orderBy('id', 'desc')
             ->get();
 
@@ -31,7 +31,7 @@ class VoucherPrintController extends Controller
         }
 
         return view('components.vouchers.print', [
-            'router'   => $router,
+            'router' => $router,
             'vouchers' => $vouchers,
         ]);
     }

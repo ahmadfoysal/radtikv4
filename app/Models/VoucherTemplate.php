@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class VoucherTemplate extends Model
 {
-
     protected $fillable = [
         'name',
         'component',

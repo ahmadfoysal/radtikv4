@@ -4,11 +4,11 @@ namespace App\MikroTik\Installer;
 
 use App\MikroTik\Client\RouterClient;
 use App\MikroTik\Scripts\CleanOrphanUsersScript;
-use App\MikroTik\Scripts\PullInactiveUsersScript;
-use App\MikroTik\Scripts\PushActiveUsersScript;
-use App\MikroTik\Scripts\PullProfilesScript;
 use App\MikroTik\Scripts\ProfileOnLoginScript;
 use App\MikroTik\Scripts\PullActiveUsersScript;
+use App\MikroTik\Scripts\PullInactiveUsersScript;
+use App\MikroTik\Scripts\PullProfilesScript;
+use App\MikroTik\Scripts\PushActiveUsersScript;
 use App\Models\Router;
 use RouterOS\Query;
 
@@ -31,7 +31,7 @@ class ScriptInstaller
             ->equal('.proplist', '.id');
 
         $existing = $this->client->safeRead($ros, $checkQuery);
-        $id       = $existing[0]['.id'] ?? null;
+        $id = $existing[0]['.id'] ?? null;
 
         if ($id) {
             $q = (new Query('/system/script/set'))
@@ -50,7 +50,7 @@ class ScriptInstaller
 
     public function installPullInactiveUsersScript(Router $router, string $baseUrl): array
     {
-        $name   = PullInactiveUsersScript::name();
+        $name = PullInactiveUsersScript::name();
         $source = PullInactiveUsersScript::build($router, $baseUrl);
 
         return $this->upsertScript($router, $name, $source);
@@ -58,7 +58,7 @@ class ScriptInstaller
 
     public function installPullActiveUsersScript(Router $router, string $baseUrl): array
     {
-        $name   = PullActiveUsersScript::name();
+        $name = PullActiveUsersScript::name();
         $source = PullActiveUsersScript::build($router, $baseUrl);
 
         return $this->upsertScript($router, $name, $source);
@@ -66,7 +66,7 @@ class ScriptInstaller
 
     public function installPushActiveUsersScript(Router $router, string $baseUrl): array
     {
-        $name   = PushActiveUsersScript::name();
+        $name = PushActiveUsersScript::name();
         $source = PushActiveUsersScript::build($router, $baseUrl);
 
         return $this->upsertScript($router, $name, $source);
@@ -74,7 +74,7 @@ class ScriptInstaller
 
     public function installRemoveOrphanUsersScript(Router $router, string $baseUrl): array
     {
-        $name   = CleanOrphanUsersScript::name();
+        $name = CleanOrphanUsersScript::name();
         $source = CleanOrphanUsersScript::build($router, $baseUrl);
 
         return $this->upsertScript($router, $name, $source);
@@ -82,16 +82,15 @@ class ScriptInstaller
 
     public function installPullProfilesScript(Router $router, string $baseUrl): array
     {
-        $name   = PullProfilesScript::name();
+        $name = PullProfilesScript::name();
         $source = PullProfilesScript::build($router, $baseUrl);
 
         return $this->upsertScript($router, $name, $source);
     }
 
-
     public function installProfileOnLoginScript(Router $router): array
     {
-        $name   = ProfileOnLoginScript::name();
+        $name = ProfileOnLoginScript::name();
         $source = ProfileOnLoginScript::build($router);
 
         return $this->upsertScript($router, $name, $source);
@@ -103,9 +102,9 @@ class ScriptInstaller
     public function installAllScriptsAndSchedulers(Router $router): void
     {
         $pullInactiveUrl = route('mikrotik.pullInactiveUsers');
-        $pullActiveUrl   = route('mikrotik.pullActiveUsers');
-        $pushUrl         = route('mikrotik.pushActiveUsers');
-        $orphanUserUrl   = route('mikrotik.syncOrphans');
+        $pullActiveUrl = route('mikrotik.pullActiveUsers');
+        $pushUrl = route('mikrotik.pushActiveUsers');
+        $orphanUserUrl = route('mikrotik.syncOrphans');
         $pullProfilesUrl = route('mikrotik.pullProfiles');
 
         $this->installPullInactiveUsersScript($router, $pullInactiveUrl);
@@ -142,7 +141,7 @@ class ScriptInstaller
             ->equal('.proplist', '.id');
 
         $existing = $this->client->safeRead($ros, $checkQuery);
-        $id       = $existing[0]['.id'] ?? null;
+        $id = $existing[0]['.id'] ?? null;
 
         if ($id) {
             // Update existing scheduler
@@ -172,40 +171,40 @@ class ScriptInstaller
     {
         return [
             [
-                'name'      => 'RADTik-PullInactive',
-                'label'     => 'Pull Inactive Users',
-                'interval'  => '5m',
-                'on_event'  => '/system script run "RADTik-pull-inactive-users"',
+                'name' => 'RADTik-PullInactive',
+                'label' => 'Pull Inactive Users',
+                'interval' => '5m',
+                'on_event' => '/system script run "RADTik-pull-inactive-users"',
             ],
             [
-                'name'      => 'RADTik-PullActiveUsers',
-                'label'     => 'Pull Active Users',
-                'interval'  => '30m',
-                'on_event'  => '/system script run "RADTik-pull-active-users"',
+                'name' => 'RADTik-PullActiveUsers',
+                'label' => 'Pull Active Users',
+                'interval' => '30m',
+                'on_event' => '/system script run "RADTik-pull-active-users"',
             ],
             [
-                'name'      => 'RADTik-PushActive',
-                'label'     => 'Push Active Users',
-                'interval'  => '1m',
-                'on_event'  => '/system script run "RADTik-push-active-users"',
+                'name' => 'RADTik-PushActive',
+                'label' => 'Push Active Users',
+                'interval' => '1m',
+                'on_event' => '/system script run "RADTik-push-active-users"',
             ],
             [
-                'name'      => 'RADTik-RemoveOrphans',
-                'label'     => 'Remove Orphan Users',
-                'interval'  => '1h',
-                'on_event'  => '/system script run "RADTik-remove-orphan-users"',
+                'name' => 'RADTik-RemoveOrphans',
+                'label' => 'Remove Orphan Users',
+                'interval' => '1h',
+                'on_event' => '/system script run "RADTik-remove-orphan-users"',
             ],
             [
-                'name'      => 'RADTik-PullProfiles',
-                'label'     => 'Pull Profiles',
-                'interval'  => '10m',
-                'on_event'  => '/system script run "RADTik-pull-profiles"',
+                'name' => 'RADTik-PullProfiles',
+                'label' => 'Pull Profiles',
+                'interval' => '10m',
+                'on_event' => '/system script run "RADTik-pull-profiles"',
             ],
             [
-                'name'      => 'RADTik-RemoveOrphanProfiles',
-                'label'     => 'Remove Orphan Profiles',
-                'interval'  => '1h',
-                'on_event'  => '/system script run "RADTik-remove-orphan-profiles"',
+                'name' => 'RADTik-RemoveOrphanProfiles',
+                'label' => 'Remove Orphan Profiles',
+                'interval' => '1h',
+                'on_event' => '/system script run "RADTik-remove-orphan-profiles"',
             ],
         ];
     }

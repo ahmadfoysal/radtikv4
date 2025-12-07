@@ -168,8 +168,9 @@ class RouterSubscriptionServiceTest extends TestCase
         $this->assertEquals(1000.00, (float) $user->balance);
 
         // Check end date is one year from start
-        $this->assertTrue(
-            $router->package_end_date->diffInDays($router->package_start_date) >= 365
+        $this->assertGreaterThanOrEqual(
+            365,
+            $router->package_start_date->diffInDays($router->package_end_date)
         );
     }
 

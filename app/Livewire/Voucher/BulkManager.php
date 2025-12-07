@@ -4,9 +4,9 @@ namespace App\Livewire\Voucher;
 
 use App\Models\Router;
 use App\Models\Voucher;
+use Illuminate\Database\Eloquent\Builder;
 use Livewire\Component;
 use Mary\Traits\Toast;
-use Illuminate\Database\Eloquent\Builder;
 
 class BulkManager extends Component
 {
@@ -14,6 +14,7 @@ class BulkManager extends Component
 
     // Filters
     public $router_id;
+
     public $batch;
 
     // CHANGE: Default status 'all' ensures vouchers show up immediately after router selection
@@ -47,8 +48,9 @@ class BulkManager extends Component
 
     public function loadBatches()
     {
-        if (!$this->router_id) {
+        if (! $this->router_id) {
             $this->batches = [];
+
             return;
         }
 
@@ -60,22 +62,22 @@ class BulkManager extends Component
             ->orderByRaw('MAX(created_at) DESC')
             ->limit(50)
             ->pluck('batch')
-            ->map(fn($b) => ['id' => $b, 'name' => $b])
+            ->map(fn ($b) => ['id' => $b, 'name' => $b])
             ->toArray();
     }
 
     // Central query logic
     public function getQuery(): ?Builder
     {
-        if (!$this->router_id) {
+        if (! $this->router_id) {
             return null;
         }
 
         return Voucher::query()
             ->with('profile')
             ->where('router_id', $this->router_id)
-            ->when($this->batch, fn($q) => $q->where('batch', $this->batch))
-            ->when($this->status !== 'all', fn($q) => $q->where('status', $this->status))
+            ->when($this->batch, fn ($q) => $q->where('batch', $this->batch))
+            ->when($this->status !== 'all', fn ($q) => $q->where('status', $this->status))
             ->orderBy('id', 'desc');
     }
 
@@ -85,17 +87,20 @@ class BulkManager extends Component
         if ($id) {
             // Single Delete
             Voucher::where('id', $id)->delete();
-            $this->success("Voucher deleted successfully.");
+            $this->success('Voucher deleted successfully.');
         } else {
             // Bulk Delete
             $query = $this->getQuery();
 
-            if (!$query) return;
+            if (! $query) {
+                return;
+            }
 
             $count = $query->count();
 
             if ($count === 0) {
                 $this->error('No vouchers found to delete.');
+
                 return;
             }
 
@@ -115,15 +120,16 @@ class BulkManager extends Component
     {
         $query = $this->getQuery();
 
-        if (!$query || $query->count() === 0) {
+        if (! $query || $query->count() === 0) {
             $this->error('No vouchers to print.');
+
             return;
         }
 
         $url = route('vouchers.print', [
             'router_id' => $this->router_id,
-            'batch'     => $this->batch,
-            'status'    => $this->status,
+            'batch' => $this->batch,
+            'status' => $this->status,
         ]);
 
         $this->js("window.open('$url', '_blank');");
@@ -131,15 +137,17 @@ class BulkManager extends Component
 
     public function printVoucher(int $voucherId): void
     {
-        if (!$this->router_id) {
+        if (! $this->router_id) {
             $this->error('Select a router first.');
+
             return;
         }
 
         $voucher = Voucher::where('router_id', $this->router_id)->find($voucherId);
 
-        if (!$voucher) {
+        if (! $voucher) {
             $this->error('Voucher not found for the selected router.');
+
             return;
         }
 
@@ -147,7 +155,6 @@ class BulkManager extends Component
 
         $this->js("window.open('$url', '_blank');");
     }
-
 
     public function render()
     {

@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\User;
+use Illuminate\Database\Seeder;
 
 class UserSeed extends Seeder
 {
@@ -13,7 +12,7 @@ class UserSeed extends Seeder
      */
     public function run(): void
     {
-        $superadmin =   User::create([
+        $superadmin = User::create([
             'name' => 'Super Admin',
             'email' => 'superadmin@example.com',
             'password' => bcrypt('password'),
@@ -26,7 +25,7 @@ class UserSeed extends Seeder
             'phone' => '+1234567890',
         ]);
 
-        //assingn role
+        // assingn role
         $superadmin->assignRole('superadmin');
 
         $admin = User::create([
@@ -42,7 +41,7 @@ class UserSeed extends Seeder
             'phone' => '+1987654321',
         ]);
 
-        //assign role
+        // assign role
         $admin->assignRole('admin');
 
         $reseller = User::create([
@@ -59,7 +58,7 @@ class UserSeed extends Seeder
             'phone' => '+1123456789',
         ]);
 
-        //assign role
+        // assign role
         $reseller->assignRole('reseller');
     }
 }

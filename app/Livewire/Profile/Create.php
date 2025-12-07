@@ -4,8 +4,8 @@ namespace App\Livewire\Profile;
 
 use App\Models\UserProfile;
 use Illuminate\Validation\Rule as VRule;
-use Livewire\Component;
 use Livewire\Attributes\Rule;
+use Livewire\Component;
 use Mary\Traits\Toast;
 
 class Create extends Component
@@ -16,16 +16,15 @@ class Create extends Component
         'required',
         'string',
         'max:100',
-        'regex:/^[A-Za-z0-9\-_]+$/'
+        'regex:/^[A-Za-z0-9\-_]+$/',
     ])]
     public string $name = '';
-
 
     #[Rule([
         'nullable',
         'string',
         'max:50',
-        'regex:/^\s*\d+(?:\.\d+)?[kKmMgG]?(?:\/\d+(?:\.\d+)?[kKmMgG]?)?\s*$/'
+        'regex:/^\s*\d+(?:\.\d+)?[kKmMgG]?(?:\/\d+(?:\.\d+)?[kKmMgG]?)?\s*$/',
     ])]
     public ?string $rate_limit = null;
 
@@ -36,7 +35,7 @@ class Create extends Component
         'nullable',
         'string',
         'max:50',
-        'regex:/^(?:(\d+d)?(\d+h)?(\d+m)?(\d+s)?)$/i'
+        'regex:/^(?:(\d+d)?(\d+h)?(\d+m)?(\d+s)?)$/i',
     ])]
     public ?string $validity = null;
 
@@ -65,14 +64,14 @@ class Create extends Component
         ]);
 
         UserProfile::create([
-            'name'        => $this->name,
-            'rate_limit'  => $this->rate_limit,
-            'validity'    => $this->validity ? strtolower($this->validity) : null,
+            'name' => $this->name,
+            'rate_limit' => $this->rate_limit,
+            'validity' => $this->validity ? strtolower($this->validity) : null,
             'shared_users' => $this->shared_users,
             'mac_binding' => $this->mac_binding,
-            'price'       => $this->price,
+            'price' => $this->price,
             'description' => $this->description,
-            'user_id'     => auth()->id(),
+            'user_id' => auth()->id(),
         ]);
 
         $this->reset(['name', 'rate_limit', 'validity', 'mac_binding', 'price', 'description']);

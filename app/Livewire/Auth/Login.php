@@ -2,8 +2,8 @@
 
 namespace App\Livewire\Auth;
 
-use Livewire\Component;
 use Livewire\Attributes\Rule;
+use Livewire\Component;
 
 class Login extends Component
 {
@@ -24,8 +24,8 @@ class Login extends Component
     {
         return view('livewire.auth.login')
             ->layout('components.layouts.auth.mary', [
-                'title'     => __('Log in'),
-                'header'    => __('Log in to your account'),
+                'title' => __('Log in'),
+                'header' => __('Log in to your account'),
                 'subheader' => __('Enter your email and password below to log in'),
             ]);
     }

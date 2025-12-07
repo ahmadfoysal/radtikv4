@@ -51,7 +51,7 @@ class RouterDiagnostics
 
         $remoteScripts = [];
         foreach ($resp as $row) {
-            if (!isset($row['name'])) {
+            if (! isset($row['name'])) {
                 continue;
             }
             $remoteScripts[$row['name']] = $row;
@@ -62,10 +62,10 @@ class RouterDiagnostics
             $match = $remoteScripts[$scriptName] ?? null;
 
             $statuses[] = [
-                'name'     => $scriptName,
-                'present'  => $match !== null,
-                'policy'   => $match['policy'] ?? null,
-                'owner'    => $match['owner'] ?? null,
+                'name' => $scriptName,
+                'present' => $match !== null,
+                'policy' => $match['policy'] ?? null,
+                'owner' => $match['owner'] ?? null,
                 'metadata' => $match,
             ];
         }
@@ -103,8 +103,8 @@ class RouterDiagnostics
         $activeCount = count($active);
 
         return [
-            'total'    => $totalUsers,
-            'active'   => $activeCount,
+            'total' => $totalUsers,
+            'active' => $activeCount,
             'disabled' => $disabled,
             'inactive' => max($totalUsers - $activeCount, 0),
         ];
@@ -125,6 +125,7 @@ class RouterDiagnostics
 
         $filtered = array_values(array_filter($resp, function ($row) {
             $topics = $row['topics'] ?? '';
+
             return str_contains(strtolower($topics), 'hotspot');
         }));
 
@@ -149,6 +150,7 @@ class RouterDiagnostics
         // Keep only physical ethernet interfaces (RouterOS reports them with type "ether*").
         $physical = array_values(array_filter($resp, function ($row) {
             $type = strtolower($row['type'] ?? '');
+
             return str_starts_with($type, 'ether');
         }));
 
@@ -180,8 +182,8 @@ class RouterDiagnostics
         }
 
         return [
-            'rx'       => (float) ($row['rx-bits-per-second'] ?? 0),
-            'tx'       => (float) ($row['tx-bits-per-second'] ?? 0),
+            'rx' => (float) ($row['rx-bits-per-second'] ?? 0),
+            'tx' => (float) ($row['tx-bits-per-second'] ?? 0),
             'datetime' => now()->toIso8601String(),
         ];
     }
@@ -191,7 +193,7 @@ class RouterDiagnostics
      */
     protected function discoverScriptNames(): array
     {
-        if (!empty($this->scriptNameCache)) {
+        if (! empty($this->scriptNameCache)) {
             return $this->scriptNameCache;
         }
 
@@ -199,9 +201,9 @@ class RouterDiagnostics
         $names = [];
 
         if (is_dir($basePath)) {
-            foreach (glob($basePath . '/*.php') as $file) {
-                $class = 'App\\MikroTik\\Scripts\\' . basename($file, '.php');
-                if (!class_exists($class) || !method_exists($class, 'name')) {
+            foreach (glob($basePath.'/*.php') as $file) {
+                $class = 'App\\MikroTik\\Scripts\\'.basename($file, '.php');
+                if (! class_exists($class) || ! method_exists($class, 'name')) {
                     continue;
                 }
 

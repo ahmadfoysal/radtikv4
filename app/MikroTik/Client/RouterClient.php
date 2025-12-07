@@ -10,10 +10,10 @@ use Throwable;
 class RouterClient
 {
     public function __construct(
-        private int $timeout       = 4,  // connect timeout (s)
+        private int $timeout = 4,  // connect timeout (s)
         private int $socketTimeout = 3,  // read timeout (s)
-        private int $attempts      = 1,  // reconnect attempts
-        private int $retryDelay    = 0,  // seconds
+        private int $attempts = 1,  // reconnect attempts
+        private int $retryDelay = 0,  // seconds
     ) {}
 
     /**
@@ -21,19 +21,19 @@ class RouterClient
      */
     public function make(Router $router): Client
     {
-        $host   = $router->address;              // prefer IP
-        $port   = (int)($router->port ?: 8728);  // ensure correct field
-        $useSSL = ($port === 8729) || (bool)($router->use_tls ?? false);
+        $host = $router->address;              // prefer IP
+        $port = (int) ($router->port ?: 8728);  // ensure correct field
+        $useSSL = ($port === 8729) || (bool) ($router->use_tls ?? false);
 
         $options = [
-            'host'           => $host,
-            'user'           => $router->username,
-            'pass'           => $router->decryptedPassword(),
-            'port'           => $port,
-            'timeout'        => $this->timeout,
+            'host' => $host,
+            'user' => $router->username,
+            'pass' => $router->decryptedPassword(),
+            'port' => $port,
+            'timeout' => $this->timeout,
             'socket_timeout' => $this->socketTimeout,
-            'attempts'       => $this->attempts,
-            'delay'          => $this->retryDelay,
+            'attempts' => $this->attempts,
+            'delay' => $this->retryDelay,
         ];
 
         if ($useSSL) {
@@ -41,8 +41,8 @@ class RouterClient
             // self-signed dev/edge cases; in prod prefer proper cert
             $options['ssl_context'] = stream_context_create([
                 'ssl' => [
-                    'verify_peer'       => false,
-                    'verify_peer_name'  => false,
+                    'verify_peer' => false,
+                    'verify_peer_name' => false,
                     'allow_self_signed' => true,
                 ],
             ]);
@@ -57,14 +57,15 @@ class RouterClient
     public function reachable(Router $router): bool
     {
         $host = $router->address;
-        $port = (int)($router->port ?: 8728);
+        $port = (int) ($router->port ?: 8728);
 
-        $errno  = 0;
+        $errno = 0;
         $errstr = '';
         $fp = @fsockopen($host, $port, $errno, $errstr, 1.2); // ~1s
 
         if ($fp) {
             fclose($fp);
+
             return true;
         }
 
@@ -78,6 +79,7 @@ class RouterClient
     {
         try {
             $resp = $client->query($query)->read();
+
             return is_array($resp) ? $resp : [];
         } catch (Throwable $e) {
             $msg = $e->getMessage() ?: 'RouterOS read failed';

@@ -2,19 +2,17 @@
 
 namespace App\Livewire\Router;
 
-use Livewire\Component;
+use App\Models\Package;
 use App\Models\Router;
 use App\Models\VoucherTemplate;
-use App\Models\Package;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Livewire\Attributes\Rule;
+use Livewire\Component;
 use Mary\Traits\Toast;
-
 
 class Create extends Component
 {
-
     use Toast;
 
     #[Rule(['required', 'string', 'max:100'])]
@@ -133,7 +131,6 @@ class Create extends Component
 
         return $this->redirect(route('routers.index'), navigate: true);
     }
-
 
     public function cancel()
     {

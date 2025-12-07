@@ -2,26 +2,30 @@
 
 namespace App\Livewire\User;
 
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 use Mary\Traits\Toast;
-use Illuminate\Support\Facades\DB;
 
 class Create extends Component
 {
-
     use Toast;
 
     #[Validate('required|string|max:255')]
     public $name;
+
     #[Validate('required|email|max:255|unique:users,email')]
     public $email;
+
     #[Validate('required|string|min:8|max:255')]
     public $password;
+
     #[Validate('nullable|string|max:20')]
     public $phone;
+
     #[Validate('nullable|string|max:255')]
     public $address;
+
     #[Validate('nullable|string|max:255')]
     public $country;
 
@@ -31,12 +35,12 @@ class Create extends Component
 
         DB::transaction(function () {
             $user = \App\Models\User::create([
-                'name'     => $this->name,
-                'email'    => $this->email,
+                'name' => $this->name,
+                'email' => $this->email,
                 'password' => bcrypt($this->password),
-                'phone'    => $this->phone,
-                'address'  => $this->address,
-                'country'  => $this->country,
+                'phone' => $this->phone,
+                'address' => $this->address,
+                'country' => $this->country,
             ]);
 
             // Decide which role to give the new user
@@ -65,10 +69,9 @@ class Create extends Component
         $this->redirect(route('users.index'), navigate: true);
     }
 
-
     public function cancel()
     {
-        //redirect to user list with a flash message
+        // redirect to user list with a flash message
 
         $this->redirect(route('users.index'), navigate: true);
     }

@@ -14,7 +14,7 @@ class SingleVoucherPrintController extends Controller
     {
         $voucher->load(['profile', 'router.voucherTemplate']);
 
-        if (!$voucher->router) {
+        if (! $voucher->router) {
             abort(404);
         }
 

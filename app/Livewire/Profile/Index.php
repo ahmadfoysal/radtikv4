@@ -9,9 +9,10 @@ use Mary\Traits\Toast;
 
 class Index extends Component
 {
-    use WithPagination, Toast;
+    use Toast, WithPagination;
 
     public string $q = '';          // search query
+
     protected $queryString = ['q']; // keep search in URL
 
     public int $perPage = 12;       // grid pagination
@@ -37,6 +38,7 @@ class Index extends Component
                 title: 'Not Found',
                 description: 'Profile not found or not yours.'
             );
+
             return;
         }
 
@@ -56,7 +58,7 @@ class Index extends Component
         return UserProfile::query()
             ->where('user_id', auth()->id())
             ->when($this->q, function ($query) {
-                $term = '%' . $this->q . '%';
+                $term = '%'.$this->q.'%';
 
                 $query->where(function ($q) use ($term) {
                     $q->where('name', 'like', $term)
