@@ -68,10 +68,10 @@ class HotspotUserManager
      */
     public function removeActiveUser(Router $router, string $usernameOrActiveId): array
     {
-        $ros       = $this->client->make($router);
-        $activeId  = $this->client->resolveActiveUserId($ros, $usernameOrActiveId);
+        $ros = $this->client->make($router);
+        $activeId = $this->client->resolveActiveUserId($ros, $usernameOrActiveId);
 
-        if (!$activeId) {
+        if (! $activeId) {
             return ['ok' => false, 'message' => 'Active user not found'];
         }
 
@@ -92,7 +92,7 @@ class HotspotUserManager
             ? $nameOrId
             : $this->client->resolveUserIdByName($ros, $nameOrId);
 
-        if (!$id) {
+        if (! $id) {
             return ['ok' => false, 'message' => 'User not found'];
         }
 
@@ -132,7 +132,7 @@ class HotspotUserManager
             ? $nameOrId
             : $this->client->resolveUserIdByName($ros, $nameOrId);
 
-        if (!$id) {
+        if (! $id) {
             return ['ok' => false, 'message' => 'User not found'];
         }
 

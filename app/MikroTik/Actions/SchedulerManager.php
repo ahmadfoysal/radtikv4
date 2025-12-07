@@ -33,20 +33,20 @@ class SchedulerManager
         foreach ($resp as $row) {
             $name = $row['name'] ?? null;
 
-            if (!$name || (!empty($names) && !in_array($name, $names, true))) {
+            if (! $name || (! empty($names) && ! in_array($name, $names, true))) {
                 continue;
             }
 
             $schedulers[] = [
-                'id'            => $row['.id'] ?? null,
-                'name'          => $name,
-                'interval'      => $row['interval'] ?? null,
-                'next_run'      => $row['next-run'] ?? null,
-                'last_run'      => $row['last-run'] ?? ($row['last-started'] ?? null),
-                'last_started'  => $row['last-started'] ?? null,
+                'id' => $row['.id'] ?? null,
+                'name' => $name,
+                'interval' => $row['interval'] ?? null,
+                'next_run' => $row['next-run'] ?? null,
+                'last_run' => $row['last-run'] ?? ($row['last-started'] ?? null),
+                'last_started' => $row['last-started'] ?? null,
                 'last_finished' => $row['last-finished'] ?? null,
-                'on_event'      => $row['on-event'] ?? null,
-                'disabled'      => ($row['disabled'] ?? 'no') === 'yes',
+                'on_event' => $row['on-event'] ?? null,
+                'disabled' => ($row['disabled'] ?? 'no') === 'yes',
             ];
         }
 
@@ -65,9 +65,9 @@ class SchedulerManager
             ->equal('.proplist', '.id');
 
         $match = $this->client->safeRead($ros, $idQuery);
-        $id    = $match[0]['.id'] ?? null;
+        $id = $match[0]['.id'] ?? null;
 
-        if (!$id) {
+        if (! $id) {
             throw new \RuntimeException("Scheduler {$name} not found.");
         }
 

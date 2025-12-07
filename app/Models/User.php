@@ -3,24 +3,19 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\Traits\HasBilling;
+use App\Models\Traits\HasRouterBilling;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Spatie\Permission\Traits\HasRoles;
-use App\Models\UserProfile;
-use App\Models\Voucher;
-use App\Models\Router;
-use App\Models\RadiusServer;
-use App\Models\RadiusProfile;
-use App\Models\Invoice;
-use App\Models\Traits\HasBilling;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, TwoFactorAuthenticatable, HasRoles, HasBilling;
+    use HasBilling, HasFactory, HasRoles, HasRouterBilling, Notifiable, TwoFactorAuthenticatable;
 
     /**
      * The attributes that are mass assignable.
@@ -83,54 +78,54 @@ class User extends Authenticatable
         return Str::of($this->name)
             ->explode(' ')
             ->take(2)
-            ->map(fn($word) => Str::substr($word, 0, 1))
+            ->map(fn ($word) => Str::substr($word, 0, 1))
             ->implode('');
     }
 
-    //Reseller relation
+    // Reseller relation
     public function reseller()
     {
         return $this->hasMany(User::class, 'admin_id');
     }
 
-    //Admins relation
+    // Admins relation
     public function admins()
     {
         return $this->belongsTo(User::class, 'admin_id');
     }
 
-    //Vouchers relation
+    // Vouchers relation
     public function vouchers()
     {
         return $this->hasMany(Voucher::class);
     }
 
-    //Router relation
+    // Router relation
 
     public function routers()
     {
         return $this->hasMany(Router::class);
     }
 
-    //Radius Servers relation
+    // Radius Servers relation
     public function radiusServers()
     {
         return $this->hasMany(RadiusServer::class);
     }
 
-    //Radius Profiles relation
+    // Radius Profiles relation
     public function radiusProfiles()
     {
         return $this->hasMany(RadiusProfile::class);
     }
 
-    //Profiles relation
+    // Profiles relation
     public function profiles()
     {
         return $this->hasMany(UserProfile::class);
     }
 
-    //Invoices relation
+    // Invoices relation
     public function invoices()
     {
         return $this->hasMany(Invoice::class);

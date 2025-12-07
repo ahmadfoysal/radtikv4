@@ -63,16 +63,16 @@ class Edit extends Component
         $this->validate();
 
         $this->package->update([
-            'name'                       => $this->name,
-            'price_monthly'              => $this->price_monthly,
-            'price_yearly'               => $this->price_yearly ?: null,
-            'user_limit'                 => $this->user_limit,
-            'billing_cycle'              => $this->billing_cycle,
-            'early_pay_days'             => $this->early_pay_days ?: null,
+            'name' => $this->name,
+            'price_monthly' => $this->price_monthly,
+            'price_yearly' => $this->price_yearly ?: null,
+            'user_limit' => $this->user_limit,
+            'billing_cycle' => $this->billing_cycle,
+            'early_pay_days' => $this->early_pay_days ?: null,
             'early_pay_discount_percent' => $this->early_pay_discount_percent ?: null,
-            'auto_renew_allowed'         => $this->auto_renew_allowed,
-            'description'                => $this->description ?: null,
-            'is_active'                  => $this->is_active,
+            'auto_renew_allowed' => $this->auto_renew_allowed,
+            'description' => $this->description ?: null,
+            'is_active' => $this->is_active,
         ]);
 
         $this->success(

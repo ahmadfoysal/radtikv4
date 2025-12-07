@@ -2,16 +2,17 @@
 
 namespace App\Livewire\Radius\Profile;
 
+use App\Models\RadiusProfile;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Mary\Traits\Toast;
-use App\Models\RadiusProfile;
 
 class Index extends Component
 {
-    use WithPagination, Toast;
+    use Toast, WithPagination;
 
     public string $q = '';        // search query
+
     protected $queryString = ['q']; // keep search in URL
 
     public int $perPage = 12;     // grid pagination

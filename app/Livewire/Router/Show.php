@@ -22,30 +22,43 @@ class Show extends Component
     public Router $router;
 
     public array $resource = [];
+
     public array $clock = [];
+
     public array $hotspotCounts = [];
+
     public array $scriptStatuses = [];
+
     public array $profiles = [];
+
     public array $interfaces = [];
+
     public string $interface = '';
+
     public array $trafficSeries = [];
+
     public array $trafficChart = [];
+
     public array $hotspotUserStats = [
         'all' => 0,
         'active' => 0,
         'expiring_today' => 0,
         'expiring_week' => 0,
     ];
+
     public array $activityStats = [
         'activated_today' => 0,
         'activated_week' => 0,
         'sales_today' => 0,
         'sales_week' => 0,
     ];
+
     public string $formattedUptime = 'N/A';
 
     public ?string $lastUpdated = null;
+
     public ?string $errorMessage = null;
+
     public array $schedulerStatuses = [];
 
     protected $queryString = [
@@ -54,7 +67,7 @@ class Show extends Component
 
     public function mount(Router $router): void
     {
-        if (!auth()->user()->hasRole('admin')) {
+        if (! auth()->user()->hasRole('admin')) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -93,7 +106,7 @@ class Show extends Component
             $this->errorMessage = null;
         } catch (\Throwable $e) {
             $this->errorMessage = $e->getMessage();
-            $this->error('Router refresh failed: ' . $e->getMessage());
+            $this->error('Router refresh failed: '.$e->getMessage());
         }
     }
 
@@ -106,7 +119,7 @@ class Show extends Component
             $this->errorMessage = null;
         } catch (\Throwable $e) {
             $this->errorMessage = $e->getMessage();
-            $this->error('Traffic refresh failed: ' . $e->getMessage());
+            $this->error('Traffic refresh failed: '.$e->getMessage());
         }
     }
 
@@ -125,7 +138,8 @@ class Show extends Component
             return $this->diagnostics()->interfaces($this->router);
         } catch (\Throwable $e) {
             $this->errorMessage = $e->getMessage();
-            $this->error('Failed to load interfaces: ' . $e->getMessage());
+            $this->error('Failed to load interfaces: '.$e->getMessage());
+
             return [];
         }
     }
@@ -147,60 +161,60 @@ class Show extends Component
 
     protected function buildChartData(): array
     {
-        $labels = array_map(fn($row) => $row['label'] ?? '', $this->trafficSeries);
-        $rx = array_map(fn($row) => round(($row['rx'] ?? 0) / 1_000_000, 2), $this->trafficSeries);
-        $tx = array_map(fn($row) => round(($row['tx'] ?? 0) / 1_000_000, 2), $this->trafficSeries);
+        $labels = array_map(fn ($row) => $row['label'] ?? '', $this->trafficSeries);
+        $rx = array_map(fn ($row) => round(($row['rx'] ?? 0) / 1_000_000, 2), $this->trafficSeries);
+        $tx = array_map(fn ($row) => round(($row['tx'] ?? 0) / 1_000_000, 2), $this->trafficSeries);
 
-        $lastRx = !empty($rx) ? end($rx) : 0;
-        $lastTx = !empty($tx) ? end($tx) : 0;
+        $lastRx = ! empty($rx) ? end($rx) : 0;
+        $lastTx = ! empty($tx) ? end($tx) : 0;
 
         return [
             'type' => 'line',
             'data' => [
-                'labels'   => $labels,
+                'labels' => $labels,
                 'datasets' => [
                     [
-                        'label'           => 'Rx Mbps ' . ($lastRx !== null ? " ({$lastRx})" : ''),
-                        'data'            => $rx,
-                        'borderColor'     => '#fe51b6ff',
+                        'label' => 'Rx Mbps '.($lastRx !== null ? " ({$lastRx})" : ''),
+                        'data' => $rx,
+                        'borderColor' => '#fe51b6ff',
                         'backgroundColor' => 'rgba(247, 12, 145, 0.2)',
-                        'borderWidth'     => 2,
-                        'pointRadius'     => 6,  // bigger point
+                        'borderWidth' => 2,
+                        'pointRadius' => 6,  // bigger point
                         'pointHoverRadius' => 8,  // hover size
                         'pointBackgroundColor' => '#fe51b6ff', // filled dot
                         'pointBorderColor' => '#ffffff', // optional border
                         'pointBorderWidth' => 1,
-                        'tension'         => 0.3,
-                        'fill'            => true,
+                        'tension' => 0.3,
+                        'fill' => true,
                     ],
 
                     [
-                        'label'           => 'Tx Mbps' . ($lastTx !== null ? " ({$lastTx})" : ''),
-                        'data'            => $tx,
-                        'borderColor'     => '#51a7feff',
+                        'label' => 'Tx Mbps'.($lastTx !== null ? " ({$lastTx})" : ''),
+                        'data' => $tx,
+                        'borderColor' => '#51a7feff',
                         'backgroundColor' => 'rgba(81, 167, 254, 0.2)',
-                        'borderWidth'     => 2,
-                        'pointRadius'     => 6,  // bigger point
+                        'borderWidth' => 2,
+                        'pointRadius' => 6,  // bigger point
                         'pointHoverRadius' => 8,  // hover size
                         'pointBackgroundColor' => '#51a7feff', // filled dot
                         'pointBorderColor' => '#ffffff', // optional border
                         'pointBorderWidth' => 1,
-                        'tension'         => 0.3,
-                        'fill'            => true,
+                        'tension' => 0.3,
+                        'fill' => true,
                     ],
                 ],
             ],
             'options' => [
                 'responsive' => true,
                 'maintainAspectRatio' => false,
-                'plugins'    => [
+                'plugins' => [
                     'legend' => [
                         'display' => true,
                         'position' => 'top',
-                        //mathe legen circle instead of box
-                        'labels'  => [
+                        // mathe legen circle instead of box
+                        'labels' => [
                             'usePointStyle' => true,
-                            'pointStyle'   => 'circle',
+                            'pointStyle' => 'circle',
                         ],
                     ],
                 ],
@@ -210,13 +224,13 @@ class Show extends Component
                     ],
                     'y' => [
                         'display' => true,
-                        'ticks'   => [
+                        'ticks' => [
                             'beginAtZero' => true,
                             'stepSize' => 5,
                         ],
-                        'title'   => [
+                        'title' => [
                             'display' => true,
-                            'text'    => 'Mbps',
+                            'text' => 'Mbps',
                         ],
                     ],
                 ],
@@ -237,7 +251,8 @@ class Show extends Component
             return is_array($profiles) ? $profiles : [];
         } catch (\Throwable $e) {
             $this->errorMessage = $e->getMessage();
-            $this->error('Failed to load profiles: ' . $e->getMessage());
+            $this->error('Failed to load profiles: '.$e->getMessage());
+
             return [];
         }
     }
@@ -250,7 +265,7 @@ class Show extends Component
             $names = array_column($definitions, 'name');
             $remote = collect($this->schedulerManager()->list($this->router, $names))->keyBy('name');
         } catch (\Throwable $e) {
-            $this->error('Failed to load schedulers: ' . $e->getMessage());
+            $this->error('Failed to load schedulers: '.$e->getMessage());
             $remote = collect();
         }
 
@@ -258,14 +273,14 @@ class Show extends Component
             $status = $remote->get($definition['name']);
 
             return [
-                'name'     => $definition['name'],
-                'label'    => $definition['label'] ?? $definition['name'],
+                'name' => $definition['name'],
+                'label' => $definition['label'] ?? $definition['name'],
                 'interval' => $status['interval'] ?? $definition['interval'],
                 'next_run' => $status['next_run'] ?? null,
                 'last_run' => $status['last_run'] ?? null,
                 'on_event' => $status['on_event'] ?? $definition['on_event'],
                 'disabled' => $status['disabled'] ?? false,
-                'missing'  => $status === null,
+                'missing' => $status === null,
             ];
         }, $definitions);
     }
@@ -278,10 +293,10 @@ class Show extends Component
         $endWeek = Carbon::now()->endOfWeek();
 
         return [
-            'all'            => (clone $base)->count(),
-            'active'         => (clone $base)->where('status', 'active')->count(),
+            'all' => (clone $base)->count(),
+            'active' => (clone $base)->where('status', 'active')->count(),
             'expiring_today' => (clone $base)->whereDate('expires_at', $today)->count(),
-            'expiring_week'  => (clone $base)->whereBetween('expires_at', [$startWeek, $endWeek])->count(),
+            'expiring_week' => (clone $base)->whereBetween('expires_at', [$startWeek, $endWeek])->count(),
         ];
     }
 
@@ -294,15 +309,15 @@ class Show extends Component
 
         return [
             'activated_today' => (clone $base)->whereDate('activated_at', $today)->count(),
-            'activated_week'  => (clone $base)->whereBetween('activated_at', [$startWeek, $endWeek])->count(),
-            'sales_today'     => (clone $base)->whereDate('created_at', $today)->count(),
-            'sales_week'      => (clone $base)->whereBetween('created_at', [$startWeek, $endWeek])->count(),
+            'activated_week' => (clone $base)->whereBetween('activated_at', [$startWeek, $endWeek])->count(),
+            'sales_today' => (clone $base)->whereDate('created_at', $today)->count(),
+            'sales_week' => (clone $base)->whereBetween('created_at', [$startWeek, $endWeek])->count(),
         ];
     }
 
     protected function formatUptime(?string $uptime): string
     {
-        if (!$uptime) {
+        if (! $uptime) {
             return 'N/A';
         }
 
@@ -327,13 +342,13 @@ class Show extends Component
 
         $parts = [];
         if ($months) {
-            $parts[] = $months . ' ' . ($months > 1 ? 'months' : 'month');
+            $parts[] = $months.' '.($months > 1 ? 'months' : 'month');
         }
         if ($weeks) {
-            $parts[] = $weeks . ' ' . ($weeks > 1 ? 'weeks' : 'week');
+            $parts[] = $weeks.' '.($weeks > 1 ? 'weeks' : 'week');
         }
         if ($days || empty($parts)) {
-            $parts[] = $days . ' ' . ($days === 1 ? 'day' : 'days');
+            $parts[] = $days.' '.($days === 1 ? 'day' : 'days');
         }
 
         return implode(' ', $parts);
@@ -341,7 +356,7 @@ class Show extends Component
 
     protected function recordTrafficSample(?RouterDiagnostics $diag = null): void
     {
-        if (!$this->interface) {
+        if (! $this->interface) {
             return;
         }
 
@@ -372,7 +387,7 @@ class Show extends Component
 
             $this->success('Scripts synced successfully.');
         } catch (\Throwable $e) {
-            $this->error('Failed to sync scripts: ' . $e->getMessage());
+            $this->error('Failed to sync scripts: '.$e->getMessage());
         }
     }
 
@@ -387,7 +402,7 @@ class Show extends Component
 
             $this->success('Schedulers synced successfully.');
         } catch (\Throwable $e) {
-            $this->error('Failed to sync schedulers: ' . $e->getMessage());
+            $this->error('Failed to sync schedulers: '.$e->getMessage());
         }
     }
 
@@ -398,7 +413,7 @@ class Show extends Component
             $this->schedulerStatuses = $this->loadSchedulerStatuses();
             $this->success("Scheduler {$name} triggered.");
         } catch (\Throwable $e) {
-            $this->error('Failed to run scheduler: ' . $e->getMessage());
+            $this->error('Failed to run scheduler: '.$e->getMessage());
         }
     }
 
@@ -447,7 +462,7 @@ class Show extends Component
             $this->profiles = $this->loadProfiles();
             $this->success('Profiles synced successfully.');
         } catch (\Throwable $e) {
-            $this->error('Failed to sync profiles: ' . $e->getMessage());
+            $this->error('Failed to sync profiles: '.$e->getMessage());
         }
     }
 }

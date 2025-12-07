@@ -21,7 +21,7 @@ class Edit extends Component
         'nullable',
         'string',
         'max:50',
-        'regex:/^\s*\d+(?:\.\d+)?[kKmMgG]?(?:\/\d+(?:\.\d+)?[kKmMgG]?)?\s*$/'
+        'regex:/^\s*\d+(?:\.\d+)?[kKmMgG]?(?:\/\d+(?:\.\d+)?[kKmMgG]?)?\s*$/',
     ])]
     public ?string $rate_limit = null;
 
@@ -29,7 +29,7 @@ class Edit extends Component
         'nullable',
         'string',
         'max:50',
-        'regex:/^(?:(\d+d)?(\d+h)?(\d+m)?(\d+s)?)$/i'
+        'regex:/^(?:(\d+d)?(\d+h)?(\d+m)?(\d+s)?)$/i',
     ])]
     public ?string $validity = null;
 
@@ -41,12 +41,12 @@ class Edit extends Component
 
     public function mount(RadiusProfile $profile): void
     {
-        $this->profile      = $profile;
-        $this->name         = $profile->name;
-        $this->rate_limit   = $profile->rate_limit;
-        $this->validity     = $profile->validity;
-        $this->mac_binding  = (bool) $profile->mac_binding;
-        $this->description  = $profile->description;
+        $this->profile = $profile;
+        $this->name = $profile->name;
+        $this->rate_limit = $profile->rate_limit;
+        $this->validity = $profile->validity;
+        $this->mac_binding = (bool) $profile->mac_binding;
+        $this->description = $profile->description;
     }
 
     public function save(): void
@@ -56,9 +56,9 @@ class Edit extends Component
 
         // Update profile
         $this->profile->update([
-            'name'        => $this->name,
-            'rate_limit'  => $this->rate_limit ?: null,
-            'validity'    => $this->validity ?: null,
+            'name' => $this->name,
+            'rate_limit' => $this->rate_limit ?: null,
+            'validity' => $this->validity ?: null,
             'mac_binding' => $this->mac_binding,
             'description' => $this->description ?: null,
         ]);

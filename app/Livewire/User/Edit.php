@@ -2,23 +2,27 @@
 
 namespace App\Livewire\User;
 
-use Livewire\Component;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rule;
 use Livewire\Attributes\Validate;
+use Livewire\Component;
 
 class Edit extends Component
 {
     public User $user;
+
     #[Validate('required|string|max:255')]
     public string $name = '';
+
     #[Validate('required|email|max:255|unique:users,email,:user->id')]
     public string $email = '';
+
     #[Validate('nullable|string|min:8|max:255')]
     public ?string $password = null;
+
     #[Validate('nullable|string|max:20')]
     public ?string $phone = null;
+
     #[Validate('nullable|string|max:255')]
     public ?string $address = null;
 
@@ -45,14 +49,13 @@ class Edit extends Component
         $this->user->phone = $validated['phone'];
         $this->user->address = $validated['address'];
 
-        if (!empty($validated['password'])) {
+        if (! empty($validated['password'])) {
             $this->user->password = Hash::make($validated['password']);
         }
 
         $this->user->save();
 
         session()->flash('success', 'User updated successfully.');
-
 
         $this->redirect(route('users.index'), navigate: true);
     }

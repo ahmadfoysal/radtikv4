@@ -10,15 +10,14 @@ use Illuminate\Support\Facades\Process;
 
 class DeployController extends Controller
 {
-
-    //check1234
+    // check1234
     private const WEBHOOK_SECRET = 'services.github.token';
+
     private const GITHUB_SIGNATURE_HEADER = 'X-Hub-Signature-256';
 
     /**
      * Handles the incoming GitHub webhook request.
      *
-     * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function deploy(Request $request)
@@ -29,6 +28,7 @@ class DeployController extends Controller
         // If secret is not set in .env, deployment is disabled or misconfigured.
         if (empty($secret)) {
             Log::error('GitHub Webhook secret is not configured.');
+
             return response()->json(['message' => 'Server misconfiguration'], 500);
         }
 
@@ -37,6 +37,7 @@ class DeployController extends Controller
 
         if (! $signature || ! $this->verifySignature($signature, $request->getContent(), $secret)) {
             Log::warning('Unauthorized access attempt: Invalid signature.');
+
             return response()->json(['message' => 'Unauthorized or Invalid Signature'], 403);
         }
 
@@ -51,6 +52,7 @@ class DeployController extends Controller
         if ($event !== 'push') {
             // Ignore events other than 'push'
             Log::info("Ignoring non-push event: {$event}");
+
             return response()->json(['message' => "Ignoring event: {$event}"], 200);
         }
 
@@ -59,6 +61,7 @@ class DeployController extends Controller
 
         if (! file_exists($scriptPath)) {
             Log::error('Deployment script not found.', ['path' => $scriptPath]);
+
             return response()->json(['message' => 'deploy.sh not found'], 500);
         }
 
@@ -74,23 +77,25 @@ class DeployController extends Controller
                 Log::error('Deployment script failed.', [
                     'exitCode' => $process->exitCode(),
                     'output' => $output,
-                    'error' => $errorOutput
+                    'error' => $errorOutput,
                 ]);
 
                 return response()->json([
                     'message' => 'Deployment failed',
-                    'output'  => $output,
-                    'error'   => $errorOutput,
+                    'output' => $output,
+                    'error' => $errorOutput,
                 ], 500);
             }
 
             Log::info('Deployment success.', ['output' => $output]);
+
             return response()->json([
                 'message' => 'Deployment success',
-                'output'  => $output,
+                'output' => $output,
             ], 200);
         } catch (\Exception $e) {
             Log::critical('Deployment execution error.', ['exception' => $e->getMessage()]);
+
             return response()->json(['message' => 'Deployment execution error', 'details' => $e->getMessage()], 500);
         }
     }
@@ -98,10 +103,9 @@ class DeployController extends Controller
     /**
      * Verifies the GitHub Webhook signature.
      *
-     * @param string $signature The signature from the X-Hub-Signature-256 header.
-     * @param string $payload The raw request body.
-     * @param string $secret The GitHub Webhook secret key.
-     * @return bool
+     * @param  string  $signature  The signature from the X-Hub-Signature-256 header.
+     * @param  string  $payload  The raw request body.
+     * @param  string  $secret  The GitHub Webhook secret key.
      */
     protected function verifySignature(string $signature, string $payload, string $secret): bool
     {
@@ -110,7 +114,7 @@ class DeployController extends Controller
             return false;
         }
 
-        list($algo, $hash) = explode('=', $signature, 2);
+        [$algo, $hash] = explode('=', $signature, 2);
 
         // Ensure it's the expected algorithm
         if ($algo !== 'sha256') {

@@ -2,13 +2,13 @@
 
 namespace App\Livewire\Router;
 
-use Livewire\Component;
+use App\Models\Package;
 use App\Models\Router;
 use App\Models\VoucherTemplate;
-use App\Models\Package;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Livewire\Attributes\Rule;
+use Livewire\Component;
 use Mary\Traits\Toast;
 
 class Edit extends Component
@@ -46,16 +46,16 @@ class Edit extends Component
 
     public function mount(Router $router): void
     {
-        if ($router->user_id !== Auth::id() && !Auth::user()->hasRole('admin')) {
+        if ($router->user_id !== Auth::id() && ! Auth::user()->hasRole('admin')) {
             abort(403, 'Unauthorized action.');
         }
 
         $this->router = $router;
 
-        $this->name     = $router->name;
-        $this->address  = $router->address;
+        $this->name = $router->name;
+        $this->address = $router->address;
         $this->login_address = $router->login_address ?? '';
-        $this->port     = $router->port;
+        $this->port = $router->port;
         $this->username = $router->username;
         $this->password = Crypt::decryptString($router->password);
         $this->voucher_template_id = $router->voucher_template_id;
@@ -68,10 +68,10 @@ class Edit extends Component
         $this->validate();
 
         $this->router->update([
-            'name'     => $this->name,
-            'address'  => $this->address,
+            'name' => $this->name,
+            'address' => $this->address,
             'login_address' => $this->login_address,
-            'port'     => $this->port,
+            'port' => $this->port,
             'username' => $this->username,
             'password' => Crypt::encryptString($this->password),
             'voucher_template_id' => $this->voucher_template_id,
@@ -103,13 +103,13 @@ class Edit extends Component
 
     protected function packagePayload(?int $packageId): ?array
     {
-        if (!$packageId) {
+        if (! $packageId) {
             return null;
         }
 
         $package = Package::find($packageId);
 
-        if (!$package) {
+        if (! $package) {
             return null;
         }
 
@@ -135,7 +135,7 @@ class Edit extends Component
 
         $snapshot = $this->packagePayload($this->package_id);
 
-        if (!$snapshot && isset($this->router->package['id']) && $this->router->package['id'] === $this->package_id) {
+        if (! $snapshot && isset($this->router->package['id']) && $this->router->package['id'] === $this->package_id) {
             return $this->router->package;
         }
 

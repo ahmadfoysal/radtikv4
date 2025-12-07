@@ -94,7 +94,7 @@ class HotspotProfileManager
 
         $id = $this->resolveProfileId($ros, $nameOrId);
 
-        if (!$id) {
+        if (! $id) {
             return ['ok' => false, 'message' => 'Profile not found'];
         }
 
@@ -120,7 +120,7 @@ class HotspotProfileManager
 
         $id = $this->resolveProfileId($ros, $nameOrId);
 
-        if (!$id) {
+        if (! $id) {
             return ['ok' => false, 'message' => 'Profile not found'];
         }
 

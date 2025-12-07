@@ -2,34 +2,35 @@
 
 namespace App\Livewire\Router;
 
-use Livewire\Component;
-use Livewire\WithPagination;
+use App\MikroTik\Installer\ScriptInstaller;
 use Illuminate\Contracts\View\View;
 use Illuminate\Pagination\LengthAwarePaginator;
-use App\MikroTik\Installer\ScriptInstaller;
-
+use Livewire\Component;
+use Livewire\WithPagination;
 use Mary\Traits\Toast;
 
 class Index extends Component
 {
-    use WithPagination, Toast;
+    use Toast, WithPagination;
 
     public string $q = '';
+
     public int $perPage = 12;
 
     public ?int $pingingId = null;
+
     public ?int $pingedId = null;
+
     public ?bool $pingSuccess = null;
 
-
     protected $queryString = [
-        'q'    => ['except' => ''],
+        'q' => ['except' => ''],
         'page' => ['except' => 1],
     ];
 
     public function mount(): void
     {
-        if (!auth()->user()->hasRole('admin')) {
+        if (! auth()->user()->hasRole('admin')) {
             abort(403, 'Unauthorized action.');
         }
     }
@@ -42,12 +43,12 @@ class Index extends Component
     protected function paginatedRouters(): LengthAwarePaginator
     {
 
-        //redirect error if user in not  admin
+        // redirect error if user in not  admin
 
         return auth()->user()
             ->routers()
             ->when($this->q !== '', function ($q) {
-                $term = '%' . mb_strtolower($this->q) . '%';
+                $term = '%'.mb_strtolower($this->q).'%';
 
                 $q->where(function ($sub) use ($term) {
                     $sub->whereRaw('LOWER(name) LIKE ?', [$term])
@@ -67,7 +68,7 @@ class Index extends Component
         try {
             $router = auth()->user()->routers()->findOrFail($id);
             $svc = app(\App\MikroTik\Actions\RouterManager::class);
-            $ok  = $svc->pingRouter($router);
+            $ok = $svc->pingRouter($router);
 
             $this->pingedId = $id;
             $this->pingSuccess = $ok;
@@ -80,13 +81,11 @@ class Index extends Component
         } catch (\Throwable $e) {
             $this->pingedId = $id;
             $this->pingSuccess = false;
-            $this->error("Error: " . $e->getMessage());
+            $this->error('Error: '.$e->getMessage());
         } finally {
             $this->pingingId = null;
         }
     }
-
-
 
     public function delete(int $id): void
     {
@@ -114,12 +113,9 @@ class Index extends Component
 
             $this->success('All RADTik scripts and schedulers installed successfully.');
         } catch (\Throwable $e) {
-            $this->error('Failed to install scripts: ' . $e->getMessage());
+            $this->error('Failed to install scripts: '.$e->getMessage());
         }
     }
-
-
-
 
     public function render(): View
     {

@@ -60,7 +60,7 @@ class Generate extends Component
         $this->available_profiles = auth()->user()->profiles()
             ->orderBy('name')
             ->get()
-            ->map(fn($p) => ['id' => $p->id, 'name' => $p->name])
+            ->map(fn ($p) => ['id' => $p->id, 'name' => $p->name])
             ->all();
     }
 
@@ -69,13 +69,13 @@ class Generate extends Component
     protected function charset(): string
     {
         return match ($this->char_type) {
-            'numeric'       => '0123456789',
+            'numeric' => '0123456789',
             'letters_upper' => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
             'letters_lower' => 'abcdefghijklmnopqrstuvwxyz',
             'letters_mixed' => 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
-            'alnum_upper'   => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
-            'alnum_mixed'   => 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
-            default         => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+            'alnum_upper' => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+            'alnum_mixed' => 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+            default => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
         };
     }
 
@@ -84,12 +84,12 @@ class Generate extends Component
         $this->validate();
 
         $codes = $this->generateCodes();
-        $rows  = $this->buildRows($codes);
+        $rows = $this->buildRows($codes);
 
         Voucher::insert($rows);
 
         $this->success('Vouchers generated successfully.');
-        //nevigat to route
+        // nevigat to route
         $this->redirect(route('vouchers.index'), navigate: true);
     }
 
@@ -103,47 +103,53 @@ class Generate extends Component
         for ($i = 0; $i < $this->quantity; $i++) {
             $attempts = 0;
             do {
-                $serial = $this->serial_start !== null ? (string)($this->serial_start + $i) : '';
+                $serial = $this->serial_start !== null ? (string) ($this->serial_start + $i) : '';
                 $rnd = '';
-                for ($j = 0; $j < $this->length; $j++) $rnd .= $cs[random_int(0, $max)];
+                for ($j = 0; $j < $this->length; $j++) {
+                    $rnd .= $cs[random_int(0, $max)];
+                }
 
-                $u = $this->prefix . $serial . $rnd;
+                $u = $this->prefix.$serial.$rnd;
 
                 // Collision fallback
-                if ($attempts++ > 5 && isset($seen[$u])) $u .= $cs[random_int(0, $max)];
+                if ($attempts++ > 5 && isset($seen[$u])) {
+                    $u .= $cs[random_int(0, $max)];
+                }
             } while (isset($seen[$u]));
 
             $seen[$u] = true;
             $codes[] = $u;
         }
+
         return $codes;
     }
 
     protected function buildRows(array $codes): array
     {
-        $batch = 'B' . now()->format('ymdHis') . Str::upper(Str::random(4));
+        $batch = 'B'.now()->format('ymdHis').Str::upper(Str::random(4));
         $userId = auth()->id();
         $now = now();
 
         $rows = [];
         foreach ($codes as $code) {
             $rows[] = [
-                'name'            => $code,
-                'username'        => $code,
-                'password'        => $code,
-                'batch'           => $batch,
-                'status'          => 'inactive',
-                'created_by'      => $userId,
-                'user_id'         => $userId,
-                'router_id'       => $this->router_id, // Required by Schema
+                'name' => $code,
+                'username' => $code,
+                'password' => $code,
+                'batch' => $batch,
+                'status' => 'inactive',
+                'created_by' => $userId,
+                'user_id' => $userId,
+                'router_id' => $this->router_id, // Required by Schema
                 'user_profile_id' => $this->profile_id, // Unified Profile ID
-                'is_radius'       => $this->type === 'radius',
-                'created_at'      => $now,
-                'updated_at'      => $now,
-                'bytes_in'        => 0,
-                'bytes_out'       => 0,
+                'is_radius' => $this->type === 'radius',
+                'created_at' => $now,
+                'updated_at' => $now,
+                'bytes_in' => 0,
+                'bytes_out' => 0,
             ];
         }
+
         return $rows;
     }
 
