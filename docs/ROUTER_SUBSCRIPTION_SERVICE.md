@@ -26,12 +26,15 @@ This trait is added to the User model and provides convenient methods:
 - `hasBalanceForPackage(Package $package): bool` - Check if user has sufficient balance
 - `subscribeRouterWithPackage(array $routerData, Package $package): Router` - Subscribe to a new router with billing
 
-### 3. Router Model Updates
+### 3. Router Model Package Structure
 
-New fields added to the Router model:
-- `package_start_date` (datetime) - When the subscription started
-- `package_end_date` (datetime) - When the subscription expires
-- `auto_renew` (boolean) - Whether to automatically renew the subscription
+All subscription data is stored in a single JSON column called `package` in the Router model. This includes:
+- Package details (id, name, prices, billing cycle, etc.)
+- Subscription-specific fields:
+  - `start_date` - When the subscription started
+  - `end_date` - When the subscription expires
+  - `auto_renew` - Whether to automatically renew the subscription
+  - `price` - The price charged for this subscription period
 
 ## Usage Examples
 
@@ -138,9 +141,9 @@ protected function schedule(Schedule $schedule)
 ### How Auto-Renewal Works
 
 1. The command finds all routers where:
-   - `auto_renew` is `true`
-   - `package_end_date` is within the specified days window
-   - `package_end_date` is not already expired
+   - `package['auto_renew']` is `true`
+   - `package['end_date']` is within the specified days window
+   - `package['end_date']` is not already expired
 
 2. For each router found, it attempts to renew using the `RouterSubscriptionService`
 
@@ -179,14 +182,37 @@ public function save()
 
 ## Database Schema
 
-### Migration
+### Package JSON Structure
 
-The migration `2025_12_07_150730_add_subscription_fields_to_routers_table.php` adds:
+All subscription data is stored in the `package` JSON column of the routers table. Example structure:
 
 ```php
-$table->timestamp('package_start_date')->nullable()->after('package');
-$table->timestamp('package_end_date')->nullable()->after('package_start_date');
-$table->boolean('auto_renew')->default(false)->after('package_end_date');
+$router->package = [
+    'id' => 1,
+    'name' => 'Basic Package',
+    'price_monthly' => 500.00,
+    'price_yearly' => 5000.00,
+    'user_limit' => 10,
+    'billing_cycle' => 'monthly',
+    'early_pay_days' => 7,
+    'early_pay_discount_percent' => 10,
+    'auto_renew_allowed' => true,
+    'description' => 'Basic subscription package',
+    // Subscription-specific fields
+    'start_date' => '2025-12-07 15:00:00',
+    'end_date' => '2026-01-07 15:00:00',
+    'auto_renew' => true,
+    'price' => 500.00,
+];
+```
+
+To access subscription fields:
+```php
+$router = Router::find(1);
+$startDate = \Carbon\Carbon::parse($router->package['start_date']);
+$endDate = \Carbon\Carbon::parse($router->package['end_date']);
+$autoRenew = $router->package['auto_renew'];
+$price = $router->package['price'];
 ```
 
 ## Billing Flow

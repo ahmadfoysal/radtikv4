@@ -54,13 +54,10 @@ class RouterSubscriptionService
             $startDate = Carbon::now();
             $endDate = $this->calculateEndDate($startDate, $package->billing_cycle);
 
-            // Create the router with package snapshot
+            // Create the router with package snapshot including subscription data
             $router = Router::create(array_merge($routerData, [
                 'user_id' => $user->id,
-                'package' => $this->createPackageSnapshot($package),
-                'package_start_date' => $startDate,
-                'package_end_date' => $endDate,
-                'auto_renew' => $package->auto_renew_allowed ?? false,
+                'package' => $this->createPackageSnapshot($package, $startDate, $endDate, $price),
             ]));
 
             // Debit the user's balance with router reference
@@ -126,12 +123,9 @@ class RouterSubscriptionService
             $startDate = $this->calculateRenewalStartDate($router);
             $endDate = $this->calculateEndDate($startDate, $package->billing_cycle);
 
-            // Update router with new package snapshot and dates
+            // Update router with new package snapshot including subscription data
             $router->update([
-                'package' => $this->createPackageSnapshot($package),
-                'package_start_date' => $startDate,
-                'package_end_date' => $endDate,
-                'auto_renew' => $package->auto_renew_allowed ?? false,
+                'package' => $this->createPackageSnapshot($package, $startDate, $endDate, $price),
             ]);
 
             return $router;
@@ -157,9 +151,12 @@ class RouterSubscriptionService
      * Create a snapshot of the package data to store with the router.
      *
      * @param  Package  $package  The package
-     * @return array The package snapshot
+     * @param  Carbon  $startDate  The subscription start date
+     * @param  Carbon  $endDate  The subscription end date
+     * @param  float  $price  The price charged for this subscription
+     * @return array The package snapshot with subscription data
      */
-    protected function createPackageSnapshot(Package $package): array
+    protected function createPackageSnapshot(Package $package, Carbon $startDate, Carbon $endDate, float $price): array
     {
         return [
             'id' => $package->id,
@@ -168,8 +165,15 @@ class RouterSubscriptionService
             'price_yearly' => $package->price_yearly,
             'user_limit' => $package->user_limit,
             'billing_cycle' => $package->billing_cycle,
+            'early_pay_days' => $package->early_pay_days,
+            'early_pay_discount_percent' => $package->early_pay_discount_percent,
             'auto_renew_allowed' => $package->auto_renew_allowed,
             'description' => $package->description,
+            // Subscription-specific fields
+            'start_date' => $startDate->toDateTimeString(),
+            'end_date' => $endDate->toDateTimeString(),
+            'auto_renew' => $package->auto_renew_allowed ?? false,
+            'price' => $price,
         ];
     }
 
@@ -182,8 +186,11 @@ class RouterSubscriptionService
      */
     protected function calculateRenewalStartDate(Router $router): Carbon
     {
-        if ($router->package_end_date && $router->package_end_date->isFuture()) {
-            return $router->package_end_date;
+        if ($router->package && isset($router->package['end_date'])) {
+            $endDate = Carbon::parse($router->package['end_date']);
+            if ($endDate->isFuture()) {
+                return $endDate;
+            }
         }
 
         return Carbon::now();

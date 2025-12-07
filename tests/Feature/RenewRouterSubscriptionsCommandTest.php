@@ -33,6 +33,9 @@ class RenewRouterSubscriptionsCommandTest extends TestCase
         $zone->save();
 
         // Create a router that expires in 5 days
+        $startDate = Carbon::now()->subMonth();
+        $endDate = Carbon::now()->addDays(5);
+
         $router = Router::create([
             'name' => 'Test Router',
             'address' => '192.168.1.1',
@@ -46,20 +49,22 @@ class RenewRouterSubscriptionsCommandTest extends TestCase
                 'name' => $package->name,
                 'price_monthly' => $package->price_monthly,
                 'billing_cycle' => $package->billing_cycle,
+                'start_date' => $startDate->toDateTimeString(),
+                'end_date' => $endDate->toDateTimeString(),
+                'auto_renew' => true,
+                'price' => 500.00,
             ],
-            'package_start_date' => Carbon::now()->subMonth(),
-            'package_end_date' => Carbon::now()->addDays(5),
-            'auto_renew' => true,
         ]);
 
-        $originalEndDate = $router->package_end_date;
+        $originalEndDate = Carbon::parse($router->package['end_date']);
 
         $this->artisan('routers:renew-subscriptions', ['--days' => 7])
             ->assertExitCode(0);
 
         // Check that router was renewed
         $router->refresh();
-        $this->assertTrue($router->package_end_date->greaterThan($originalEndDate));
+        $renewedEndDate = Carbon::parse($router->package['end_date']);
+        $this->assertTrue($renewedEndDate->greaterThan($originalEndDate));
 
         // Check that balance was debited
         $user->refresh();
@@ -91,6 +96,9 @@ class RenewRouterSubscriptionsCommandTest extends TestCase
         $zone->save();
 
         // Create a router that expires in 5 days but has auto_renew disabled
+        $startDate = Carbon::now()->subMonth();
+        $endDate = Carbon::now()->addDays(5);
+
         $router = Router::create([
             'name' => 'Test Router',
             'address' => '192.168.1.1',
@@ -104,20 +112,21 @@ class RenewRouterSubscriptionsCommandTest extends TestCase
                 'name' => $package->name,
                 'price_monthly' => $package->price_monthly,
                 'billing_cycle' => $package->billing_cycle,
+                'start_date' => $startDate->toDateTimeString(),
+                'end_date' => $endDate->toDateTimeString(),
+                'auto_renew' => false,
+                'price' => 500.00,
             ],
-            'package_start_date' => Carbon::now()->subMonth(),
-            'package_end_date' => Carbon::now()->addDays(5),
-            'auto_renew' => false,
         ]);
 
-        $originalEndDate = $router->package_end_date;
+        $originalEndDate = Carbon::parse($router->package['end_date']);
 
         $this->artisan('routers:renew-subscriptions', ['--days' => 7])
             ->assertExitCode(0);
 
         // Check that router was NOT renewed
         $router->refresh();
-        $this->assertEquals($originalEndDate->timestamp, $router->package_end_date->timestamp);
+        $this->assertEquals($originalEndDate->timestamp, Carbon::parse($router->package['end_date'])->timestamp);
 
         // Check that balance was NOT debited
         $user->refresh();
@@ -142,6 +151,9 @@ class RenewRouterSubscriptionsCommandTest extends TestCase
         $zone->save();
 
         // Create a router that expires in 10 days (outside the 7-day window)
+        $startDate = Carbon::now()->subMonth();
+        $endDate = Carbon::now()->addDays(10);
+
         $router = Router::create([
             'name' => 'Test Router',
             'address' => '192.168.1.1',
@@ -155,20 +167,21 @@ class RenewRouterSubscriptionsCommandTest extends TestCase
                 'name' => $package->name,
                 'price_monthly' => $package->price_monthly,
                 'billing_cycle' => $package->billing_cycle,
+                'start_date' => $startDate->toDateTimeString(),
+                'end_date' => $endDate->toDateTimeString(),
+                'auto_renew' => true,
+                'price' => 500.00,
             ],
-            'package_start_date' => Carbon::now()->subMonth(),
-            'package_end_date' => Carbon::now()->addDays(10),
-            'auto_renew' => true,
         ]);
 
-        $originalEndDate = $router->package_end_date;
+        $originalEndDate = Carbon::parse($router->package['end_date']);
 
         $this->artisan('routers:renew-subscriptions', ['--days' => 7])
             ->assertExitCode(0);
 
         // Check that router was NOT renewed
         $router->refresh();
-        $this->assertEquals($originalEndDate->timestamp, $router->package_end_date->timestamp);
+        $this->assertEquals($originalEndDate->timestamp, Carbon::parse($router->package['end_date'])->timestamp);
 
         // Check that balance was NOT debited
         $user->refresh();
@@ -193,6 +206,9 @@ class RenewRouterSubscriptionsCommandTest extends TestCase
         $zone->save();
 
         // Create a router that expires in 5 days
+        $startDate = Carbon::now()->subMonth();
+        $endDate = Carbon::now()->addDays(5);
+
         $router = Router::create([
             'name' => 'Test Router',
             'address' => '192.168.1.1',
@@ -206,13 +222,14 @@ class RenewRouterSubscriptionsCommandTest extends TestCase
                 'name' => $package->name,
                 'price_monthly' => $package->price_monthly,
                 'billing_cycle' => $package->billing_cycle,
+                'start_date' => $startDate->toDateTimeString(),
+                'end_date' => $endDate->toDateTimeString(),
+                'auto_renew' => true,
+                'price' => 500.00,
             ],
-            'package_start_date' => Carbon::now()->subMonth(),
-            'package_end_date' => Carbon::now()->addDays(5),
-            'auto_renew' => true,
         ]);
 
-        $originalEndDate = $router->package_end_date;
+        $originalEndDate = Carbon::parse($router->package['end_date']);
 
         // Command should still succeed but report failure for this router
         $this->artisan('routers:renew-subscriptions', ['--days' => 7])
@@ -220,7 +237,7 @@ class RenewRouterSubscriptionsCommandTest extends TestCase
 
         // Check that router was NOT renewed
         $router->refresh();
-        $this->assertEquals($originalEndDate->timestamp, $router->package_end_date->timestamp);
+        $this->assertEquals($originalEndDate->timestamp, Carbon::parse($router->package['end_date'])->timestamp);
 
         // Check that balance was NOT debited
         $user->refresh();
@@ -245,6 +262,9 @@ class RenewRouterSubscriptionsCommandTest extends TestCase
         $zone->save();
 
         // Create a router that expires in 2 days
+        $startDate = Carbon::now()->subMonth();
+        $endDate = Carbon::now()->addDays(2);
+
         $router = Router::create([
             'name' => 'Test Router',
             'address' => '192.168.1.1',
@@ -258,13 +278,14 @@ class RenewRouterSubscriptionsCommandTest extends TestCase
                 'name' => $package->name,
                 'price_monthly' => $package->price_monthly,
                 'billing_cycle' => $package->billing_cycle,
+                'start_date' => $startDate->toDateTimeString(),
+                'end_date' => $endDate->toDateTimeString(),
+                'auto_renew' => true,
+                'price' => 500.00,
             ],
-            'package_start_date' => Carbon::now()->subMonth(),
-            'package_end_date' => Carbon::now()->addDays(2),
-            'auto_renew' => true,
         ]);
 
-        $originalEndDate = $router->package_end_date;
+        $originalEndDate = Carbon::parse($router->package['end_date']);
 
         // Use 3 days window, should catch this router
         $this->artisan('routers:renew-subscriptions', ['--days' => 3])
@@ -272,6 +293,7 @@ class RenewRouterSubscriptionsCommandTest extends TestCase
 
         // Check that router was renewed
         $router->refresh();
-        $this->assertTrue($router->package_end_date->greaterThan($originalEndDate));
+        $renewedEndDate = Carbon::parse($router->package['end_date']);
+        $this->assertTrue($renewedEndDate->greaterThan($originalEndDate));
     }
 }

@@ -91,15 +91,10 @@ class RouterSubscriptionServiceTest extends TestCase
         $this->assertEquals($package->id, $router->package['id']);
         $this->assertEquals($package->name, $router->package['name']);
 
-        // Check subscription dates are in the package JSON
-        $this->assertArrayHasKey('start_date', $router->package);
-        $this->assertArrayHasKey('end_date', $router->package);
-        $this->assertArrayHasKey('auto_renew', $router->package);
-        $this->assertArrayHasKey('price', $router->package);
-
-        $startDate = \Carbon\Carbon::parse($router->package['start_date']);
-        $endDate = \Carbon\Carbon::parse($router->package['end_date']);
-        $this->assertTrue($endDate->greaterThan($startDate));
+        // Check subscription dates
+        $this->assertNotNull($router->package_start_date);
+        $this->assertNotNull($router->package_end_date);
+        $this->assertTrue($router->package_end_date->greaterThan($router->package_start_date));
 
         // Check balance was debited
         $user->refresh();
@@ -173,11 +168,9 @@ class RouterSubscriptionServiceTest extends TestCase
         $this->assertEquals(1000.00, (float) $user->balance);
 
         // Check end date is one year from start
-        $startDate = \Carbon\Carbon::parse($router->package['start_date']);
-        $endDate = \Carbon\Carbon::parse($router->package['end_date']);
         $this->assertGreaterThanOrEqual(
             365,
-            $startDate->diffInDays($endDate)
+            $router->package_start_date->diffInDays($router->package_end_date)
         );
     }
 
@@ -209,7 +202,7 @@ class RouterSubscriptionServiceTest extends TestCase
 
         // Create initial subscription
         $router = $this->service->subscribeNewRouter($user, $package, $routerData);
-        $firstEndDate = \Carbon\Carbon::parse($router->package['end_date']);
+        $firstEndDate = $router->package_end_date;
 
         // Renew the router
         $renewedRouter = $this->service->renewRouter($router);
@@ -219,8 +212,7 @@ class RouterSubscriptionServiceTest extends TestCase
         $this->assertEquals(1000.00, (float) $user->balance);
 
         // Check end date was extended
-        $renewedEndDate = \Carbon\Carbon::parse($renewedRouter->package['end_date']);
-        $this->assertTrue($renewedEndDate->greaterThan($firstEndDate));
+        $this->assertTrue($renewedRouter->package_end_date->greaterThan($firstEndDate));
 
         // Check invoices
         $this->assertCount(2, $user->invoices);

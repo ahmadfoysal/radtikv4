@@ -36,12 +36,23 @@ class RenewRouterSubscriptions extends Command
 
         // Find routers with auto_renew enabled that are expiring soon
         $routers = Router::query()
-            ->where('auto_renew', true)
-            ->whereNotNull('package_end_date')
-            ->where('package_end_date', '<=', $cutoffDate)
-            ->where('package_end_date', '>', Carbon::now()) // Not already expired
+            ->whereNotNull('package')
             ->with('user')
-            ->get();
+            ->get()
+            ->filter(function ($router) use ($cutoffDate) {
+                // Check if package has auto_renew enabled and is expiring soon
+                if (! $router->package || ! isset($router->package['auto_renew']) || ! $router->package['auto_renew']) {
+                    return false;
+                }
+
+                if (! isset($router->package['end_date'])) {
+                    return false;
+                }
+
+                $endDate = Carbon::parse($router->package['end_date']);
+
+                return $endDate->isFuture() && $endDate->lte($cutoffDate);
+            });
 
         if ($routers->isEmpty()) {
             $this->info('No routers found that need renewal.');
