@@ -6,7 +6,6 @@ use App\Gateway\Contracts\PaymentGatewayContract;
 use App\Models\Invoice;
 use App\Models\PaymentGateway;
 use App\Models\User;
-use App\Services\BillingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -16,12 +15,10 @@ use RuntimeException;
 class PayStationGateway implements PaymentGatewayContract
 {
     protected PaymentGateway $gateway;
-    protected BillingService $billingService;
 
-    public function __construct(PaymentGateway $gateway, BillingService $billingService)
+    public function __construct(PaymentGateway $gateway)
     {
         $this->gateway = $gateway;
-        $this->billingService = $billingService;
     }
 
     /**
@@ -135,17 +132,16 @@ class PayStationGateway implements PaymentGatewayContract
         // Process based on status
         if ($status === 'success' || $status === 'paid') {
             if ($invoice->status !== 'completed') {
-                // Credit user's balance
+                // Credit user's balance using the trait
                 $user = $invoice->user;
-                $this->billingService->credit(
-                    $user,
+                $user->credit(
                     (float) $invoice->amount,
                     'payment_gateway',
                     'Payment received via PayStation',
                     [
                         'gateway' => 'paystation',
                         'transaction_id' => $transactionId,
-                        'original_invoice_id' => $invoice->id,
+                        'pending_invoice_id' => $invoice->id,
                     ]
                 );
 
