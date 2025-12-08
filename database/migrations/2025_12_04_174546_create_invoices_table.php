@@ -24,7 +24,6 @@ return new class extends Migration
             $table->json('meta')->nullable();
             $table->timestamps();
             $table->softDeletes();
-
             $table->foreign('router_id')->references('id')->on('routers')->onDelete('set null');
             $table->index(['user_id', 'type']);
             $table->index(['user_id', 'category']);

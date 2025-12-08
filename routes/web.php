@@ -41,11 +41,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile/add', App\Livewire\Profile\Create::class)->name('profiles.create');
     Route::get('/profile/{profile}/edit', App\Livewire\Profile\Edit::class)->name('profiles.edit');
 
-    /* Radius Profile Routes */
-    Route::get('/radius/profiles', App\Livewire\Radius\Profile\Index::class)->name('radius.profiles');
-    Route::get('/radius/profile/add', App\Livewire\Radius\Profile\Create::class)->name('radius.profiles.create');
-    Route::get('/radius/profile/{profile}/edit', App\Livewire\Radius\Profile\Edit::class)->name('radius.profiles.edit');
-
     /* Zone Routes */
     Route::get('/zones', App\Livewire\Zone\Index::class)->name('zones.index');
 
@@ -53,17 +48,27 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/packages', App\Livewire\Package\Index::class)->name('packages.index');
     Route::get('/package/add', App\Livewire\Package\Create::class)->name('packages.create');
     Route::get('/package/{package}/edit', App\Livewire\Package\Edit::class)->name('packages.edit');
+
+    /* Billing Routes */
+    Route::get('/billing/invoices', App\Livewire\Billing\Invoices::class)->name('billing.invoices');
+    Route::get('/billing/manual-adjustment', App\Livewire\Billing\ManualAdjustment::class)->name('billing.manual-adjustment');
 });
 
 /* Hotspot User sync */
-Route::get('/mikrotik/api/pull-inactive-users', [MikrotikApiController::class, 'pullInactiveUsers'])->name('mikrotik.pullInactiveUsers')->middleware('check.router.subscription');
-Route::get('/mikrotik/api/pull-active-users', [MikrotikApiController::class, 'pullActiveUsers'])->name('mikrotik.pullActiveUsers')->middleware('check.router.subscription');
-Route::post('/mikrotik/api/push-active-users', [MikrotikApiController::class, 'pushActiveUsers'])->name('mikrotik.pushActiveUsers')->withoutMiddleware([VerifyCsrfToken::class])->middleware('check.router.subscription');
-Route::get('/mikrotik/api/sync-orphans', [MikrotikApiController::class, 'syncOrphans'])->name('mikrotik.syncOrphans')->withoutMiddleware([VerifyCsrfToken::class])->middleware('check.router.subscription');
+Route::get('/mikrotik/api/pull-inactive-users', [MikrotikApiController::class, 'pullInactiveUsers'])
+    ->name('mikrotik.pullInactiveUsers')->middleware('check.router.subscription');
+Route::get('/mikrotik/api/pull-active-users', [MikrotikApiController::class, 'pullActiveUsers'])
+    ->name('mikrotik.pullActiveUsers')->middleware('check.router.subscription');
+Route::post('/mikrotik/api/push-active-users', [MikrotikApiController::class, 'pushActiveUsers'])
+    ->name('mikrotik.pushActiveUsers')->withoutMiddleware([VerifyCsrfToken::class])->middleware('check.router.subscription');
+Route::get('/mikrotik/api/sync-orphans', [MikrotikApiController::class, 'syncOrphans'])
+    ->name('mikrotik.syncOrphans')->withoutMiddleware([VerifyCsrfToken::class])->middleware('check.router.subscription');
 
 /* Hotspot profile sync */
-Route::get('/mikrotik/api/pull-profiles', [MikrotikApiController::class, 'pullProfiles'])->name('mikrotik.pullProfiles')->middleware('check.router.subscription');
-Route::get('/mikrotik/api/pull-updated-profiles', [MikrotikApiController::class, 'pullUpdatedProfiles'])->name('mikrotik.pullUpdatedProfiles')->middleware('check.router.subscription');
+Route::get('/mikrotik/api/pull-profiles', [MikrotikApiController::class, 'pullProfiles'])
+    ->name('mikrotik.pullProfiles')->middleware('check.router.subscription');
+Route::get('/mikrotik/api/pull-updated-profiles', [MikrotikApiController::class, 'pullUpdatedProfiles'])
+    ->name('mikrotik.pullUpdatedProfiles')->middleware('check.router.subscription');
 
 /* Deploy route */
 Route::post('/api/deploy', [App\Http\Controllers\Api\DeployController::class, 'deploy'])

@@ -1,27 +1,34 @@
-<x-mary-card title="Add User" progress-indicator separator
-    class="max-w-2xl mx-auto bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300 rounded-2xl border border-base-300">
-
+<x-mary-card title="Add User" separator class="max-w-4xl mx-auto rounded-2xl bg-base-200">
     <x-mary-form wire:submit="save">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div class="col-span-1">
+                <x-mary-input label="Name" wire:model.live.debounce.500ms="name" />
+            </div>
 
-        <div class="w-full md:w-auto">
-            <x-mary-input label="Name" wire:model.live.debounce.500ms="name" />
+            <div class="col-span-1">
+                <x-mary-input label="Email" wire:model.live.debounce.500ms="email" />
+            </div>
+
+            <div class="col-span-1">
+                <x-mary-input label="Password" type="password" wire:model.live.debounce.500ms="password" />
+            </div>
+
+            <div class="col-span-1">
+                <x-mary-input label="Phone" wire:model.live.debounce.500ms="phone" />
+            </div>
+
+            <div class="col-span-1 sm:col-span-2">
+                <x-mary-input label="Address" wire:model.live.debounce.500ms="address" />
+            </div>
+
+            <div class="col-span-1 sm:col-span-2">
+                <x-mary-input label="Country" wire:model.live.debounce.500ms="country" />
+            </div>
         </div>
-        <div class="w-full md:w-auto">
-            <x-mary-input label="Email" wire:model.live.debounce.500ms="email" />
-        </div>
-        <div class="w-full md:w-auto">
-            <x-mary-input label="Password" type="password" wire:model.live.debounce.500ms="password" />
-        </div>
-        <div class="w-full md:w-auto">
-            <x-mary-input label="Phone" wire:model.live.debounce.500ms="phone" />
-        </div>
-        <div class="w-full md:w-auto">
-            <x-mary-input label="Address" wire:model.live.debounce.500ms="address" />
-        </div>
+
         <x-slot:actions>
             <x-mary-button label="Cancel" class="btn-ghost" type="button" wire:click="cancel" />
             <x-mary-button label="Add User" class="btn-primary" type="submit" spinner="save" />
         </x-slot:actions>
     </x-mary-form>
-
 </x-mary-card>

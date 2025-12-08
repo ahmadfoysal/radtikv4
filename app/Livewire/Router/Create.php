@@ -39,7 +39,7 @@ class Create extends Component
     #[Rule(['nullable', 'numeric', 'min:0'])]
     public float $monthly_expense = 0.0;
 
-    #[Rule(['nullable', 'integer', 'exists:packages,id'])]
+    #[Rule(['required', 'integer', 'exists:packages,id'])]
     public ?int $package_id = null;
 
     public function mount(): void

@@ -30,10 +30,18 @@ class Router extends Model
         'package',
     ];
 
+    protected $casts = [
+        'package' => 'array',
+    ];
+
     public function decryptedPassword(): string
     {
         return Crypt::decryptString($this->password);
     }
+
+    //is Expired
+
+
 
     // Add any relationships or additional methods as needed
 
@@ -52,6 +60,18 @@ class Router extends Model
         return $this->hasMany(Voucher::class);
     }
 
+    public function resellerAssignments()
+    {
+        return $this->hasMany(ResellerRouter::class);
+    }
+
+    public function assignedResellers()
+    {
+        return $this->belongsToMany(User::class, 'reseller_router', 'router_id', 'reseller_id')
+            ->withPivot('assigned_by')
+            ->withTimestamps();
+    }
+
     public function voucherTemplate()
     {
         return $this->belongsTo(VoucherTemplate::class);
@@ -62,7 +82,9 @@ class Router extends Model
         return $this->hasMany(Invoice::class);
     }
 
-    protected $casts = [
-        'package' => 'array',
-    ];
+    //Voucher Logs relation
+    public function voucherLogs()
+    {
+        return $this->hasMany(VoucherLog::class);
+    }
 }

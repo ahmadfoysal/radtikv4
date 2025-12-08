@@ -78,7 +78,7 @@ class User extends Authenticatable
         return Str::of($this->name)
             ->explode(' ')
             ->take(2)
-            ->map(fn ($word) => Str::substr($word, 0, 1))
+            ->map(fn($word) => Str::substr($word, 0, 1))
             ->implode('');
     }
 
@@ -107,16 +107,27 @@ class User extends Authenticatable
         return $this->hasMany(Router::class);
     }
 
+    public function routerAssignments()
+    {
+        return $this->hasMany(ResellerRouter::class, 'reseller_id');
+    }
+
+    public function resellerRouters()
+    {
+        return $this->belongsToMany(Router::class, 'reseller_router', 'reseller_id', 'router_id')
+            ->withPivot('assigned_by')
+            ->withTimestamps();
+    }
+
+    public function getResellerRouters()
+    {
+        return $this->resellerRouters()->get();
+    }
+
     // Radius Servers relation
     public function radiusServers()
     {
         return $this->hasMany(RadiusServer::class);
-    }
-
-    // Radius Profiles relation
-    public function radiusProfiles()
-    {
-        return $this->hasMany(RadiusProfile::class);
     }
 
     // Profiles relation
@@ -129,5 +140,11 @@ class User extends Authenticatable
     public function invoices()
     {
         return $this->hasMany(Invoice::class);
+    }
+
+    //Voucher Logs relation
+    public function voucherLogs()
+    {
+        return $this->hasMany(VoucherLog::class);
     }
 }

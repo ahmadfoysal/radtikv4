@@ -1,9 +1,6 @@
-<x-mary-card title="Edit User Profile" progress-indicator separator
-    class="max-w-2xl mx-auto bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300 rounded-2xl border border-base-300">
-
+<x-mary-card title="Edit User Profile" separator class="max-w-4xl mx-auto rounded-2xl bg-base-200">
     <x-mary-form wire:submit="save">
-        <div class="grid md:grid-cols-2 gap-4">
-
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
                 <x-mary-input label="Profile Name" wire:model.live.debounce.400ms="name" placeholder="e.g. 10M-1d" />
             </div>
@@ -16,7 +13,7 @@
             <div>
                 <x-mary-input label="Shared Users (optional)" type="number" min="1"
                     wire:model.live.debounce.500ms="shared_users" placeholder="e.g. 1" />
-                <p class="text-xs opacity-70 mt-1">
+                <p class="mt-1 text-xs opacity-70">
                     Number of simultaneous logins allowed for this profile. Default is 1.
                 </p>
             </div>
@@ -31,11 +28,11 @@
                     wire:model.live.debounce.400ms="price" />
             </div>
 
-            <div class="md:col-span-2 flex items-center gap-3">
+            <div class="sm:col-span-2 flex items-center gap-3">
                 <x-mary-toggle label="Bind MAC on first login" wire:model.live="mac_binding" />
             </div>
 
-            <div class="md:col-span-2">
+            <div class="sm:col-span-2">
                 <x-mary-textarea label="Description (optional)" rows="2"
                     wire:model.live.debounce.400ms="description" placeholder="Short note about this profile..." />
             </div>
