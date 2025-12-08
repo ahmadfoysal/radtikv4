@@ -64,16 +64,14 @@ class AddBalance extends Component
                 ]
             );
 
-            // If it's a RedirectResponse, redirect
+            // Redirect to payment gateway
             if ($redirect instanceof \Illuminate\Http\RedirectResponse) {
-                $redirect->send();
-                exit;
+                return $redirect;
             }
 
-            // If it's a string URL, redirect to it
+            // If it's a string URL, create redirect response
             if (is_string($redirect)) {
-                redirect($redirect)->send();
-                exit;
+                return redirect($redirect);
             }
         } catch (\Exception $e) {
             $this->error('Failed to initiate payment: '.$e->getMessage());

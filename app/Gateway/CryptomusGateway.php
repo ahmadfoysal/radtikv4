@@ -68,7 +68,8 @@ class CryptomusGateway implements PaymentGatewayContract
         $sign = $this->generateSignature($data, $apiKey);
 
         try {
-            $baseUrl = $testMode ? 'https://api.cryptomus.com/v1' : 'https://api.cryptomus.com/v1';
+            // Cryptomus uses the same URL for both test and production
+            $baseUrl = 'https://api.cryptomus.com/v1';
             
             $response = Http::withHeaders([
                 'merchant' => $merchantId,
@@ -140,7 +141,6 @@ class CryptomusGateway implements PaymentGatewayContract
         // Find invoice by transaction_id or order_id pattern
         $invoice = Invoice::where('transaction_id', $uuid)
             ->orWhere('transaction_id', 'LIKE', '%'.$orderId.'%')
-            ->whereNull('deleted_at')
             ->first();
 
         if (! $invoice) {

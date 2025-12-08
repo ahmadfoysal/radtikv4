@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('invoices', function (Blueprint $table) {
-            $table->string('status')->default('completed')->after('category'); // pending, completed, failed, cancelled
+            $table->string('status')->default('pending')->after('category'); // pending, completed, failed, cancelled
             $table->string('transaction_id')->nullable()->after('status'); // External payment reference
             $table->foreignId('payment_gateway_id')->nullable()->after('transaction_id')
                 ->constrained('payment_gateways')->onDelete('set null');

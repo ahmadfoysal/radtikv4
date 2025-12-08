@@ -121,7 +121,6 @@ class PayStationGateway implements PaymentGatewayContract
 
         // Find invoice
         $invoice = Invoice::where('transaction_id', $orderId)
-            ->whereNull('deleted_at')
             ->first();
 
         if (! $invoice) {
