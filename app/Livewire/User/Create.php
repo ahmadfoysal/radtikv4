@@ -29,6 +29,9 @@ class Create extends Component
     #[Validate('nullable|string|max:255')]
     public $country;
 
+    #[Validate('required|numeric|min:0|max:100')]
+    public $commission = 0;
+
     public function save()
     {
         $this->validate();
@@ -41,6 +44,7 @@ class Create extends Component
                 'phone' => $this->phone,
                 'address' => $this->address,
                 'country' => $this->country,
+                'commission' => $this->commission,
             ]);
 
             // Decide which role to give the new user

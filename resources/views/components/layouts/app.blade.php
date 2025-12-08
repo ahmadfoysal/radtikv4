@@ -78,7 +78,15 @@
                 <x-mary-menu-separator />
             @endif
 
-            <x-sidebar-menu />
+            @auth
+                @if (auth()->user()->isSuperAdmin())
+                    <x-menu.superadmin-menu />
+                @elseif (auth()->user()->isAdmin())
+                    <x-menu.admin-menu />
+                @elseif (auth()->user()->isReseller())
+                    <x-menu.reseller-menu />
+                @endif
+            @endauth
         </x-slot:sidebar>
 
         <x-slot:content>

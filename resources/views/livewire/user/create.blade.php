@@ -24,6 +24,11 @@
             <div class="col-span-1 sm:col-span-2">
                 <x-mary-input label="Country" wire:model.live.debounce.500ms="country" />
             </div>
+
+            <div class="col-span-1 sm:col-span-2">
+                <x-mary-input label="Commission (%)" type="number" step="0.01"
+                    wire:model.live.debounce.500ms="commission" />
+            </div>
         </div>
 
         <x-slot:actions>

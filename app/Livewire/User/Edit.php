@@ -26,6 +26,9 @@ class Edit extends Component
     #[Validate('nullable|string|max:255')]
     public ?string $address = null;
 
+    #[Validate('required|numeric|min:0|max:100')]
+    public float $commission = 0;
+
     public function mount(User $user): void
     {
         $this->user = $user;
@@ -33,6 +36,7 @@ class Edit extends Component
         $this->email = $user->email;
         $this->phone = $user->phone;
         $this->address = $user->address;
+        $this->commission = (float) $user->commission;
     }
 
     public function render()
@@ -48,6 +52,7 @@ class Edit extends Component
         $this->user->email = $validated['email'];
         $this->user->phone = $validated['phone'];
         $this->user->address = $validated['address'];
+        $this->user->commission = $validated['commission'];
 
         if (! empty($validated['password'])) {
             $this->user->password = Hash::make($validated['password']);

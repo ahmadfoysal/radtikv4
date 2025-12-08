@@ -47,8 +47,18 @@ class Index extends Component
 
         return auth()->user()
             ->routers()
+            ->with(['zone', 'voucherTemplate'])
+            ->withCount([
+                'vouchers as total_vouchers_count',
+                'vouchers as active_vouchers_count' => function ($q) {
+                    $q->where('status', 'active');
+                },
+                'vouchers as expired_vouchers_count' => function ($q) {
+                    $q->where('status', 'expired');
+                },
+            ])
             ->when($this->q !== '', function ($q) {
-                $term = '%'.mb_strtolower($this->q).'%';
+                $term = '%' . mb_strtolower($this->q) . '%';
 
                 $q->where(function ($sub) use ($term) {
                     $sub->whereRaw('LOWER(name) LIKE ?', [$term])
@@ -81,7 +91,7 @@ class Index extends Component
         } catch (\Throwable $e) {
             $this->pingedId = $id;
             $this->pingSuccess = false;
-            $this->error('Error: '.$e->getMessage());
+            $this->error('Error: ' . $e->getMessage());
         } finally {
             $this->pingingId = null;
         }
@@ -113,7 +123,7 @@ class Index extends Component
 
             $this->success('All RADTik scripts and schedulers installed successfully.');
         } catch (\Throwable $e) {
-            $this->error('Failed to install scripts: '.$e->getMessage());
+            $this->error('Failed to install scripts: ' . $e->getMessage());
         }
     }
 

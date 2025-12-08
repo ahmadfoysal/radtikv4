@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('profile_image')->nullable();
             $table->string('country')->nullable();
             $table->decimal('balance', 15, 2)->default(0);
+            $table->decimal('commission', 5, 2)->default(0); // commission in %
             $table->foreignId('admin_id')->nullable()->constrained('users')->onDelete('cascade');
             $table->json('subscription')->nullable();
             $table->boolean('is_active')->default(true);

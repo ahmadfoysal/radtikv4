@@ -31,6 +31,7 @@ class User extends Authenticatable
         'profile_image',
         'country',
         'balance',
+        'commission',
         'admin_id',
         'subscription',
         'is_active',
@@ -67,6 +68,7 @@ class User extends Authenticatable
             'expiration_date' => 'date',
             'password' => 'hashed',
             'balance' => 'decimal:2',
+            'commission' => 'decimal:2',
         ];
     }
 
@@ -80,6 +82,28 @@ class User extends Authenticatable
             ->take(2)
             ->map(fn($word) => Str::substr($word, 0, 1))
             ->implode('');
+    }
+
+    // Role helpers
+    public function isSuperAdmin(): bool
+    {
+        return $this->hasRole('superadmin');
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->hasRole('admin');
+    }
+
+    public function isReseller(): bool
+    {
+        return $this->hasRole('reseller');
+    }
+
+    //add a method to check if user has role reseller and has specific permission
+    public function resellerHasPermission(string $permission): bool
+    {
+        return $this->isReseller() && $this->hasPermissionTo($permission);
     }
 
     // Reseller relation
