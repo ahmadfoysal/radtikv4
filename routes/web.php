@@ -56,14 +56,14 @@ Route::middleware(['auth'])->group(function () {
 });
 
 /* Hotspot User sync */
-Route::get('/mikrotik/api/pull-inactive-users', [MikrotikApiController::class, 'pullInactiveUsers'])->name('mikrotik.pullInactiveUsers');
-Route::get('/mikrotik/api/pull-active-users', [MikrotikApiController::class, 'pullActiveUsers'])->name('mikrotik.pullActiveUsers');
-Route::post('/mikrotik/api/push-active-users', [MikrotikApiController::class, 'pushActiveUsers'])->name('mikrotik.pushActiveUsers')->withoutMiddleware([VerifyCsrfToken::class]);
-Route::get('/mikrotik/api/sync-orphans', [MikrotikApiController::class, 'syncOrphans'])->name('mikrotik.syncOrphans')->withoutMiddleware([VerifyCsrfToken::class]);
+Route::get('/mikrotik/api/pull-inactive-users', [MikrotikApiController::class, 'pullInactiveUsers'])->name('mikrotik.pullInactiveUsers')->middleware('check.router.subscription');
+Route::get('/mikrotik/api/pull-active-users', [MikrotikApiController::class, 'pullActiveUsers'])->name('mikrotik.pullActiveUsers')->middleware('check.router.subscription');
+Route::post('/mikrotik/api/push-active-users', [MikrotikApiController::class, 'pushActiveUsers'])->name('mikrotik.pushActiveUsers')->withoutMiddleware([VerifyCsrfToken::class])->middleware('check.router.subscription');
+Route::get('/mikrotik/api/sync-orphans', [MikrotikApiController::class, 'syncOrphans'])->name('mikrotik.syncOrphans')->withoutMiddleware([VerifyCsrfToken::class])->middleware('check.router.subscription');
 
 /* Hotspot profile sync */
-Route::get('/mikrotik/api/pull-profiles', [MikrotikApiController::class, 'pullProfiles'])->name('mikrotik.pullProfiles');
-Route::get('/mikrotik/api/pull-updated-profiles', [MikrotikApiController::class, 'pullUpdatedProfiles'])->name('mikrotik.pullUpdatedProfiles');
+Route::get('/mikrotik/api/pull-profiles', [MikrotikApiController::class, 'pullProfiles'])->name('mikrotik.pullProfiles')->middleware('check.router.subscription');
+Route::get('/mikrotik/api/pull-updated-profiles', [MikrotikApiController::class, 'pullUpdatedProfiles'])->name('mikrotik.pullUpdatedProfiles')->middleware('check.router.subscription');
 
 /* Deploy route */
 Route::post('/api/deploy', [App\Http\Controllers\Api\DeployController::class, 'deploy'])
