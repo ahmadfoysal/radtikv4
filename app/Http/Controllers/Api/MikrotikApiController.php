@@ -360,4 +360,61 @@ class MikrotikApiController extends Controller
         return response(implode("\n", $orphans), 200)
             ->header('Content-Type', 'text/plain');
     }
+
+    /**
+     * Pull Updated Profiles Endpoint
+     * Returns profiles that have been updated.
+     */
+    public function pullUpdatedProfiles(Request $request)
+    {
+        $token = $request->query('token');
+        $router = Router::where('app_key', $token)->first();
+
+        if (! $router) {
+            return response()->json(['error' => 'Invalid token'], 401);
+        }
+
+        // Get profiles updated after a specific timestamp if provided
+        $since = $request->query('since');
+        $query = $router->user->profiles();
+
+        if ($since) {
+            try {
+                $sinceDate = Carbon::parse($since);
+                $query->where('updated_at', '>', $sinceDate);
+            } catch (\Exception $e) {
+                // If date parsing fails, return all profiles
+            }
+        }
+
+        $profiles = $query->get();
+
+        if ($request->query('format') === 'flat') {
+            $lines = $profiles->map(function ($p) {
+                return implode(';', [
+                    $p->name,
+                    (int) $p->shared_users,
+                    (string) $p->rate_limit,
+                ]);
+            })->implode("\n");
+
+            return response($lines, 200)
+                ->header('Content-Type', 'text/plain');
+        }
+
+        $profilesJson = $profiles->map(function ($p) {
+            return [
+                'name' => $p->name,
+                'shared_users' => $p->shared_users,
+                'rate_limit' => $p->rate_limit,
+                'updated_at' => $p->updated_at,
+            ];
+        });
+
+        return response()->json([
+            'router_id' => $router->id,
+            'count' => $profilesJson->count(),
+            'profiles' => $profilesJson,
+        ]);
+    }
 }
