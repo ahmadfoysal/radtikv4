@@ -8,6 +8,7 @@ use App\Models\PaymentGateway;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
@@ -34,25 +35,21 @@ class PayStationGateway implements PaymentGatewayContract
             throw new RuntimeException('PayStation gateway credentials not configured');
         }
 
-        // Create pending invoice locally
-        $invoice = Invoice::create([
+        // Generate unique order ID
+        $orderId = 'PAY-'.uniqid().'-'.time();
+        $callbackUrl = route('payment.paystation.callback');
+
+        // Store payment data in session (to be used after successful payment)
+        session()->put('pending_payment', [
+            'order_id' => $orderId,
             'user_id' => $user->id,
-            'type' => 'credit',
-            'category' => 'payment_gateway',
-            'status' => 'pending',
-            'payment_gateway_id' => $this->gateway->id,
+            'gateway_id' => $this->gateway->id,
+            'gateway_name' => 'paystation',
             'amount' => $amount,
             'currency' => 'BDT',
-            'balance_after' => $user->balance,
-            'description' => 'Balance top-up via PayStation',
-            'meta' => array_merge($meta, [
-                'gateway' => 'paystation',
-            ]),
+            'meta' => $meta,
+            'created_at' => now()->toIso8601String(),
         ]);
-
-        // Prepare PayStation request
-        $orderId = 'INV-'.$invoice->id.'-'.time();
-        $callbackUrl = route('payment.paystation.callback');
 
         // Build payment URL with parameters
         $params = [
@@ -73,17 +70,12 @@ class PayStationGateway implements PaymentGatewayContract
         $signatureString = $merchantId.$orderId.$amount.$password;
         $params['signature'] = hash('sha256', $signatureString);
 
-        // Update invoice with transaction ID
-        $invoice->update([
-            'transaction_id' => $orderId,
-        ]);
-
         // Build payment URL
         $paymentUrl = $baseUrl.'/payment?'.http_build_query($params);
 
         Log::info('PayStation payment initiated', [
-            'invoice_id' => $invoice->id,
             'order_id' => $orderId,
+            'user_id' => $user->id,
         ]);
 
         return redirect($paymentUrl);
@@ -119,52 +111,74 @@ class PayStationGateway implements PaymentGatewayContract
             return;
         }
 
-        // Find invoice
-        $invoice = Invoice::where('transaction_id', $orderId)
-            ->first();
+        // Check if invoice already exists for this transaction
+        $existingInvoice = Invoice::where('transaction_id', $transactionId)->first();
+        
+        if ($existingInvoice) {
+            Log::info('Invoice already exists for transaction', ['transaction_id' => $transactionId]);
+            return;
+        }
 
-        if (! $invoice) {
-            Log::warning('Invoice not found for PayStation callback', ['order_id' => $orderId]);
+        // Get payment data from session
+        $paymentData = session()->get('pending_payment');
+        
+        if (! $paymentData || $paymentData['order_id'] !== $orderId) {
+            Log::warning('No matching pending payment in session', [
+                'order_id' => $orderId,
+                'session_order_id' => $paymentData['order_id'] ?? null,
+            ]);
             return;
         }
 
         // Process based on status
         if ($status === 'success' || $status === 'paid') {
-            if ($invoice->status !== 'completed') {
-                // Credit user's balance using the trait
-                $user = $invoice->user;
-                $user->credit(
-                    (float) $invoice->amount,
+            // Get user
+            $user = User::find($paymentData['user_id']);
+            
+            if (! $user) {
+                Log::error('User not found for payment', ['user_id' => $paymentData['user_id']]);
+                return;
+            }
+
+            // Create invoice and credit balance in a transaction
+            DB::transaction(function () use ($user, $paymentData, $transactionId, $request) {
+                // Credit user's balance
+                $invoice = $user->credit(
+                    (float) $paymentData['amount'],
                     'payment_gateway',
                     'Payment received via PayStation',
-                    [
+                    array_merge($paymentData['meta'] ?? [], [
                         'gateway' => 'paystation',
                         'transaction_id' => $transactionId,
-                        'pending_invoice_id' => $invoice->id,
-                    ]
+                        'callback_data' => $request->all(),
+                        'completed_at' => now()->toIso8601String(),
+                    ])
                 );
 
-                // Mark original invoice as completed
-                $invoice->markAsCompleted();
+                // Update invoice with payment gateway details
                 $invoice->update([
-                    'meta' => array_merge($invoice->meta ?? [], [
-                        'callback_data' => $request->all(),
-                        'completed_at' => now(),
-                        'transaction_id' => $transactionId,
-                    ]),
+                    'transaction_id' => $transactionId,
+                    'payment_gateway_id' => $paymentData['gateway_id'],
+                    'currency' => $paymentData['currency'],
                 ]);
 
                 Log::info('PayStation payment completed', [
                     'invoice_id' => $invoice->id,
                     'transaction_id' => $transactionId,
+                    'user_id' => $user->id,
                 ]);
-            }
+            });
+
+            // Remove payment data from session
+            session()->forget('pending_payment');
         } elseif ($status === 'failed' || $status === 'cancelled') {
-            $invoice->markAsFailed();
             Log::info('PayStation payment failed/cancelled', [
-                'invoice_id' => $invoice->id,
+                'order_id' => $orderId,
                 'status' => $status,
             ]);
+            
+            // Remove payment data from session
+            session()->forget('pending_payment');
         }
     }
 }

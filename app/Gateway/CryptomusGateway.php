@@ -8,6 +8,7 @@ use App\Models\PaymentGateway;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
@@ -22,7 +23,7 @@ class CryptomusGateway implements PaymentGatewayContract
     }
 
     /**
-     * Create a payment invoice with Cryptomus
+     * Create a payment with Cryptomus
      */
     public function createPayment(User $user, float $amount, array $meta = []): RedirectResponse|string
     {
@@ -35,26 +36,22 @@ class CryptomusGateway implements PaymentGatewayContract
             throw new RuntimeException('Cryptomus gateway credentials not configured');
         }
 
-        // Create pending invoice locally
-        $invoice = Invoice::create([
-            'user_id' => $user->id,
-            'type' => 'credit',
-            'category' => 'payment_gateway',
-            'status' => 'pending',
-            'payment_gateway_id' => $this->gateway->id,
-            'amount' => $amount,
-            'currency' => 'USD', // Cryptomus typically uses USD
-            'balance_after' => $user->balance,
-            'description' => 'Balance top-up via Cryptomus',
-            'meta' => array_merge($meta, [
-                'gateway' => 'cryptomus',
-                'network' => $network,
-            ]),
-        ]);
-
-        // Prepare Cryptomus API request
-        $orderId = 'INV-'.$invoice->id.'-'.time();
+        // Generate unique order ID
+        $orderId = 'PAY-'.uniqid().'-'.time();
         $callbackUrl = route('payment.cryptomus.callback');
+
+        // Store payment data in session (to be used after successful payment)
+        session()->put('pending_payment', [
+            'order_id' => $orderId,
+            'user_id' => $user->id,
+            'gateway_id' => $this->gateway->id,
+            'gateway_name' => 'cryptomus',
+            'amount' => $amount,
+            'currency' => 'USD',
+            'network' => $network,
+            'meta' => $meta,
+            'created_at' => now()->toIso8601String(),
+        ]);
 
         $data = [
             'amount' => (string) $amount,
@@ -82,22 +79,21 @@ class CryptomusGateway implements PaymentGatewayContract
                     'response' => $response->json(),
                     'status' => $response->status(),
                 ]);
+                session()->forget('pending_payment');
                 throw new RuntimeException('Failed to create Cryptomus payment');
             }
 
             $result = $response->json();
 
-            // Update invoice with transaction ID
-            $invoice->update([
-                'transaction_id' => $result['result']['uuid'] ?? $orderId,
-                'meta' => array_merge($invoice->meta ?? [], [
-                    'cryptomus_response' => $result,
-                ]),
-            ]);
+            // Update session with transaction UUID from Cryptomus
+            $transactionId = $result['result']['uuid'] ?? $orderId;
+            session()->put('pending_payment.transaction_id', $transactionId);
+            session()->put('pending_payment.cryptomus_response', $result);
 
             // Return payment URL
             $paymentUrl = $result['result']['url'] ?? null;
             if (! $paymentUrl) {
+                session()->forget('pending_payment');
                 throw new RuntimeException('No payment URL received from Cryptomus');
             }
 
@@ -105,10 +101,10 @@ class CryptomusGateway implements PaymentGatewayContract
         } catch (\Exception $e) {
             Log::error('Cryptomus payment error', [
                 'error' => $e->getMessage(),
-                'invoice_id' => $invoice->id,
+                'order_id' => $orderId,
             ]);
             
-            $invoice->markAsFailed();
+            session()->forget('pending_payment');
             throw $e;
         }
     }
@@ -138,46 +134,74 @@ class CryptomusGateway implements PaymentGatewayContract
             return;
         }
 
-        // Find invoice by transaction_id or order_id pattern
-        $invoice = Invoice::where('transaction_id', $uuid)
-            ->orWhere('transaction_id', 'LIKE', '%'.$orderId.'%')
-            ->first();
+        // Check if invoice already exists for this transaction
+        $existingInvoice = Invoice::where('transaction_id', $uuid)->first();
+        
+        if ($existingInvoice) {
+            Log::info('Invoice already exists for transaction', ['transaction_id' => $uuid]);
+            return;
+        }
 
-        if (! $invoice) {
-            Log::warning('Invoice not found for Cryptomus callback', ['order_id' => $orderId, 'uuid' => $uuid]);
+        // Get payment data from session
+        $paymentData = session()->get('pending_payment');
+        
+        if (! $paymentData || $paymentData['order_id'] !== $orderId) {
+            Log::warning('No matching pending payment in session', [
+                'order_id' => $orderId,
+                'session_order_id' => $paymentData['order_id'] ?? null,
+            ]);
             return;
         }
 
         // Process based on status
         if ($status === 'paid' || $status === 'paid_over') {
-            if ($invoice->status !== 'completed') {
-                // Credit user's balance using the trait
-                $user = $invoice->user;
-                $user->credit(
-                    (float) $invoice->amount,
+            // Get user
+            $user = User::find($paymentData['user_id']);
+            
+            if (! $user) {
+                Log::error('User not found for payment', ['user_id' => $paymentData['user_id']]);
+                return;
+            }
+
+            // Create invoice and credit balance in a transaction
+            DB::transaction(function () use ($user, $paymentData, $uuid, $data) {
+                // Credit user's balance
+                $invoice = $user->credit(
+                    (float) $paymentData['amount'],
                     'payment_gateway',
                     'Payment received via Cryptomus',
-                    [
+                    array_merge($paymentData['meta'] ?? [], [
                         'gateway' => 'cryptomus',
                         'transaction_id' => $uuid,
-                        'pending_invoice_id' => $invoice->id,
-                    ]
+                        'callback_data' => $data,
+                        'completed_at' => now()->toIso8601String(),
+                    ])
                 );
 
-                // Mark original invoice as completed
-                $invoice->markAsCompleted();
+                // Update invoice with payment gateway details
                 $invoice->update([
-                    'meta' => array_merge($invoice->meta ?? [], [
-                        'callback_data' => $data,
-                        'completed_at' => now(),
-                    ]),
+                    'transaction_id' => $uuid,
+                    'payment_gateway_id' => $paymentData['gateway_id'],
+                    'currency' => $paymentData['currency'],
                 ]);
 
-                Log::info('Cryptomus payment completed', ['invoice_id' => $invoice->id, 'uuid' => $uuid]);
-            }
+                Log::info('Cryptomus payment completed', [
+                    'invoice_id' => $invoice->id,
+                    'transaction_id' => $uuid,
+                    'user_id' => $user->id,
+                ]);
+            });
+
+            // Remove payment data from session
+            session()->forget('pending_payment');
         } elseif ($status === 'cancel' || $status === 'fail') {
-            $invoice->markAsFailed();
-            Log::info('Cryptomus payment failed/cancelled', ['invoice_id' => $invoice->id, 'status' => $status]);
+            Log::info('Cryptomus payment failed/cancelled', [
+                'order_id' => $orderId,
+                'status' => $status,
+            ]);
+            
+            // Remove payment data from session
+            session()->forget('pending_payment');
         }
     }
 
