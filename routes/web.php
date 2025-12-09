@@ -70,6 +70,12 @@ Route::middleware(['auth'])->group(function () {
     /* Documentation Routes */
     Route::get('/docs', App\Livewire\Docs\Index::class)->name('docs.index');
     Route::get('/docs/{slug}', App\Livewire\Docs\Show::class)->name('docs.show');
+
+    /* Hotspot Users Routes */
+    Route::get('/hotspot/users/create', App\Livewire\HotspotUsers\Create::class)->name('hotspot.users.create');
+    Route::get('/hotspot/sessions', App\Livewire\HotspotUsers\ActiveSessions::class)->name('hotspot.sessions');
+    Route::get('/hotspot/session-cookies', App\Livewire\HotspotUsers\SessionCookies::class)->name('hotspot.sessionCookies');
+    Route::get('/hotspot/logs', App\Livewire\HotspotUsers\Logs::class)->name('hotspot.logs');
 });
 
 /* Hotspot User sync */

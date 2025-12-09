@@ -119,6 +119,77 @@ class HotspotUserManager
     }
 
     /**
+     * Get hotspot profiles (server profiles) from MikroTik.
+     */
+    public function getHotspotProfiles(Router $router): array
+    {
+        $ros = $this->client->make($router);
+
+        $q = (new Query('/ip/hotspot/user/profile/print'))
+            ->equal('.proplist', 'name,.id');
+
+        return $this->client->safeRead($ros, $q);
+    }
+
+    /**
+     * Get active hotspot sessions with detailed information.
+     */
+    public function getActiveSessions(Router $router): array
+    {
+        $ros = $this->client->make($router);
+
+        $q = (new Query('/ip/hotspot/active/print'))
+            ->equal('.proplist', 'user,address,mac-address,uptime,bytes-in,bytes-out,.id');
+
+        return $this->client->safeRead($ros, $q);
+    }
+
+    /**
+     * Get session cookies from MikroTik.
+     */
+    public function getSessionCookies(Router $router): array
+    {
+        $ros = $this->client->make($router);
+
+        $q = (new Query('/ip/hotspot/cookie/print'))
+            ->equal('.proplist', 'user,mac-address,domain,.id');
+
+        return $this->client->safeRead($ros, $q);
+    }
+
+    /**
+     * Delete a session cookie by .id.
+     */
+    public function deleteSessionCookie(Router $router, string $cookieId): array
+    {
+        $ros = $this->client->make($router);
+
+        if (! str_starts_with($cookieId, '*')) {
+            return ['ok' => false, 'message' => 'Invalid cookie ID format'];
+        }
+
+        $q = (new Query('/ip/hotspot/cookie/remove'))
+            ->equal('.id', $cookieId);
+
+        return $this->client->safeRead($ros, $q);
+    }
+
+    /**
+     * Get hotspot logs from MikroTik.
+     */
+    public function getHotspotLogs(Router $router): array
+    {
+        $ros = $this->client->make($router);
+
+        // Hotspot logs are typically found in the log with topics containing "hotspot"
+        $q = (new Query('/log/print'))
+            ->where('topics', 'hotspot')
+            ->equal('.proplist', 'time,topics,message');
+
+        return $this->client->safeRead($ros, $q);
+    }
+
+    /**
      * Internal helper to set disabled flag for a user.
      */
     protected function setUserDisabled(
