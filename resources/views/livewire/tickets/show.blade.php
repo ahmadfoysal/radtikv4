@@ -133,4 +133,47 @@
             </x-slot:actions>
         @endcan
     </x-mary-card>
+
+    {{-- Messages Section --}}
+    <x-mary-card title="Messages" separator class="mt-6 rounded-2xl bg-base-200">
+        {{-- Message Thread --}}
+        <div class="space-y-4 mb-6 max-h-96 overflow-y-auto" id="messageThread">
+            @forelse ($ticket->messages as $message)
+                <div class="flex {{ $message->user_id === auth()->id() ? 'justify-end' : 'justify-start' }}">
+                    <div class="max-w-xl">
+                        <div class="text-xs font-medium mb-1 {{ $message->user_id === auth()->id() ? 'text-right' : 'text-left' }} opacity-70">
+                            {{ $message->user->name }} • {{ $message->created_at->format('d-m-Y H:i') }}
+                        </div>
+                        <div class="p-3 rounded-lg {{ $message->user_id === auth()->id() ? 'bg-primary text-primary-content' : 'bg-base-100' }}">
+                            {{ $message->message }}
+                        </div>
+                    </div>
+                </div>
+            @empty
+                <div class="text-center opacity-50 py-8">
+                    No messages yet. Start the conversation!
+                </div>
+            @endforelse
+        </div>
+
+        {{-- Message Input Form --}}
+        <div class="space-y-3 pt-4 border-t border-base-300">
+            <x-mary-textarea wire:model="messageText" placeholder="Type your message here..." rows="3" />
+            <div class="flex justify-end">
+                <x-mary-button label="Send Message" icon="o-paper-airplane" class="btn-primary" 
+                    wire:click="sendMessage" spinner="sendMessage" />
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener('livewire:init', () => {
+                Livewire.on('messageSent', () => {
+                    const messageThread = document.getElementById('messageThread');
+                    if (messageThread) {
+                        messageThread.scrollTop = messageThread.scrollHeight;
+                    }
+                });
+            });
+        </script>
+    </x-mary-card>
 </div>

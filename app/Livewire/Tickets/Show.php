@@ -23,6 +23,9 @@ class Show extends Component
     #[V(['nullable', 'exists:users,id'])]
     public ?int $assigned_to = null;
 
+    #[V(['required', 'string', 'min:1'])]
+    public string $messageText = '';
+
     public function mount(Ticket $ticket)
     {
         $this->authorize('view', $ticket);
@@ -77,6 +80,32 @@ class Show extends Component
         $this->success('Ticket marked as solved.');
     }
 
+    public function sendMessage()
+    {
+        $user = auth()->user();
+
+        // Authorization: only superadmin or ticket owner/creator can send messages
+        if (! $user->isSuperAdmin() && $this->ticket->owner_id !== $user->id && $this->ticket->created_by !== $user->id) {
+            abort(403, 'Unauthorized to send messages on this ticket.');
+        }
+
+        $this->validate(['messageText' => 'required|string|min:1']);
+
+        $this->ticket->messages()->create([
+            'user_id' => $user->id,
+            'message' => $this->messageText,
+        ]);
+
+        $this->messageText = '';
+        $this->success('Message sent successfully.');
+
+        // Refresh ticket with messages to update the view
+        $this->ticket->load('messages.user');
+
+        // Emit event for auto-scroll
+        $this->dispatch('messageSent');
+    }
+
     public function render()
     {
         $user = auth()->user();
@@ -87,6 +116,9 @@ class Show extends Component
         if ($user->isSuperAdmin()) {
             $users = User::orderBy('name')->limit(100)->get(['id', 'name']);
         }
+
+        // Load messages with user information
+        $this->ticket->load('messages.user');
 
         return view('livewire.tickets.show', [
             'users' => $users,
