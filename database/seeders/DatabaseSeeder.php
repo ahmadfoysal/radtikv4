@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             PackageSeeder::class,
             RouterSeeder::class,
             VoucherSeeder::class,
+            PaymentGatewaySeeder::class,
         ]);
     }
 }

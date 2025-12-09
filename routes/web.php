@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\MikrotikApiController;
+use App\Http\Controllers\PaymentCallbackController;
 use App\Http\Controllers\Voucher\SingleVoucherPrintController;
 use App\Http\Controllers\Voucher\VoucherPrintController;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -52,6 +53,10 @@ Route::middleware(['auth'])->group(function () {
     /* Billing Routes */
     Route::get('/billing/invoices', App\Livewire\Billing\Invoices::class)->name('billing.invoices');
     Route::get('/billing/manual-adjustment', App\Livewire\Billing\ManualAdjustment::class)->name('billing.manual-adjustment');
+    Route::get('/billing/add-balance', App\Livewire\Billing\AddBalance::class)->name('billing.add-balance');
+
+    /* Admin Routes */
+    Route::get('/admin/payment-gateways', App\Livewire\Admin\PaymentGatewaySettings::class)->name('admin.payment-gateways');
 });
 
 /* Hotspot User sync */
@@ -69,6 +74,12 @@ Route::get('/mikrotik/api/pull-profiles', [MikrotikApiController::class, 'pullPr
     ->name('mikrotik.pullProfiles')->middleware('check.router.subscription');
 Route::get('/mikrotik/api/pull-updated-profiles', [MikrotikApiController::class, 'pullUpdatedProfiles'])
     ->name('mikrotik.pullUpdatedProfiles')->middleware('check.router.subscription');
+
+/* Payment Gateway Callbacks (without CSRF) */
+Route::post('/payment/cryptomus/callback', [App\Http\Controllers\PaymentCallbackController::class, 'cryptomus'])
+    ->withoutMiddleware([VerifyCsrfToken::class])->name('payment.cryptomus.callback');
+Route::post('/payment/paystation/callback', [App\Http\Controllers\PaymentCallbackController::class, 'paystation'])
+    ->withoutMiddleware([VerifyCsrfToken::class])->name('payment.paystation.callback');
 
 /* Deploy route */
 Route::post('/api/deploy', [App\Http\Controllers\Api\DeployController::class, 'deploy'])
