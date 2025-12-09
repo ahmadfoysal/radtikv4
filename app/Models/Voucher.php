@@ -20,6 +20,7 @@ class Voucher extends Model
         'mac_address',
         'activated_at',
         'batch',
+        'user_profile_id',
     ];
 
     protected $casts = [
