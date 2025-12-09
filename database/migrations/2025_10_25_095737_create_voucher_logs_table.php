@@ -13,9 +13,29 @@ return new class extends Migration
     {
         Schema::create('voucher_logs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->json('log');
+            
+            // Foreign keys with nullable and nullOnDelete
+            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('voucher_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('router_id')->nullable()->constrained()->nullOnDelete();
+            
+            // Event information
+            $table->string('event_type');
+            
+            // Snapshot fields (preserve data even if voucher/router deleted)
+            $table->string('username')->nullable();
+            $table->string('profile')->nullable();
+            $table->decimal('price', 12, 2)->nullable();
+            $table->integer('validity_days')->nullable();
+            $table->string('router_name')->nullable();
+            
+            // Extra metadata
+            $table->json('meta')->nullable();
+            
             $table->timestamps();
+            
+            // Index for pruning queries
+            $table->index('created_at');
         });
     }
 
