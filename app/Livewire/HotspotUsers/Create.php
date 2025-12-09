@@ -118,7 +118,6 @@ class Create extends Component
             
             // Reset form
             $this->reset(['username', 'password', 'profile']);
-            $this->loadProfiles();
         } catch (\Throwable $e) {
             $this->error('Failed to create hotspot user: ' . $e->getMessage());
         }
