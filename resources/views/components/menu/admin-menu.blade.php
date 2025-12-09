@@ -39,14 +39,14 @@
         <x-mary-menu-sub title="Resellers" icon="o-user-group">
             <x-mary-menu-item title="All Resellers" icon="o-list-bullet" link="/users" />
             <x-mary-menu-item title="Add Reseller" icon="o-user-plus" link="/user/add" />
-            <x-mary-menu-item title="Assign Router" icon="o-server" link="/reseller/packages" />
+            <x-mary-menu-item title="Assign Router" icon="o-server" link="/reseller/assign-router" />
             <x-mary-menu-item title="Reseller Permissions" icon="o-cube" link="/resellers/permissions" />
         </x-mary-menu-sub>
 
         {{-- BILLING & TRANSACTIONS --}}
         <x-mary-menu-sub title="Billing" icon="o-credit-card">
             <x-mary-menu-item title="Invoices" icon="o-document-text" link="/billing/invoices" />
-            <x-mary-menu-item title="Balance & Top-up" icon="o-banknotes" link="/billing/balance" />
+            <x-mary-menu-item title="Balance & Top-up" icon="o-banknotes" link="/billing/add-balance" />
         </x-mary-menu-sub>
 
         {{-- REPORTS --}}

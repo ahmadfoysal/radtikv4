@@ -18,7 +18,7 @@ return new class extends Migration
             $table->json('data')->nullable(); // JSON for credentials and config
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-            
+
             $table->unique('name');
         });
     }
@@ -28,6 +28,8 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // Disable foreign key constraints before dropping the table
+        Schema::disableForeignKeyConstraints();
         Schema::dropIfExists('payment_gateways');
     }
 };

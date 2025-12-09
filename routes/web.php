@@ -20,6 +20,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/users', App\Livewire\User\Index::class)->name('users.index');
     Route::get('/user/add', App\Livewire\User\Create::class)->name('users.create');
     Route::get('/user/{user}/edit', App\Livewire\User\Edit::class)->name('users.edit');
+    Route::get('/reseller/assign-router', App\Livewire\Admin\AssignResellerRouters::class)->name('reseller.assign-router');
 
     /* Router Routes */
     Route::get('/routers', App\Livewire\Router\Index::class)->name('routers.index');
@@ -55,8 +56,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/billing/manual-adjustment', App\Livewire\Billing\ManualAdjustment::class)->name('billing.manual-adjustment');
 
     /* Ticket Routes */
-    Route::get('/tickets', App\Livewire\Tickets\Index::class)->name('tickets.index');
-    Route::get('/tickets/{ticket}', App\Livewire\Tickets\Show::class)->name('tickets.show');
+    Route::get('/support/contact', App\Livewire\Tickets\Index::class)->name('tickets.index');
+    Route::get('/support/contact/{ticket}', App\Livewire\Tickets\Show::class)->name('tickets.show');
     Route::get('/billing/add-balance', App\Livewire\Billing\AddBalance::class)->name('billing.add-balance');
 
     /* Admin Routes */
