@@ -94,4 +94,12 @@ class Ticket extends Model
     {
         return $this->status === 'in_progress';
     }
+
+    /**
+     * Get all messages for the ticket.
+     */
+    public function messages()
+    {
+        return $this->hasMany(TicketMessage::class)->orderBy('created_at');
+    }
 }
