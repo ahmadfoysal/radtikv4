@@ -52,7 +52,7 @@
                                         icon="o-trash" 
                                         class="btn-ghost btn-xs text-error"
                                         wire:click="deleteSession('{{ $session['.id'] ?? '' }}')"
-                                        spinner="deleteSession('{{ $session['.id'] ?? '' }}')"
+                                        spinner="deleteSession"
                                         onclick="return confirm('Are you sure you want to remove this session?')"
                                     />
                                 </td>
