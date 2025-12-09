@@ -77,7 +77,7 @@ class Create extends Component
             // Get user profile ID - ensure it exists
             $userProfile = auth()->user()->profiles()->first();
             if (!$userProfile) {
-                $this->error('No user profile found. Please create a user profile first.');
+                $this->error('No user profile found. Please create a user profile in the Profile Management section first.');
                 return;
             }
 
