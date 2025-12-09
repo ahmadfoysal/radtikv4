@@ -41,7 +41,7 @@ class Create extends Component
         }
 
         try {
-            $router = Router::find($value);
+            $router = auth()->user()->routers()->find($value);
             if (!$router) {
                 $this->available_profiles = [];
                 $this->profile = '';
@@ -71,13 +71,13 @@ class Create extends Component
         $this->validate();
 
         try {
-            $router = Router::findOrFail($this->router_id);
+            $router = auth()->user()->routers()->findOrFail($this->router_id);
             $manager = app(HotspotUserManager::class);
 
             // Get user profile ID - ensure it exists
             $userProfile = auth()->user()->profiles()->first();
             if (!$userProfile) {
-                $this->error('No user profile found. Please create a user profile in the Profile Management section first.');
+                $this->error('No bandwidth profile found. Please create a bandwidth profile in the Profile Management section first.');
                 return;
             }
 
@@ -131,7 +131,7 @@ class Create extends Component
     public function render()
     {
         return view('livewire.hotspot-users.create', [
-            'routers' => Router::orderBy('name')->get(['id', 'name', 'address']),
+            'routers' => auth()->user()->routers()->orderBy('name')->get(['id', 'name', 'address']),
         ]);
     }
 }

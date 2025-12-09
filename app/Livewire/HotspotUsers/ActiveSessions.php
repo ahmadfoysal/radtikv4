@@ -40,7 +40,7 @@ class ActiveSessions extends Component
         $this->loading = true;
 
         try {
-            $router = Router::findOrFail($this->router_id);
+            $router = auth()->user()->routers()->findOrFail($this->router_id);
             $manager = app(HotspotUserManager::class);
             
             $this->sessions = $manager->getActiveSessions($router);
@@ -59,7 +59,7 @@ class ActiveSessions extends Component
     public function deleteSession(string $sessionId)
     {
         try {
-            $router = Router::findOrFail($this->router_id);
+            $router = auth()->user()->routers()->findOrFail($this->router_id);
             $manager = app(HotspotUserManager::class);
             
             $manager->removeActiveUser($router, $sessionId);

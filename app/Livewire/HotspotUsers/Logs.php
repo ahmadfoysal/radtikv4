@@ -40,7 +40,7 @@ class Logs extends Component
         $this->loading = true;
 
         try {
-            $router = Router::findOrFail($this->router_id);
+            $router = auth()->user()->routers()->findOrFail($this->router_id);
             $manager = app(HotspotUserManager::class);
             
             $this->logs = $manager->getHotspotLogs($router);
@@ -59,7 +59,7 @@ class Logs extends Component
     public function render()
     {
         return view('livewire.hotspot-users.logs', [
-            'routers' => Router::orderBy('name')->get(['id', 'name']),
+            'routers' => auth()->user()->routers()->orderBy('name')->get(['id', 'name']),
         ]);
     }
 }

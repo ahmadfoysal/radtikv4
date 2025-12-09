@@ -45,7 +45,7 @@
                                     <x-mary-button 
                                         icon="o-trash" 
                                         class="btn-ghost btn-xs text-error"
-                                        wire:click="deleteCookie('{{ $cookie['.id'] ?? '' }}')"
+                                        wire:click="deleteCookie(@js($cookie['.id'] ?? ''))"
                                         spinner="deleteCookie"
                                         onclick="return confirm('Are you sure you want to remove this cookie?')"
                                     />

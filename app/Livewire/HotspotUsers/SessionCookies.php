@@ -40,7 +40,7 @@ class SessionCookies extends Component
         $this->loading = true;
 
         try {
-            $router = Router::findOrFail($this->router_id);
+            $router = auth()->user()->routers()->findOrFail($this->router_id);
             $manager = app(HotspotUserManager::class);
             
             $this->cookies = $manager->getSessionCookies($router);
@@ -59,7 +59,7 @@ class SessionCookies extends Component
     public function deleteCookie(string $cookieId)
     {
         try {
-            $router = Router::findOrFail($this->router_id);
+            $router = auth()->user()->routers()->findOrFail($this->router_id);
             $manager = app(HotspotUserManager::class);
             
             $manager->deleteSessionCookie($router, $cookieId);
@@ -74,7 +74,7 @@ class SessionCookies extends Component
     public function render()
     {
         return view('livewire.hotspot-users.session-cookies', [
-            'routers' => Router::orderBy('name')->get(['id', 'name']),
+            'routers' => auth()->user()->routers()->orderBy('name')->get(['id', 'name']),
         ]);
     }
 }

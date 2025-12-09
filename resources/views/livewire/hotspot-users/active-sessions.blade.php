@@ -51,7 +51,7 @@
                                     <x-mary-button 
                                         icon="o-trash" 
                                         class="btn-ghost btn-xs text-error"
-                                        wire:click="deleteSession('{{ $session['.id'] ?? '' }}')"
+                                        wire:click="deleteSession(@js($session['.id'] ?? ''))"
                                         spinner="deleteSession"
                                         onclick="return confirm('Are you sure you want to remove this session?')"
                                     />
