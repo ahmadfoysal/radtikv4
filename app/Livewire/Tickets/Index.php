@@ -95,12 +95,12 @@ class Index extends Component
 
         // If not superadmin, set owner to current user
         if (! $user->isSuperAdmin()) {
-            $this->owner_id = $user->id();
+            $this->owner_id = $user->id;
         }
 
         // If owner_id is still null (shouldn't happen), default to current user
         if (! $this->owner_id) {
-            $this->owner_id = $user->id();
+            $this->owner_id = $user->id;
         }
 
         Ticket::create([
@@ -108,7 +108,7 @@ class Index extends Component
             'description' => $this->description,
             'priority' => $this->priority,
             'status' => 'open',
-            'created_by' => $user->id(),
+            'created_by' => $user->id,
             'owner_id' => $this->owner_id,
             'assigned_to' => $this->assigned_to,
         ]);
