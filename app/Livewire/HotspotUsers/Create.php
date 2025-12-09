@@ -81,7 +81,14 @@ class Create extends Component
             $router = Router::findOrFail($this->router_id);
             $manager = app(HotspotUserManager::class);
 
-            // Create user in MikroTik
+            // Get user profile ID - ensure it exists
+            $userProfile = auth()->user()->profiles()->first();
+            if (!$userProfile) {
+                $this->error('No user profile found. Please create a user profile first.');
+                return;
+            }
+
+            // Create user in MikroTik first
             $result = $manager->addUser(
                 $router,
                 $this->username,
@@ -89,7 +96,13 @@ class Create extends Component
                 $this->profile ?: null
             );
 
-            // Create record in vouchers table
+            // Check if MikroTik creation was successful
+            if (isset($result['ok']) && $result['ok'] === false) {
+                $this->error('Failed to create user in MikroTik: ' . ($result['message'] ?? 'Unknown error'));
+                return;
+            }
+
+            // Create record in vouchers table only after successful MikroTik creation
             $batch = 'HS' . now()->format('ymdHis') . Str::upper(Str::random(4));
             
             Voucher::create([
@@ -101,7 +114,7 @@ class Create extends Component
                 'created_by' => auth()->id(),
                 'user_id' => auth()->id(),
                 'router_id' => $this->router_id,
-                'user_profile_id' => auth()->user()->profiles()->first()?->id ?? 1,
+                'user_profile_id' => $userProfile->id,
                 'is_radius' => false,
                 'bytes_in' => 0,
                 'bytes_out' => 0,
