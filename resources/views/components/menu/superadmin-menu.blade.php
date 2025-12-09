@@ -7,23 +7,22 @@
 
 
         {{-- USER MANAGEMENT --}}
-        <x-mary-menu-sub title="User Management" icon="o-users"></x-mary-menu-sub>
-        <x-mary-menu-item title="All Users" icon="o-user-group" link="/users" wire:navigate />
-        <x-mary-menu-item title="Add User" icon="o-user-plus" link="/user/add" wire:navigate />
+        <x-mary-menu-sub title="User Management" icon="o-users">
+            <x-mary-menu-item title="All Users" icon="o-user-group" link="/users" wire:navigate />
+            <x-mary-menu-item title="Add User" icon="o-user-plus" link="/user/add" wire:navigate />
         </x-mary-menu-sub>
 
         {{-- BILLING & TRANSACTIONS --}}
         <x-mary-menu-sub title="Billing" icon="o-credit-card">
+            <x-mary-menu-item title="Add Balance" icon="o-plus-circle" link="/billing/add-balance" wire:navigate />
             <x-mary-menu-item title="Invoices" icon="o-document-text" link="/billing/invoices" />
             <x-mary-menu-item title="Manual Adjustment" icon="o-pencil" link="/billing/manual-adjustment" />
             <x-mary-menu-item title="Transactions" icon="o-receipt-percent" link="/billing/transactions" />
-            <x-mary-menu-item title="Packages" icon="o-cube" link="/packages" wire:navigate />
-            <x-mary-menu-item title="Add Package" icon="o-plus" link="/package/add" wire:navigate />
             <x-mary-menu-item title="Payment Methods" icon="o-wallet" link="/billing/methods" />
         </x-mary-menu-sub>
 
         {{-- Packages --}}
-        <x-mary-menu-sub title="Packages" icon="o-box-open">
+        <x-mary-menu-sub title="Packages" icon="o-cube">
             <x-mary-menu-item title="All Packages" icon="o-cube" link="/packages" wire:navigate />
             <x-mary-menu-item title="Add Package" icon="o-plus" link="/package/add" wire:navigate />
         </x-mary-menu-sub>
@@ -39,6 +38,7 @@
             <x-mary-menu-item title="General Settings" icon="o-adjustments-horizontal" link="/settings/general" />
             <x-mary-menu-item title="Email & SMTP" icon="o-envelope-open" link="/settings/email" />
             <x-mary-menu-item title="API Keys" icon="o-key" link="/settings/api" />
+            <x-mary-menu-item title="Payment Gateways" icon="o-credit-card" link="/admin/payment-gateways" wire:navigate />
         </x-mary-menu-sub>
 
         {{-- SUPPORT --}}

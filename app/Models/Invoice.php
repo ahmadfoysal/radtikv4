@@ -15,6 +15,9 @@ class Invoice extends Model
         'router_id',
         'type',
         'category',
+        'status',
+        'transaction_id',
+        'payment_gateway_id',
         'amount',
         'currency',
         'balance_after',
@@ -39,5 +42,58 @@ class Invoice extends Model
     public function router(): BelongsTo
     {
         return $this->belongsTo(Router::class);
+    }
+
+    public function paymentGateway(): BelongsTo
+    {
+        return $this->belongsTo(PaymentGateway::class);
+    }
+
+    /**
+     * Scope to only get pending invoices
+     */
+    public function scopePending($query)
+    {
+        return $query->where('status', 'pending');
+    }
+
+    /**
+     * Scope to only get completed invoices
+     */
+    public function scopeCompleted($query)
+    {
+        return $query->where('status', 'completed');
+    }
+
+    /**
+     * Check if invoice is pending
+     */
+    public function isPending(): bool
+    {
+        return $this->status === 'pending';
+    }
+
+    /**
+     * Mark invoice as completed
+     */
+    public function markAsCompleted(): void
+    {
+        $this->update(['status' => 'completed']);
+    }
+
+    /**
+     * Mark invoice as failed
+     */
+    public function markAsFailed(): void
+    {
+        $this->update(['status' => 'failed']);
+    }
+
+    /**
+     * Mark invoice as cancelled
+     */
+    public function markAsCancelled(): void
+    {
+        $this->update(['status' => 'cancelled']);
     }
 }
