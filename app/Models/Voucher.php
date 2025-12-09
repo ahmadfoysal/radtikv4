@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Models\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 
 class Voucher extends Model
 {
+    use LogsActivity;
     protected $fillable = [
         'name',
         'username',

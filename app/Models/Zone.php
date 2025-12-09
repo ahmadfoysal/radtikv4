@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,7 +12,7 @@ use Illuminate\Support\Str;
 
 class Zone extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     /**
      * @var array<int, string>

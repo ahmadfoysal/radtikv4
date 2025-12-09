@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Models\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 
 class ResellerRouter extends Model
 {
+    use LogsActivity;
     protected $table = 'reseller_router';
 
     protected $fillable = [

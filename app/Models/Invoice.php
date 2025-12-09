@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Invoice extends Model
 {
-    use SoftDeletes;
+    use LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'user_id',
