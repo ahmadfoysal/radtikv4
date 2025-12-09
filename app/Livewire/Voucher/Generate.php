@@ -88,6 +88,20 @@ class Generate extends Component
 
         Voucher::insert($rows);
 
+        // Log bulk voucher generation
+        \App\Services\ActivityLogger::logCustom(
+            'bulk_generated',
+            null,
+            "Generated {$this->quantity} vouchers in batch {$rows[0]['batch']}",
+            [
+                'quantity' => $this->quantity,
+                'batch' => $rows[0]['batch'],
+                'router_id' => $this->router_id,
+                'profile_id' => $this->profile_id,
+                'type' => $this->type,
+            ]
+        );
+
         $this->success('Vouchers generated successfully.');
         // nevigat to route
         $this->redirect(route('vouchers.index'), navigate: true);
