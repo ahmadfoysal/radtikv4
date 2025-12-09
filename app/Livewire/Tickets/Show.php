@@ -23,7 +23,6 @@ class Show extends Component
     #[V(['nullable', 'exists:users,id'])]
     public ?int $assigned_to = null;
 
-    #[V(['required', 'string', 'min:1'])]
     public string $messageText = '';
 
     public function mount(Ticket $ticket)
@@ -47,7 +46,12 @@ class Show extends Component
     public function updateTicket()
     {
         $this->authorize('update', $this->ticket);
-        $this->validate();
+        
+        // Validate only ticket-related fields
+        $this->validate([
+            'status' => 'required|string|in:open,in_progress,solved,closed',
+            'assigned_to' => 'nullable|exists:users,id',
+        ]);
 
         $updates = [
             'status' => $this->status,
@@ -83,6 +87,42 @@ class Show extends Component
         $this->success('Ticket marked as solved.');
     }
 
+    public function changeStatus($newStatus)
+    {
+        $this->authorize('update', $this->ticket);
+        
+        $this->validate([
+            'status' => 'required|string|in:open,in_progress,solved,closed',
+        ]);
+
+        $updates = ['status' => $newStatus];
+
+        // Set solved_at timestamp if status changed to solved
+        if ($newStatus === 'solved' && ! $this->ticket->isSolved()) {
+            $updates['solved_at'] = now();
+        }
+
+        // Set closed_at timestamp if status changed to closed
+        if ($newStatus === 'closed' && ! $this->ticket->isClosed()) {
+            $updates['closed_at'] = now();
+        }
+
+        $this->ticket->update($updates);
+        $this->status = $newStatus;
+
+        $this->success('Ticket status updated successfully.');
+    }
+
+    public function deleteTicket()
+    {
+        $this->authorize('delete', $this->ticket);
+        
+        $this->ticket->delete();
+        
+        $this->success('Ticket deleted successfully.');
+        return redirect()->route('tickets.index');
+    }
+
     public function sendMessage()
     {
         $user = auth()->user();
@@ -92,7 +132,10 @@ class Show extends Component
             abort(403, 'Unauthorized to send messages on this ticket.');
         }
 
-        $this->validate(['messageText' => 'required|string|min:1']);
+        // Validate only message field
+        $validated = $this->validate([
+            'messageText' => 'required|string|min:1',
+        ]);
 
         $this->ticket->messages()->create([
             'user_id' => $user->id,
