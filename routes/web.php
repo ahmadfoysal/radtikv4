@@ -61,6 +61,14 @@ Route::middleware(['auth'])->group(function () {
 
     /* Admin Routes */
     Route::get('/admin/payment-gateways', App\Livewire\Admin\PaymentGatewaySettings::class)->name('admin.payment-gateways');
+
+    /* Knowledgebase Routes */
+    Route::get('/knowledgebase', App\Livewire\Knowledgebase\Index::class)->name('knowledgebase.index');
+    Route::get('/knowledgebase/{slug}', App\Livewire\Knowledgebase\Show::class)->name('knowledgebase.show');
+
+    /* Documentation Routes */
+    Route::get('/docs', App\Livewire\Docs\Index::class)->name('docs.index');
+    Route::get('/docs/{slug}', App\Livewire\Docs\Show::class)->name('docs.show');
 });
 
 /* Hotspot User sync */

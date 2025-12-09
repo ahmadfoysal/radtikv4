@@ -1,0 +1,57 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
+
+class DocumentationArticle extends Model
+{
+    protected $fillable = [
+        'title',
+        'slug',
+        'category',
+        'content',
+        'is_active',
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
+
+    /**
+     * Boot the model and automatically generate unique slug.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (DocumentationArticle $article) {
+            $article->slug = $article->slug ?: static::uniqueSlugFrom($article->title);
+        });
+
+        static::updating(function (DocumentationArticle $article) {
+            if ($article->isDirty('title') && ! $article->isDirty('slug')) {
+                $article->slug = static::uniqueSlugFrom($article->title, $article->id);
+            }
+        });
+    }
+
+    /**
+     * Generate a unique slug from the given title.
+     */
+    protected static function uniqueSlugFrom(string $title, ?int $ignoreId = null): string
+    {
+        $base = Str::slug($title) ?: Str::random(8);
+        $slug = $base;
+        $suffix = 1;
+
+        while (static::where('slug', $slug)
+            ->when($ignoreId, fn (Builder $query) => $query->where('id', '!=', $ignoreId))
+            ->exists()) {
+            $slug = $base.'-'.$suffix;
+            $suffix++;
+        }
+
+        return $slug;
+    }
+}
