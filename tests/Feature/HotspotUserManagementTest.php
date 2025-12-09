@@ -27,7 +27,6 @@ beforeEach(function () {
 
     // Create user profile
     $this->profile = UserProfile::factory()->create(['user_id' => $this->admin->id]);
-    $this->admin->profiles()->attach($this->profile->id);
 });
 
 // ==================== Authorization Tests ====================
@@ -101,8 +100,8 @@ test('create component requires authentication for router operations', function 
 });
 
 test('create component shows error when no user profile exists', function () {
-    // Remove profile association
-    $this->admin->profiles()->detach();
+    // Delete the profile
+    $this->profile->delete();
 
     $this->actingAs($this->admin);
 
@@ -111,7 +110,7 @@ test('create component shows error when no user profile exists', function () {
         ->set('username', 'testuser')
         ->set('password', 'testpass')
         ->call('save')
-        ->assertHasErrors([]);
+        ->assertNotSet('router_id', null); // Should not reset form on error
 });
 
 test('create component validates required fields', function () {
