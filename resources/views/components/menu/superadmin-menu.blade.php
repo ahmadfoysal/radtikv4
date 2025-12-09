@@ -44,7 +44,7 @@
         {{-- SUPPORT --}}
         <x-mary-menu-sub title="Support" icon="o-lifebuoy">
             <x-mary-menu-item title="Documentation" icon="o-book-open" link="/docs" />
-            <x-mary-menu-item title="Knowledge Base" icon="o-light-bulb" link="/help" />
+            <x-mary-menu-item title="Knowledge Base" icon="o-light-bulb" link="/knowledgebase" />
             <x-mary-menu-item title="Contact Support" icon="o-chat-bubble-left-right" link="/support/contact" />
         </x-mary-menu-sub>
 

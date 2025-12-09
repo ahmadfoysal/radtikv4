@@ -21,6 +21,8 @@ class DatabaseSeeder extends Seeder
             RouterSeeder::class,
             VoucherSeeder::class,
             PaymentGatewaySeeder::class,
+            KnowledgebaseArticleSeeder::class,
+            DocumentationArticleSeeder::class,
         ]);
     }
 }
