@@ -111,6 +111,20 @@ class AssignResellerRouters extends Component
                     ]
                 );
             }
+
+            // Log router assignment
+            if (count($selected) > 0) {
+                \App\Services\ActivityLogger::logCustom(
+                    'routers_assigned',
+                    null,
+                    "Assigned " . count($selected) . " router(s) to reseller",
+                    [
+                        'reseller_id' => $this->resellerId,
+                        'router_ids' => $selected,
+                        'count' => count($selected),
+                    ]
+                );
+            }
         });
 
         $this->loadAssignments();
