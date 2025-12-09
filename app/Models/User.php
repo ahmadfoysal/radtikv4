@@ -171,4 +171,20 @@ class User extends Authenticatable
     {
         return $this->hasMany(VoucherLog::class);
     }
+
+    // Tickets relations
+    public function ticketsCreated()
+    {
+        return $this->hasMany(Ticket::class, 'created_by');
+    }
+
+    public function ticketsOwned()
+    {
+        return $this->hasMany(Ticket::class, 'owner_id');
+    }
+
+    public function ticketsAssigned()
+    {
+        return $this->hasMany(Ticket::class, 'assigned_to');
+    }
 }
