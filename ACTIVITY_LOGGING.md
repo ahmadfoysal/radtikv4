@@ -55,6 +55,27 @@ Reusable trait that automatically logs model events:
 - Smart detection of whether to log
 - Configurable per-model exclusions
 
+## Human-Readable Log Format
+
+The activity logging system automatically generates user-friendly descriptions that are easy to understand:
+
+### Automatic Descriptions
+- **Created**: "John Doe created package: Premium Plan"
+- **Updated**: "Jane Smith updated router: Main Gateway"
+- **Deleted**: "Admin deleted voucher: VOUCHER123"
+
+### Formatted Changes
+For updates, the system shows what changed in plain language:
+- "Name changed from 'Basic Plan' to 'Premium Plan', Price Monthly changed from '50' to '100'"
+
+### Accessible Attributes
+Each log entry provides several human-readable properties:
+- `readable_summary`: Complete sentence describing the activity
+- `formatted_changes`: Detailed description of what changed
+- `time_ago`: "5 minutes ago", "2 hours ago", etc.
+- `readable_action`: "created", "updated", "deleted", etc.
+- `readable_model_name`: "package", "router", "user", etc.
+
 ## Usage
 
 ### Automatic Logging (Recommended)
@@ -157,6 +178,41 @@ The following models automatically log all CRUD operations:
 - KnowledgebaseArticle
 - DocumentationArticle
 
+## Viewing Activity Logs
+
+### Activity Log UI Component
+
+A complete Livewire component is provided to display activity logs in a user-friendly interface:
+
+**Location**: `app/Livewire/ActivityLog/Index.php`
+
+**Features**:
+- Real-time search across activities
+- Filter by action type (created, updated, deleted, etc.)
+- Pagination for large datasets
+- Color-coded activity icons
+- Timestamps in human-readable format ("5 minutes ago")
+- User information and IP tracking
+
+**To add to your routes** (example):
+```php
+Route::get('/activity-log', \App\Livewire\ActivityLog\Index::class)
+    ->name('activity-log.index')
+    ->middleware(['auth']);
+```
+
+### Displaying Logs in Your Views
+
+```blade
+@foreach($logs as $log)
+    <div>
+        <strong>{{ $log->readable_summary }}</strong>
+        <p>{{ $log->formatted_changes }}</p>
+        <small>{{ $log->time_ago }} by {{ $log->user->name ?? 'System' }}</small>
+    </div>
+@endforeach
+```
+
 ## Querying Logs
 
 ### Get all logs for a user
@@ -164,6 +220,12 @@ The following models automatically log all CRUD operations:
 $logs = ActivityLog::where('user_id', $userId)
     ->orderBy('created_at', 'desc')
     ->get();
+
+// Display them
+foreach ($logs as $log) {
+    echo $log->readable_summary; // "John created package: Premium Plan"
+    echo $log->time_ago; // "5 minutes ago"
+}
 ```
 
 ### Get logs for a specific model

@@ -50,15 +50,70 @@ class ActivityLogger
     protected static function generateDescription(string $action, ?Model $model): string
     {
         if (! $model) {
-            return ucfirst($action);
+            return static::humanizeAction($action);
         }
 
-        $modelName = class_basename($model);
-        $identifier = method_exists($model, 'getIdentifier')
-            ? $model->getIdentifier()
-            : ($model->name ?? $model->username ?? "#{$model->id}");
+        $modelName = static::getReadableModelName($model);
+        $identifier = static::getModelIdentifier($model);
+        $actionText = static::humanizeAction($action);
 
-        return ucfirst($action) . " {$modelName}: {$identifier}";
+        // Generate contextual description
+        return match($action) {
+            'created' => "Created new {$modelName}: {$identifier}",
+            'updated' => "Updated {$modelName}: {$identifier}",
+            'deleted' => "Deleted {$modelName}: {$identifier}",
+            default => ucfirst($actionText) . " {$modelName}: {$identifier}",
+        };
+    }
+
+    /**
+     * Get readable model name
+     */
+    protected static function getReadableModelName(Model $model): string
+    {
+        $modelName = class_basename($model);
+        
+        // Convert CamelCase to readable format
+        return \Illuminate\Support\Str::of($modelName)
+            ->snake()
+            ->replace('_', ' ')
+            ->lower()
+            ->toString();
+    }
+
+    /**
+     * Get model identifier for description
+     */
+    protected static function getModelIdentifier(Model $model): string
+    {
+        // Try custom getIdentifier method first
+        if (method_exists($model, 'getIdentifier')) {
+            return $model->getIdentifier();
+        }
+
+        // Try common identifier fields
+        $identifierFields = ['name', 'title', 'username', 'email', 'subject'];
+        
+        foreach ($identifierFields as $field) {
+            if (isset($model->{$field}) && !empty($model->{$field})) {
+                return $model->{$field};
+            }
+        }
+
+        // Fall back to ID
+        return "#{$model->id}";
+    }
+
+    /**
+     * Humanize action name
+     */
+    protected static function humanizeAction(string $action): string
+    {
+        return \Illuminate\Support\Str::of($action)
+            ->snake()
+            ->replace('_', ' ')
+            ->lower()
+            ->toString();
     }
 
     /**

@@ -51,6 +51,10 @@ class ActivityLoggerTest extends TestCase
         $this->assertEquals('created', $log->action);
         $this->assertNotNull($log->new_values);
         $this->assertNull($log->old_values);
+        
+        // Test human-readable features
+        $this->assertStringContainsString('created', $log->readable_summary);
+        $this->assertStringContainsString('package', $log->readable_summary);
     }
 
     public function test_model_update_is_logged(): void
@@ -253,5 +257,83 @@ class ActivityLoggerTest extends TestCase
             'model_id' => $user->id,
             'action' => 'created',
         ]);
+    }
+
+    public function test_logs_have_human_readable_descriptions(): void
+    {
+        $package = Package::create([
+            'name' => 'Premium Plan',
+            'price_monthly' => 100,
+            'user_limit' => 10,
+            'billing_cycle' => 'monthly',
+            'auto_renew_allowed' => true,
+            'is_active' => true,
+        ]);
+
+        $log = ActivityLog::where('model_id', $package->id)
+            ->where('action', 'created')
+            ->first();
+
+        // Test readable summary
+        $summary = $log->readable_summary;
+        $this->assertStringContainsString($this->user->name, $summary);
+        $this->assertStringContainsString('created', $summary);
+        $this->assertStringContainsString('package', $summary);
+
+        // Test formatted changes
+        $changes = $log->formatted_changes;
+        $this->assertNotNull($changes);
+        $this->assertStringContainsString('Premium Plan', $changes);
+
+        // Test time ago
+        $this->assertNotNull($log->time_ago);
+        $this->assertStringContainsString('ago', $log->time_ago);
+    }
+
+    public function test_update_logs_show_changes_in_readable_format(): void
+    {
+        $package = Package::create([
+            'name' => 'Basic Plan',
+            'price_monthly' => 50,
+            'user_limit' => 5,
+            'billing_cycle' => 'monthly',
+            'auto_renew_allowed' => true,
+            'is_active' => true,
+        ]);
+
+        // Clear creation log
+        ActivityLog::query()->delete();
+
+        $package->update([
+            'name' => 'Premium Plan',
+            'price_monthly' => 100,
+        ]);
+
+        $log = ActivityLog::where('model_id', $package->id)
+            ->where('action', 'updated')
+            ->first();
+
+        $changes = $log->formatted_changes;
+        $this->assertStringContainsString('Basic Plan', $changes);
+        $this->assertStringContainsString('Premium Plan', $changes);
+        $this->assertStringContainsString('50', $changes);
+        $this->assertStringContainsString('100', $changes);
+    }
+
+    public function test_readable_model_name_converts_camel_case(): void
+    {
+        $package = Package::create([
+            'name' => 'Test Package',
+            'price_monthly' => 100,
+            'user_limit' => 10,
+            'billing_cycle' => 'monthly',
+            'auto_renew_allowed' => true,
+            'is_active' => true,
+        ]);
+
+        $log = ActivityLog::where('model_id', $package->id)->first();
+
+        $modelName = $log->getReadableModelName();
+        $this->assertEquals('package', $modelName);
     }
 }
