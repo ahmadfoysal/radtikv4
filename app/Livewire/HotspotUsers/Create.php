@@ -30,13 +30,6 @@ class Create extends Component
 
     public function mount()
     {
-        $this->loadProfiles();
-    }
-
-    public function loadProfiles()
-    {
-        // Will be loaded dynamically when router is selected
-        $this->available_profiles = [];
     }
 
     public function updatedRouterId($value)
