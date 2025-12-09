@@ -171,7 +171,8 @@ class HotspotUserManager
         $q = (new Query('/ip/hotspot/cookie/remove'))
             ->equal('.id', $cookieId);
 
-        return $this->client->safeRead($ros, $q);
+        $result = $this->client->safeRead($ros, $q);
+        return ['ok' => true, 'data' => $result];
     }
 
     /**
