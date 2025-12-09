@@ -81,10 +81,11 @@ class Show extends Component
     {
         $user = auth()->user();
 
-        // Get all users for assignee dropdown (superadmin only)
+        // Get users for assignee dropdown (superadmin only)
+        // Limit to 100 users to avoid performance issues
         $users = [];
         if ($user->isSuperAdmin()) {
-            $users = User::orderBy('name')->get(['id', 'name']);
+            $users = User::orderBy('name')->limit(100)->get(['id', 'name']);
         }
 
         return view('livewire.tickets.show', [
