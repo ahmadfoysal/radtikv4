@@ -212,3 +212,98 @@ test('ticket status filter works', function () {
         ->assertSee('Solved Ticket')
         ->assertDontSee('Open Ticket');
 });
+
+// Ticket Messaging Tests
+test('admin can send message on their own ticket', function () {
+    $this->actingAs($this->admin);
+
+    $ticket = Ticket::create([
+        'subject' => 'Test Ticket',
+        'description' => 'Test',
+        'status' => 'open',
+        'created_by' => $this->admin->id,
+        'owner_id' => $this->admin->id,
+    ]);
+
+    Livewire::test(\App\Livewire\Tickets\Show::class, ['ticket' => $ticket])
+        ->set('messageText', 'This is a test message')
+        ->call('sendMessage')
+        ->assertHasNoErrors();
+
+    expect($ticket->messages()->count())->toBe(1);
+    $message = $ticket->messages()->first();
+    expect($message->message)->toBe('This is a test message');
+    expect($message->user_id)->toBe($this->admin->id);
+});
+
+test('superadmin can send message on any ticket', function () {
+    $this->actingAs($this->superadmin);
+
+    $ticket = Ticket::create([
+        'subject' => 'Test Ticket',
+        'description' => 'Test',
+        'status' => 'open',
+        'created_by' => $this->admin->id,
+        'owner_id' => $this->admin->id,
+    ]);
+
+    Livewire::test(\App\Livewire\Tickets\Show::class, ['ticket' => $ticket])
+        ->set('messageText', 'Superadmin reply')
+        ->call('sendMessage')
+        ->assertHasNoErrors();
+
+    expect($ticket->messages()->count())->toBe(1);
+    $message = $ticket->messages()->first();
+    expect($message->user_id)->toBe($this->superadmin->id);
+});
+
+test('message validation requires text', function () {
+    $this->actingAs($this->admin);
+
+    $ticket = Ticket::create([
+        'subject' => 'Test Ticket',
+        'description' => 'Test',
+        'status' => 'open',
+        'created_by' => $this->admin->id,
+        'owner_id' => $this->admin->id,
+    ]);
+
+    Livewire::test(\App\Livewire\Tickets\Show::class, ['ticket' => $ticket])
+        ->set('messageText', '')
+        ->call('sendMessage')
+        ->assertHasErrors(['messageText']);
+});
+
+test('multiple messages are displayed in order', function () {
+    $this->actingAs($this->admin);
+
+    $ticket = Ticket::create([
+        'subject' => 'Test Ticket',
+        'description' => 'Test',
+        'status' => 'open',
+        'created_by' => $this->admin->id,
+        'owner_id' => $this->admin->id,
+    ]);
+
+    // Send multiple messages
+    $ticket->messages()->create([
+        'user_id' => $this->admin->id,
+        'message' => 'First message',
+    ]);
+
+    $ticket->messages()->create([
+        'user_id' => $this->superadmin->id,
+        'message' => 'Second message',
+    ]);
+
+    $ticket->messages()->create([
+        'user_id' => $this->admin->id,
+        'message' => 'Third message',
+    ]);
+
+    expect($ticket->messages()->count())->toBe(3);
+    $messages = $ticket->messages()->get();
+    expect($messages[0]->message)->toBe('First message');
+    expect($messages[1]->message)->toBe('Second message');
+    expect($messages[2]->message)->toBe('Third message');
+});
