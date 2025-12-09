@@ -33,6 +33,9 @@ class Show extends Component
         $this->ticket = $ticket;
         $this->status = $ticket->status;
         $this->assigned_to = $ticket->assigned_to;
+
+        // Load messages with user information once on mount
+        $this->ticket->load('messages.user');
     }
 
     public function toggleEditMode()
@@ -116,9 +119,6 @@ class Show extends Component
         if ($user->isSuperAdmin()) {
             $users = User::orderBy('name')->limit(100)->get(['id', 'name']);
         }
-
-        // Load messages with user information
-        $this->ticket->load('messages.user');
 
         return view('livewire.tickets.show', [
             'users' => $users,
