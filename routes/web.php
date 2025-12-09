@@ -53,6 +53,10 @@ Route::middleware(['auth'])->group(function () {
     /* Billing Routes */
     Route::get('/billing/invoices', App\Livewire\Billing\Invoices::class)->name('billing.invoices');
     Route::get('/billing/manual-adjustment', App\Livewire\Billing\ManualAdjustment::class)->name('billing.manual-adjustment');
+
+    /* Ticket Routes */
+    Route::get('/tickets', App\Livewire\Tickets\Index::class)->name('tickets.index');
+    Route::get('/tickets/{ticket}', App\Livewire\Tickets\Show::class)->name('tickets.show');
     Route::get('/billing/add-balance', App\Livewire\Billing\AddBalance::class)->name('billing.add-balance');
 
     /* Admin Routes */
