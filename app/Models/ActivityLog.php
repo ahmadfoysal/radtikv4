@@ -44,6 +44,12 @@ class ActivityLog extends Model
         $userName = $this->user ? $this->user->name : 'System';
         $modelName = $this->getReadableModelName();
         $action = $this->getReadableAction();
+        $identifier = $this->getModelIdentifier();
+        
+        // Include identifier for more context
+        if ($identifier) {
+            return "{$userName} {$action} {$modelName}: {$identifier}";
+        }
         
         return "{$userName} {$action} {$modelName}";
     }
@@ -57,16 +63,33 @@ class ActivityLog extends Model
             return 'an item';
         }
 
-        $modelName = class_basename($this->model_type);
-        
-        // Convert CamelCase to readable format
-        $readable = Str::of($modelName)
-            ->snake()
-            ->replace('_', ' ')
-            ->lower()
-            ->toString();
+        return \App\Support\ActivityLogHelper::getReadableModelName($this->model_type);
+    }
 
-        return $readable;
+    /**
+     * Get model identifier for display
+     */
+    protected function getModelIdentifier(): ?string
+    {
+        // Try to get from description first (for custom logs)
+        if ($this->description && preg_match('/: (.+)$/', $this->description, $matches)) {
+            return $matches[1];
+        }
+
+        // Try to get from stored values
+        $values = $this->new_values ?? $this->old_values;
+        if (!$values) {
+            return null;
+        }
+
+        $identifierFields = ['name', 'title', 'username', 'email', 'subject'];
+        foreach ($identifierFields as $field) {
+            if (isset($values[$field]) && !empty($values[$field])) {
+                return $values[$field];
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -82,7 +105,7 @@ class ActivityLog extends Model
             'bulk_deleted' => 'deleted multiple',
             'routers_assigned' => 'assigned routers to',
             'routers_unassigned' => 'removed routers from',
-            default => str_replace('_', ' ', $this->action),
+            default => \App\Support\ActivityLogHelper::humanize($this->action),
         };
     }
 
@@ -219,11 +242,7 @@ class ActivityLog extends Model
      */
     protected function humanizeFieldName(string $field): string
     {
-        return Str::of($field)
-            ->snake()
-            ->replace('_', ' ')
-            ->title()
-            ->toString();
+        return \App\Support\ActivityLogHelper::humanizeFieldName($field);
     }
 
     /**
