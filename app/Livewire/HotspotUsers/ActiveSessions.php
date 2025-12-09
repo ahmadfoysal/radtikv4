@@ -74,7 +74,7 @@ class ActiveSessions extends Component
     public function render()
     {
         return view('livewire.hotspot-users.active-sessions', [
-            'routers' => Router::orderBy('name')->get(['id', 'name']),
+            'routers' => auth()->user()->routers()->orderBy('name')->get(['id', 'name']),
         ]);
     }
 }
