@@ -86,6 +86,18 @@ class AssignResellerRouters extends Component
                     ->where('reseller_id', $this->resellerId)
                     ->whereIn('router_id', $routerIdsToDetach)
                     ->delete();
+
+                // Log router unassignment
+                \App\Services\ActivityLogger::logCustom(
+                    'routers_unassigned',
+                    null,
+                    "Unassigned " . count($routerIdsToDetach) . " router(s) from reseller",
+                    [
+                        'reseller_id' => $this->resellerId,
+                        'router_ids' => $routerIdsToDetach,
+                        'count' => count($routerIdsToDetach),
+                    ]
+                );
             }
 
             foreach ($selected as $routerId) {
@@ -96,6 +108,20 @@ class AssignResellerRouters extends Component
                     ],
                     [
                         'assigned_by' => Auth::id(),
+                    ]
+                );
+            }
+
+            // Log router assignment
+            if (count($selected) > 0) {
+                \App\Services\ActivityLogger::logCustom(
+                    'routers_assigned',
+                    null,
+                    "Assigned " . count($selected) . " router(s) to reseller",
+                    [
+                        'reseller_id' => $this->resellerId,
+                        'router_ids' => $selected,
+                        'count' => count($selected),
                     ]
                 );
             }

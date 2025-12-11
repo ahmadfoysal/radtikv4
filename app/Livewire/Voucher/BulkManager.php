@@ -108,6 +108,19 @@ class BulkManager extends Component
                 Voucher::whereIn('id', $vouchers->pluck('id'))->delete();
             });
 
+            // Log bulk voucher deletion
+            \App\Services\ActivityLogger::logCustom(
+                'bulk_deleted',
+                null,
+                "Bulk deleted {$count} vouchers",
+                [
+                    'count' => $count,
+                    'router_id' => $this->router_id,
+                    'batch' => $this->batch,
+                    'status' => $this->status,
+                ]
+            );
+
             $this->success("{$count} Vouchers deleted successfully.");
 
             // Reset filters after bulk delete (Keep router_id selected)

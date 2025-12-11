@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 class DocumentationArticle extends Model
 {
+    use LogsActivity;
     protected $fillable = [
         'title',
         'slug',
