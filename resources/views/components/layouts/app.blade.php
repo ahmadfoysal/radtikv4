@@ -67,7 +67,7 @@
                 <x-mary-list-item :item="$user" value="name" sub-value="email" no-separator no-hover
                     class="pt-2">
                     <x-slot:actions>
-                        <form method="POST" action="{{ route('logout') }}">
+                        <form method="POST" action="{{ route('tyro-login.logout') }}">
                             @csrf
                             <button type="submit" class="btn btn-circle btn-ghost btn-xs" title="Log out">
                                 <x-mary-icon name="o-power" />
