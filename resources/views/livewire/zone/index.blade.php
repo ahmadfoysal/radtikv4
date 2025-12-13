@@ -1,7 +1,7 @@
 <div class="max-w-7xl mx-auto space-y-6">
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {{-- Form --}}
-        <x-mary-card :title="$zoneId ? 'Edit Zone' : 'Create Zone'" class="rounded-2xl border border-base-300">
+        <x-mary-card :title="$zoneId ? 'Edit Zone' : 'Create Zone'" class=" border border-base-300 bg-base-100">
             <x-mary-form wire:submit="save" class="space-y-4">
                 <x-mary-input label="Zone Name" placeholder="Enter zone name" wire:model.live.debounce.400ms="name"
                     required />
@@ -39,7 +39,7 @@
 
         {{-- List --}}
         <div class="lg:col-span-2">
-            <x-mary-card title="Zones" class="rounded-2xl border border-base-300">
+            <x-mary-card title="Zones" class=" border border-base-300">
                 <div class="mb-4 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <x-mary-input placeholder="Search zone…" icon="o-magnifying-glass"
                         wire:model.live.debounce.400ms="search" class="w-full sm:w-80" />
@@ -73,7 +73,7 @@
                                 <tr class="border-t border-base-200 hover:bg-base-200/50">
                                     <td class="px-4 py-3">
                                         <div class="flex items-center gap-3">
-                                            <span class="h-4 w-4 rounded-full border border-base-200"
+                                            <span class="h-4 w-4 border border-base-200"
                                                 style="background-color: {{ $zone->color ?? '#2563eb' }}"></span>
                                             <div>
                                                 <div class="font-semibold text-base-content">{{ $zone->name }}</div>

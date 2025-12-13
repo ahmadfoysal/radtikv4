@@ -1,7 +1,7 @@
 @props(['voucher', 'router'])
 
 <div
-    class="w-full max-w-[300px] bg-white text-black p-4 font-mono text-sm break-inside-avoid mx-auto border-x border-dashed border-gray-300">
+    class="w-full max-w-[300px] bg-base-100 text-base-content p-4 font-mono text-sm break-inside-avoid mx-auto border-x border-dashed border-base-300">
     <div class="text-center pb-4 border-b-2 border-black border-dashed">
         @if ($router->logo)
             <img src="{{ asset('storage/' . $router->logo) }}" class="h-12 mx-auto grayscale mb-2">

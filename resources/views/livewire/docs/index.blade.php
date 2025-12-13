@@ -1,6 +1,6 @@
 <section class="w-full">
     {{-- Header --}}
-    <x-mary-card class="mb-6 bg-base-200 border-0 shadow-sm rounded-2xl">
+    <x-mary-card class="mb-6 bg-base-100 border border-base-300 shadow-sm">
         <div class="px-4 py-4 flex flex-col gap-3">
             <div class="flex items-center gap-2 mb-2">
                 <x-mary-icon name="o-book-open" class="w-6 h-6 text-primary" />
@@ -25,7 +25,7 @@
     <div class="px-2 sm:px-4">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             @forelse ($articles as $article)
-                <x-mary-card class="bg-base-200 rounded-2xl shadow-sm hover:shadow-md transition duration-300">
+                <x-mary-card class="bg-base-100 shadow-sm hover:shadow-md transition duration-300">
                     <div class="space-y-3">
                         {{-- Category Badge --}}
                         <div>
@@ -53,7 +53,7 @@
                     </div>
                 </x-mary-card>
             @empty
-                <x-mary-card class="col-span-full bg-base-200 rounded-2xl">
+                <x-mary-card class="col-span-full bg-base-100">
                     <div class="p-8 text-center opacity-70">
                         <x-mary-icon name="o-document-magnifying-glass" class="w-12 h-12 mx-auto mb-3 opacity-50" />
                         <p>No documentation found.</p>

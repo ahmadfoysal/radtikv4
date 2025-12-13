@@ -6,7 +6,7 @@
     </div>
 
     {{-- Article Content --}}
-    <x-mary-card class="max-w-4xl mx-auto bg-base-200 rounded-2xl shadow-sm">
+    <x-mary-card class="max-w-4xl mx-auto bg-base-100 shadow-sm">
         <div class="px-6 py-6 space-y-4">
             {{-- Category Badge --}}
             <div>

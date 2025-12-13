@@ -34,7 +34,7 @@
 
     {{-- Header --}}
     {{-- Header (compact, single card) --}}
-    <x-mary-card class="bg-base-200 border-0 shadow-sm">
+    <x-mary-card class="bg-base-100 border border-base-300 shadow-sm">
         <div class="grid grid-cols-1 gap-4 lg:grid-cols-3 text-xs sm:text-sm">
 
             {{-- Router info --}}
@@ -144,22 +144,22 @@
     <div class="space-y-2">
         <div class="text-sm uppercase font-semibold opacity-70">Hotspot User Status</div>
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <x-mary-card class="bg-base-200 border-0 shadow-sm">
+            <x-mary-card class="bg-base-100 border border-base-300 shadow-sm">
                 <div class="text-xs uppercase opacity-60">All Hotspot Users</div>
                 <div class="text-3xl font-semibold">{{ $hotspotUserStats['all'] ?? 0 }}</div>
             </x-mary-card>
 
-            <x-mary-card class="bg-base-200 border-0 shadow-sm">
+            <x-mary-card class="bg-base-100 border border-base-300 shadow-sm">
                 <div class="text-xs uppercase opacity-60">Active Hotspot Users</div>
                 <div class="text-3xl font-semibold text-success">{{ $hotspotUserStats['active'] ?? 0 }}</div>
             </x-mary-card>
 
-            <x-mary-card class="bg-base-200 border-0 shadow-sm">
+            <x-mary-card class="bg-base-100 border border-base-300 shadow-sm">
                 <div class="text-xs uppercase opacity-60">Expiring Today</div>
                 <div class="text-3xl font-semibold text-warning">{{ $hotspotUserStats['expiring_today'] ?? 0 }}</div>
             </x-mary-card>
 
-            <x-mary-card class="bg-base-200 border-0 shadow-sm">
+            <x-mary-card class="bg-base-100 border border-base-300 shadow-sm">
                 <div class="text-xs uppercase opacity-60">Expiring This Week</div>
                 <div class="text-3xl font-semibold text-error">{{ $hotspotUserStats['expiring_week'] ?? 0 }}</div>
             </x-mary-card>
@@ -170,22 +170,22 @@
     <div class="space-y-2">
         <div class="text-sm uppercase font-semibold opacity-70">Activation & Sales</div>
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <x-mary-card class="bg-base-200 border-0 shadow-sm">
+            <x-mary-card class="bg-base-100 border border-base-300 shadow-sm">
                 <div class="text-xs uppercase opacity-60">Activated Today</div>
                 <div class="text-3xl font-semibold text-primary">{{ $activityStats['activated_today'] ?? 0 }}</div>
             </x-mary-card>
 
-            <x-mary-card class="bg-base-200 border-0 shadow-sm">
+            <x-mary-card class="bg-base-100 border border-base-300 shadow-sm">
                 <div class="text-xs uppercase opacity-60">Activated This Week</div>
                 <div class="text-3xl font-semibold text-primary">{{ $activityStats['activated_week'] ?? 0 }}</div>
             </x-mary-card>
 
-            <x-mary-card class="bg-base-200 border-0 shadow-sm">
+            <x-mary-card class="bg-base-100 border border-base-300 shadow-sm">
                 <div class="text-xs uppercase opacity-60">Sales Today</div>
                 <div class="text-3xl font-semibold text-success">{{ $activityStats['sales_today'] ?? 0 }}</div>
             </x-mary-card>
 
-            <x-mary-card class="bg-base-200 border-0 shadow-sm">
+            <x-mary-card class="bg-base-100 border border-base-300 shadow-sm">
                 <div class="text-xs uppercase opacity-60">Sales This Week</div>
                 <div class="text-3xl font-semibold text-success">{{ $activityStats['sales_week'] ?? 0 }}</div>
             </x-mary-card>
@@ -193,7 +193,7 @@
     </div>
 
     {{-- Full-width traffic --}}
-    <x-mary-card class="bg-base-200 border-0 shadow-sm" wire:poll.10s="refreshTrafficData">
+    <x-mary-card class="bg-base-100 border border-base-300 shadow-sm" wire:poll.10s="refreshTrafficData">
         <div class="flex flex-col gap-4">
             <div>
                 <div class="text-sm uppercase opacity-60">Live Traffic</div>
@@ -216,7 +216,7 @@
     <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
 
         {{-- Scripts Health --}}
-        <x-mary-card class="bg-base-200 border-0 shadow-sm flex flex-col">
+        <x-mary-card class="bg-base-100 border border-base-300 shadow-sm flex flex-col">
             <div class="flex items-center justify-between mb-2">
                 <div class="text-sm uppercase opacity-60">Scripts Health</div>
 
@@ -266,7 +266,7 @@
 
 
         {{-- Hotspot Profiles --}}
-        <x-mary-card class="bg-base-200 border-0 shadow-sm flex flex-col">
+        <x-mary-card class="bg-base-100 border border-base-300 shadow-sm flex flex-col">
             <div class="flex items-center justify-between mb-2">
                 <div class="text-sm uppercase opacity-60">Hotspot Profiles</div>
 
@@ -308,7 +308,7 @@
 
 
         {{-- Router Schedulers --}}
-        <x-mary-card class="bg-base-200 border-0 shadow-sm flex flex-col">
+        <x-mary-card class="bg-base-100 border border-base-300 shadow-sm flex flex-col">
             <div class="flex items-center justify-between mb-2">
                 <div class="text-sm uppercase opacity-60">Router Schedulers</div>
 

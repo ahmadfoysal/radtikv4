@@ -1,5 +1,5 @@
 <div class="max-w-5xl mx-auto space-y-6">
-    <x-mary-card title="Assign Routers" separator class="rounded-2xl bg-base-200">
+    <x-mary-card title="Assign Routers" separator class=" bg-base-100">
         <p class="text-sm text-base-content/70 mb-6">
             Select one of your resellers and choose which routers they can work with. Assignments are limited to routers that belong to you.
         </p>
@@ -48,7 +48,7 @@
                             Assign multiple routers at once. Removing a router from the selection detaches it from the reseller.
                         </p>
                     @else
-                        <div class="rounded-2xl border border-dashed border-base-300 p-4 bg-base-100/60 text-sm text-base-content/70">
+                        <div class=" border border-dashed border-base-300 p-4 bg-base-100/60 text-sm text-base-content/70">
                             Select a reseller on the left to load routers you can assign.
                         </div>
                     @endif
@@ -64,13 +64,13 @@
         </x-mary-form>
     </x-mary-card>
 
-    <x-mary-card title="Current Assignments" class="rounded-2xl bg-base-200">
+    <x-mary-card title="Current Assignments" class=" bg-base-100">
         @if(!$resellerId)
             <p class="text-sm text-base-content/70">Select a reseller to view assigned routers.</p>
         @else
             <div class="space-y-4">
                 @forelse($assignedRouters as $router)
-                    <div class="rounded-2xl border border-base-300 bg-base-100/80 p-4" wire:key="assigned-{{ $router['id'] }}">
+                    <div class=" border border-base-300 bg-base-100/80 p-4" wire:key="assigned-{{ $router['id'] }}">
                         <div class="flex items-start justify-between">
                             <div>
                                 <p class="font-semibold text-base-content">{{ $router['name'] }}</p>

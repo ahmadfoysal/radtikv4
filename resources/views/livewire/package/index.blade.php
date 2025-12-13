@@ -1,5 +1,5 @@
 <div class="max-w-7xl mx-auto">
-    <x-mary-card title="Package List" class="rounded-xl shadow-sm border border-base-300">
+    <x-mary-card title="Package List" class="shadow-sm border border-base-300">
 
         {{-- Toolbar --}}
         <div class="flex flex-col sm:flex-row sm:flex-wrap sm:items-end sm:justify-end gap-4 mb-6">
@@ -27,7 +27,7 @@
 
         {{-- Table --}}
         <div class="overflow-x-auto">
-            <table class="min-w-full text-sm border border-base-200 rounded-lg overflow-hidden">
+            <table class="min-w-full text-sm border border-base-200 overflow-hidden">
                 <thead>
                     <tr class="bg-base-200 text-base-content/80 text-center">
                         <th class="px-4 py-3 cursor-pointer text-left" wire:click="sortBy('name')">

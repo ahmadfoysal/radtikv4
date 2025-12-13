@@ -1,7 +1,7 @@
 <section class="w-full">
 
     {{-- Header --}}
-    <x-mary-card class="mb-4 bg-base-200 border-0 shadow-sm">
+    <x-mary-card class="mb-4 bg-base-100 border border-base-300 shadow-sm">
         <div class="px-4 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
             <div class="flex items-center gap-2">
@@ -38,10 +38,10 @@
                     $iconColor = $colors[$loop->index % count($colors)];
                 @endphp
 
-                <div class="bg-base-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition duration-300">
+                <div class="bg-base-100 p-4 shadow-sm hover:shadow-md transition duration-300 border border-base-300">
                     <div class="flex items-center gap-3">
 
-                        <div class="p-3 rounded-xl bg-base-100">
+                        <div class="p-3 bg-base-100">
                             <x-mary-icon name="o-rectangle-group" class="w-6 h-6 {{ $iconColor }}" />
                         </div>
 
@@ -107,7 +107,7 @@
                 </div>
 
             @empty
-                <x-mary-card class="col-span-full bg-base-200">
+                <x-mary-card class="col-span-full bg-base-100">
                     <div class="p-8 text-center opacity-70">No profiles found.</div>
                 </x-mary-card>
             @endforelse

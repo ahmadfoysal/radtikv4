@@ -9,26 +9,64 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
     <!-- THEME INIT: must run BEFORE CSS to avoid flash + persist choice -->
+    @php
+        $defaultTheme = config('theme.default_theme', 'dark');
+        // Normalize to light or dark for user toggle (admin can set other themes via config)
+        $userTheme = in_array($defaultTheme, ['light', 'dark']) ? $defaultTheme : 'dark';
+    @endphp
     <script>
         (function() {
             const KEY = 'radtik-theme';
             const saved = localStorage.getItem(KEY);
-            // Default to DARK when nothing saved
-            const initial = saved || 'dark';
-            document.documentElement.setAttribute('data-theme', initial);
-            // If you use Tailwind dark variant anywhere, keep .dark in sync
-            document.documentElement.classList.toggle('dark', initial === 'dark');
+            // Get default theme - normalize to light/dark for user toggle
+            const defaultTheme = @json($userTheme);
+            const initial = saved || defaultTheme;
+            
+            // Ensure we only use 'light' or 'dark' for user toggle
+            const normalizedTheme = (initial === 'light' || initial === 'dark') ? initial : 'dark';
+            
+            // Apply theme immediately
+            const html = document.documentElement;
+            html.setAttribute('data-theme', normalizedTheme);
+            
+            // Update dark class for Tailwind dark mode
+            if (normalizedTheme === 'dark') {
+                html.classList.add('dark');
+            } else {
+                html.classList.remove('dark');
+            }
 
-            // Global toggler (usable from any button onclick)
-            window.__toggleTheme = function(next) {
-                const current = document.documentElement.getAttribute('data-theme') || 'dark';
-                const target = next ?? (current === 'dark' ? 'light' : 'dark');
-                document.documentElement.setAttribute('data-theme', target);
-                document.documentElement.classList.toggle('dark', target === 'dark');
-                localStorage.setItem(KEY, target);
-                // Optional: live-update the icon if present
-                const i = document.getElementById('radtik-theme-icon');
-                if (i) i.setAttribute('name', target === 'dark' ? 'o-sun' : 'o-moon');
+            // Simple light/dark toggle function
+            window.__toggleTheme = function() {
+                const current = html.getAttribute('data-theme') || 'dark';
+                const target = current === 'dark' ? 'light' : 'dark';
+                
+                // Apply theme
+                html.setAttribute('data-theme', target);
+                
+                // Update dark class
+                if (target === 'dark') {
+                    html.classList.add('dark');
+                } else {
+                    html.classList.remove('dark');
+                }
+                
+                // Save to localStorage
+                try {
+                    localStorage.setItem(KEY, target);
+                } catch (e) {
+                    console.warn('Failed to save theme:', e);
+                }
+                
+                // Update icon
+                const icon = document.getElementById('radtik-theme-icon');
+                if (icon) {
+                    icon.setAttribute('name', target === 'dark' ? 'o-sun' : 'o-moon');
+                }
+                
+                // Dispatch event for any listeners
+                window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme: target } }));
+                
                 return target;
             };
         })();
@@ -38,7 +76,7 @@
     @livewireStyles
 </head>
 
-<body class="font-sans antialiased">
+<body class="font-sans antialiased bg-base-200 min-h-screen">
     {{-- NAVBAR --}}
     <x-mary-nav sticky full-width>
         <x-slot:brand>
@@ -51,14 +89,14 @@
         <x-slot:actions>
             {{-- User Balance --}}
             @auth
-                <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-base-200">
+                <div class="flex items-center gap-2 px-3 py-2 bg-base-100 border border-base-300">
                     <x-mary-icon name="o-banknotes" class="w-5 h-5 text-primary" />
                     <span class="font-semibold text-sm sm:text-base">BDT {{ number_format(auth()->user()->balance, 2) }}</span>
                 </div>
             @endauth
 
-            {{-- Theme toggle --}}
-            <button type="button" class="btn btn-ghost btn-sm" title="Toggle theme" onclick="window.__toggleTheme?.()">
+            {{-- Theme toggle (Light/Dark only) --}}
+            <button type="button" class="btn btn-ghost btn-sm" title="Toggle theme" id="theme-toggle-btn">
                 <x-mary-icon id="radtik-theme-icon" name="o-moon" class="w-5 h-5" />
                 <span class="ml-1 hidden sm:inline">Theme</span>
             </button>
@@ -70,35 +108,35 @@
 
     {{-- MAIN --}}
     <x-mary-main with-nav full-width>
-        <x-slot:sidebar drawer="main-drawer" collapsible class="bg-base-200">
-            @if ($user = auth()->user())
-                <x-mary-list-item :item="$user" value="name" sub-value="email" no-separator no-hover
-                    class="pt-2">
-                    <x-slot:actions>
-                        <form method="POST" action="{{ route('tyro-login.logout') }}">
-                            @csrf
-                            <button type="submit" class="btn btn-circle btn-ghost btn-xs" title="Log out">
-                                <x-mary-icon name="o-power" />
-                            </button>
-                        </form>
-                    </x-slot:actions>
-                </x-mary-list-item>
-                <x-mary-menu-separator />
-            @endif
+        <x-slot:sidebar drawer="main-drawer" collapsible class="bg-base-100 border-r border-base-300 flex flex-col">
+            <div class="flex-1">
+                @auth
+                    @if (auth()->user()->isSuperAdmin())
+                        <x-menu.superadmin-menu />
+                    @elseif (auth()->user()->isAdmin())
+                        <x-menu.admin-menu />
+                    @elseif (auth()->user()->isReseller())
+                        <x-menu.reseller-menu />
+                    @endif
+                @endauth
+            </div>
 
+            {{-- Logout button at bottom --}}
             @auth
-                @if (auth()->user()->isSuperAdmin())
-                    <x-menu.superadmin-menu />
-                @elseif (auth()->user()->isAdmin())
-                    <x-menu.admin-menu />
-                @elseif (auth()->user()->isReseller())
-                    <x-menu.reseller-menu />
-                @endif
+                <div class="mt-auto pt-4 border-t border-base-300">
+                    <form method="POST" action="{{ route('tyro-login.logout') }}">
+                        @csrf
+                        <button type="submit" class="btn btn-ghost btn-block justify-start gap-2">
+                            <x-mary-icon name="o-power" class="w-5 h-5" />
+                            <span>Logout</span>
+                        </button>
+                    </form>
+                </div>
             @endauth
         </x-slot:sidebar>
 
         <x-slot:content>
-            <div class="px-0 py-4 sm:px-4 lg:px-6">
+            <div class="px-0 py-4 sm:px-4 lg:px-6 bg-base-200 min-h-screen">
                 {{ $slot }}
             </div>
         </x-slot:content>
@@ -108,11 +146,21 @@
 
     @livewireScripts
     <script>
-        // Set initial icon to match current theme once DOM exists
+        // Set initial icon and attach toggle button once DOM exists
         document.addEventListener('DOMContentLoaded', function() {
             const cur = document.documentElement.getAttribute('data-theme') || 'dark';
             const i = document.getElementById('radtik-theme-icon');
-            if (i) i.setAttribute('name', cur === 'dark' ? 'o-sun' : 'o-moon');
+            if (i) {
+                i.setAttribute('name', cur === 'dark' ? 'o-sun' : 'o-moon');
+            }
+            
+            // Attach click handler to toggle button
+            const toggleBtn = document.getElementById('theme-toggle-btn');
+            if (toggleBtn && window.__toggleTheme) {
+                toggleBtn.addEventListener('click', function() {
+                    window.__toggleTheme();
+                });
+            }
         });
     </script>
 </body>

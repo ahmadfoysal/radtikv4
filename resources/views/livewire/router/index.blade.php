@@ -1,6 +1,6 @@
 <section class="w-full">
     {{-- Header --}}
-    <x-mary-card class="mb-4 bg-base-200 border-0 shadow-sm">
+    <x-mary-card class="mb-4 bg-base-100 border border-base-300 shadow-sm">
         <div class="px-4 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div class="flex items-center gap-2">
                 <x-mary-icon name="o-server-stack" class="w-6 h-6 text-primary" />
@@ -27,14 +27,14 @@
             @forelse ($routers as $router)
                 @php
                     $zone = $router->zone ?? ($router->location ?? ($router->note ?: '—'));
-                    // এলোমেলো আইকন কালার (তুমি চাইলে ফিক্সডও করতে পারো)
+                    // Rotate through semantic colors for visual variety
                     $colors = [
                         'text-primary',
+                        'text-secondary',
+                        'text-accent',
+                        'text-info',
                         'text-success',
                         'text-warning',
-                        'text-error',
-                        'text-info',
-                        'text-pink-500',
                     ];
                     $iconColor = $colors[$loop->index % count($colors)];
                     $package = $router->package ?? [];
@@ -50,9 +50,9 @@
                     $usagePercent = $userLimit ? min(100, (int) (($totalUsers / $userLimit) * 100)) : null;
                 @endphp
 
-                <div class="bg-base-200 rounded-2xl p-4 space-y-3 shadow-sm hover:shadow-md transition duration-300">
+                <div class="bg-base-100 p-4 space-y-3 shadow-sm hover:shadow-md transition duration-300 border border-base-300">
                     <div class="flex items-center gap-2">
-                        <div class="p-2 rounded-xl bg-base-100">
+                        <div class="p-2 bg-base-100">
                             <x-mary-icon name="s-server" class="w-6 h-6 {{ $iconColor }}" />
                         </div>
 
@@ -82,15 +82,15 @@
                         </div>
                     </div>
 
-                    <div class="text-[11px] space-y-1.5">
+                        <div class="text-[11px] space-y-1.5">
                         <div class="flex flex-wrap gap-2 text-[10px] sm:text-xs opacity-70">
                             <span
-                                class="inline-flex items-center gap-1 bg-blue-500/10 text-blue-600 px-2 py-1 rounded-full">
+                                class="inline-flex items-center gap-1 bg-primary/10 text-primary px-2 py-1">
                                 <x-mary-icon name="o-arrow-path" class="w-3.5 h-3.5" />
                                 Cycle: <strong>{{ ucfirst($package['billing_cycle'] ?? 'N/A') }}</strong>
                             </span>
                             <span
-                                class="inline-flex items-center gap-1 bg-orange-500/10 text-orange-600 px-2 py-1 rounded-full">
+                                class="inline-flex items-center gap-1 bg-warning/10 text-warning px-2 py-1">
                                 <x-mary-icon name="o-calendar-days" class="w-3.5 h-3.5" />
                                 Exp: <strong>{{ $expiryDate }}</strong>
                             </span>
@@ -112,7 +112,7 @@
                             <progress class="progress progress-primary h-1" value="{{ $usagePercent }}"
                                 max="100"></progress>
                         @else
-                            <div class="h-1.5 rounded-full bg-base-300"></div>
+                            <div class="h-1.5 bg-base-300"></div>
                         @endif
                         <div class="flex flex-wrap gap-2">
                             <span class="badge badge-sm badge-success gap-1 text-xs">
@@ -192,7 +192,7 @@
                 </div>
 
             @empty
-                <x-mary-card class="col-span-full bg-base-200">
+                <x-mary-card class="col-span-full bg-base-100">
                     <div class="p-8 text-center opacity-70">No routers found.</div>
                 </x-mary-card>
             @endforelse

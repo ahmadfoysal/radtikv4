@@ -36,6 +36,7 @@
         {{-- ADMIN SETTINGS --}}
         <x-mary-menu-sub title="Admin Settings" icon="o-cog-6-tooth">
             <x-mary-menu-item title="General Settings" icon="o-adjustments-horizontal" link="/settings/general" />
+            <x-mary-menu-item title="Theme Settings" icon="o-paint-brush" link="/admin/theme-settings" wire:navigate />
             <x-mary-menu-item title="Email & SMTP" icon="o-envelope-open" link="/settings/email" />
             <x-mary-menu-item title="API Keys" icon="o-key" link="/settings/api" />
             <x-mary-menu-item title="Payment Gateways" icon="o-credit-card" link="/admin/payment-gateways"

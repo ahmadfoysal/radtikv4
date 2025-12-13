@@ -1,12 +1,12 @@
-﻿<div class="space-y-6">
+<div class="space-y-6">
     <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <x-mary-card class="rounded-2xl border border-base-300 bg-base-200">
+        <x-mary-card class=" border border-base-300 bg-base-100">
             <x-slot name="title">Wallet Balance</x-slot>
             <p class="text-4xl font-semibold text-primary">{{ number_format($balance, 2) }}</p>
             <p class="text-sm text-base-content/70">Available balance for subscriptions and renewals.</p>
         </x-mary-card>
 
-        <x-mary-card class="rounded-2xl border border-base-300 bg-base-200">
+        <x-mary-card class=" border border-base-300 bg-base-100">
             <x-slot name="title">Router Health</x-slot>
             <div class="grid grid-cols-2 gap-2 text-sm">
                 <div>
@@ -29,7 +29,7 @@
             <div class="mt-4 text-xs text-base-content/70">Monthly expense tracked: {{ number_format($routerStats['monthlyExpense'], 2) }}</div>
         </x-mary-card>
 
-        <x-mary-card class="rounded-2xl border border-base-300 bg-base-200">
+        <x-mary-card class=" border border-base-300 bg-base-100">
             <x-slot name="title">Resellers</x-slot>
             <div class="space-y-2 text-sm">
                 <div class="flex items-center justify-between">
@@ -49,7 +49,7 @@
     </div>
 
     <div class="grid gap-4 lg:grid-cols-3">
-        <x-mary-card class="rounded-2xl border border-base-300">
+        <x-mary-card class=" border border-base-300 bg-base-100">
             <x-slot name="title">Packages In Use</x-slot>
             <div class="space-y-3">
                 @forelse ($routerUsage as $package => $count)
@@ -63,7 +63,7 @@
             </div>
         </x-mary-card>
 
-        <x-mary-card class="lg:col-span-2 rounded-2xl border border-base-300">
+        <x-mary-card class="lg:col-span-2 border border-base-300 bg-base-100">
             <x-slot name="title">Upcoming Renewals</x-slot>
             <div class="space-y-3">
                 @forelse ($routerAlerts as $router)
@@ -87,11 +87,11 @@
     </div>
 
     <div class="grid gap-4 lg:grid-cols-2">
-        <x-mary-card class="rounded-2xl border border-base-300">
+        <x-mary-card class=" border border-base-300 bg-base-100">
             <x-slot name="title">Recent Routers</x-slot>
             <div class="space-y-3">
                 @forelse ($recentRouters as $router)
-                    <div class="rounded-2xl border border-base-200 bg-base-100/80 p-4" wire:key="recent-router-{{ $router->id }}">
+                    <div class=" border border-base-200 bg-base-100/80 p-4" wire:key="recent-router-{{ $router->id }}">
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="font-semibold">{{ $router->name }}</p>
@@ -110,7 +110,7 @@
             </div>
         </x-mary-card>
 
-        <x-mary-card class="rounded-2xl border border-base-300">
+        <x-mary-card class=" border border-base-300 bg-base-100">
             <x-slot name="title">Recent Invoices</x-slot>
             <div class="space-y-3">
                 @forelse ($recentInvoices as $invoice)

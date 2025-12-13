@@ -1,4 +1,4 @@
-<x-mary-card title="Create Single Hotspot User" separator class="max-w-4xl mx-auto rounded-2xl bg-base-200">
+<x-mary-card title="Create Single Hotspot User" separator class="max-w-4xl mx-auto bg-base-100">
 
     {{-- === Content Area === --}}
     <div class="relative">

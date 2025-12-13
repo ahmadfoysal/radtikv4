@@ -1,4 +1,4 @@
-<x-mary-card title="Add Balance" separator class="max-w-4xl mx-auto rounded-2xl bg-base-200">
+<x-mary-card title="Add Balance" separator class="max-w-4xl mx-auto bg-base-100">
     <x-mary-form wire:submit="submit">
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             
@@ -30,7 +30,7 @@
         </div>
 
         <div class="mt-6 grid grid-cols-1 gap-4">
-            <div class="rounded-2xl border border-base-300 bg-base-100/80 p-4">
+            <div class=" border border-base-300 bg-base-100/80 p-4">
                 <p class="text-sm text-base-content/70">Instructions</p>
                 <p class="mt-1 text-base-content">
                     Enter the amount you want to add to your balance and select a payment gateway. 

@@ -1,6 +1,6 @@
-﻿<div class="space-y-6">
+<div class="space-y-6">
     <div class="grid gap-4 md:grid-cols-2">
-        <x-mary-card class="rounded-2xl border border-base-300 bg-base-200">
+        <x-mary-card class=" border border-base-300 bg-base-100">
             <x-slot name="title">Assigned Routers</x-slot>
             <div class="grid grid-cols-3 gap-2 text-sm">
                 <div>
@@ -18,7 +18,7 @@
             </div>
         </x-mary-card>
 
-        <x-mary-card class="rounded-2xl border border-base-300 bg-base-200">
+        <x-mary-card class=" border border-base-300 bg-base-100">
             <x-slot name="title">Voucher Activity</x-slot>
             <div class="grid grid-cols-3 gap-2 text-sm">
                 <div>
@@ -38,11 +38,11 @@
     </div>
 
     <div class="grid gap-4 lg:grid-cols-3">
-        <x-mary-card class="lg:col-span-2 rounded-2xl border border-base-300">
+        <x-mary-card class="lg:col-span-2 border border-base-300">
             <x-slot name="title">Routers You Can Access</x-slot>
             <div class="space-y-3">
                 @forelse ($assignments as $assignment)
-                    <div class="rounded-2xl border border-base-200 bg-base-100/80 p-4" wire:key="assignment-router-{{ $assignment->id }}">
+                    <div class=" border border-base-200 bg-base-100/80 p-4" wire:key="assignment-router-{{ $assignment->id }}">
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="font-semibold">{{ $assignment->router?->name ?? 'Router unavailable' }}</p>
@@ -65,7 +65,7 @@
             </div>
         </x-mary-card>
 
-        <x-mary-card class="rounded-2xl border border-base-300">
+        <x-mary-card class=" border border-base-300">
             <x-slot name="title">Zones Covered</x-slot>
             <div class="space-y-3">
                 @forelse ($zonesBreakdown as $zone => $count)
@@ -81,7 +81,7 @@
     </div>
 
     <div class="grid gap-4 lg:grid-cols-2">
-        <x-mary-card class="rounded-2xl border border-base-300">
+        <x-mary-card class=" border border-base-300">
             <x-slot name="title">Recent Voucher Activity</x-slot>
             <div class="space-y-3">
                 @forelse ($recentVouchers as $voucher)
@@ -103,7 +103,7 @@
             </div>
         </x-mary-card>
 
-        <x-mary-card class="rounded-2xl border border-base-300">
+        <x-mary-card class=" border border-base-300">
             <x-slot name="title">Assignment Timeline</x-slot>
             <div class="space-y-3">
                 @forelse ($recentAssignments as $history)

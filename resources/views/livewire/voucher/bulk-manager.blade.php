@@ -1,4 +1,4 @@
-<x-mary-card title="Bulk Operations" separator class="max-w-6xl mx-auto rounded-2xl bg-base-100 shadow-lg">
+<x-mary-card title="Bulk Operations" separator class="max-w-6xl mx-auto bg-base-100 shadow-lg">
 
     {{-- === FILTERS SECTION === --}}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -19,11 +19,11 @@
     </div>
 
     {{-- === ACTIONS HEADER === --}}
-    <div class="flex flex-col sm:flex-row justify-between items-center bg-base-200 p-4 rounded-xl mb-4 gap-4">
+    <div class="flex flex-col sm:flex-row justify-between items-center bg-base-100 p-4 mb-4 gap-4 border border-base-300">
 
         {{-- Stats --}}
         <div class="text-center sm:text-left flex items-center gap-3">
-            <div class="p-3 bg-base-100 rounded-lg">
+            <div class="p-3 bg-base-100">
                 <x-mary-icon name="o-ticket" class="w-6 h-6 text-primary" />
             </div>
             <div>
@@ -49,7 +49,7 @@
 
         {{-- Loading Overlay --}}
         <div wire:loading.flex wire:target="router_id, batch, status"
-            class="absolute inset-0 z-10 bg-base-100/60  flex flex-col items-center justify-center rounded-lg">
+            class="absolute inset-0 z-10 bg-base-100/60  flex flex-col items-center justify-center">
             <span class="loading loading-spinner loading-lg text-primary"></span>
             <div class="text-sm font-medium mt-2 opacity-70">Loading Data...</div>
         </div>

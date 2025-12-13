@@ -1,11 +1,11 @@
 <div class="max-w-7xl mx-auto">
-    <x-mary-card title="Payment Gateway Settings" separator class="rounded-2xl bg-base-200">
+    <x-mary-card title="Payment Gateway Settings" separator class=" bg-base-100">
         <p class="text-sm text-base-content/70 mb-6">
             Configure payment gateway credentials and manage their status. Only active gateways will be available for users.
         </p>
 
         @foreach($gateways as $gateway)
-            <div class="mb-6 border border-base-300 rounded-2xl p-6 bg-base-100" wire:key="gateway-{{ $gateway['id'] }}">
+            <div class="mb-6 border border-base-300 p-6 bg-base-100" wire:key="gateway-{{ $gateway['id'] }}">
                 <div class="flex items-center justify-between mb-4">
                     <div>
                         <h3 class="text-lg font-semibold">{{ $gateway['name'] }}</h3>

@@ -1,6 +1,6 @@
-﻿<div class="space-y-6">
+<div class="space-y-6">
     <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <x-mary-card class="bg-base-200 border border-base-300 rounded-2xl">
+        <x-mary-card class="bg-base-100 border border-base-300">
             <x-slot name="title">Admin Overview</x-slot>
             <div class="space-y-2">
                 <p class="text-3xl font-semibold">{{ number_format($adminStats['total']) }}</p>
@@ -13,7 +13,7 @@
             </div>
         </x-mary-card>
 
-        <x-mary-card class="bg-base-200 border border-base-300 rounded-2xl">
+        <x-mary-card class="bg-base-100 border border-base-300">
             <x-slot name="title">Resellers</x-slot>
             <div class="space-y-2">
                 <p class="text-3xl font-semibold">{{ number_format($resellerStats['total']) }}</p>
@@ -22,7 +22,7 @@
             </div>
         </x-mary-card>
 
-        <x-mary-card class="bg-base-200 border border-base-300 rounded-2xl">
+        <x-mary-card class="bg-base-100 border border-base-300">
             <x-slot name="title">Routers</x-slot>
             <div class="space-y-2">
                 <p class="text-3xl font-semibold">{{ number_format($routerOverview['total']) }}</p>
@@ -34,7 +34,7 @@
             </div>
         </x-mary-card>
 
-        <x-mary-card class="bg-base-200 border border-base-300 rounded-2xl">
+        <x-mary-card class="bg-base-100 border border-base-300">
             <x-slot name="title">Sales Snapshot</x-slot>
             <div class="space-y-2 text-sm">
                 <div>
@@ -51,7 +51,7 @@
     </div>
 
     <div class="grid gap-4 lg:grid-cols-3">
-        <x-mary-card class="lg:col-span-2 rounded-2xl border border-base-300">
+        <x-mary-card class="lg:col-span-2 border border-base-300">
             <x-slot name="title">Routers by Package</x-slot>
             <div class="divide-y divide-base-300">
                 @forelse ($packageBreakdown as $package => $meta)
@@ -68,7 +68,7 @@
             </div>
         </x-mary-card>
 
-        <x-mary-card class="rounded-2xl border border-base-300">
+        <x-mary-card class=" border border-base-300">
             <x-slot name="title">Revenue Trend (7 days)</x-slot>
             @php
                 $maxTrend = max(collect($revenueTrend)->pluck('value')->max() ?? 0, 1);
@@ -83,8 +83,8 @@
                             <span class="text-base-content/80">{{ $point['label'] }}</span>
                             <span class="font-semibold">{{ number_format($point['value'], 2) }}</span>
                         </div>
-                        <div class="mt-1 h-2 rounded-full bg-base-300">
-                            <div class="h-2 rounded-full bg-primary" style="width: {{ $percent }}%"></div>
+                        <div class="mt-1 h-2 bg-base-300">
+                            <div class="h-2 bg-primary" style="width: {{ $percent }}%"></div>
                         </div>
                     </div>
                 @endforeach
@@ -93,7 +93,7 @@
     </div>
 
     <div class="grid gap-4 lg:grid-cols-2">
-        <x-mary-card class="rounded-2xl border border-base-300">
+        <x-mary-card class=" border border-base-300">
             <x-slot name="title">Sales by Category</x-slot>
             <div class="overflow-x-auto">
                 <table class="table table-sm">
@@ -121,7 +121,7 @@
             </div>
         </x-mary-card>
 
-        <x-mary-card class="rounded-2xl border border-base-300">
+        <x-mary-card class=" border border-base-300">
             <x-slot name="title">Latest Invoices</x-slot>
             <div class="space-y-4">
                 @forelse ($recentInvoices as $invoice)
@@ -144,11 +144,11 @@
         </x-mary-card>
     </div>
 
-    <x-mary-card class="rounded-2xl border border-base-300">
+    <x-mary-card class=" border border-base-300">
         <x-slot name="title">Recently Added Admins</x-slot>
         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             @forelse ($recentAdmins as $admin)
-                <div class="rounded-2xl border border-base-300 bg-base-100/80 p-4">
+                <div class=" border border-base-300 bg-base-100/80 p-4">
                     <p class="font-semibold">{{ $admin->name }}</p>
                     <p class="text-xs text-base-content/60">{{ $admin->email }}</p>
                     <div class="mt-3 flex items-center justify-between text-xs">

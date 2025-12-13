@@ -1,4 +1,4 @@
-<x-mary-card title="Generate Vouchers" separator class="max-w-4xl mx-auto rounded-2xl bg-base-200">
+<x-mary-card title="Generate Vouchers" separator class="max-w-4xl mx-auto bg-base-100">
 
     {{-- === Mode Switcher (One Line) === --}}
     <div class="flex justify-center mb-6">

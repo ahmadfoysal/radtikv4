@@ -7,7 +7,7 @@
     {{-- Header: Router Name --}}
     <div class="flex justify-between items-center border-b border-black pb-0.5">
         <span class="text-[9px] font-bold truncate w-20 leading-none uppercase">{{ $router->name }}</span>
-        <span class="text-[8px] font-mono bg-black text-white px-1 leading-none rounded-sm">
+        <span class="text-[8px] font-mono bg-black text-white px-1 leading-none">
             {{ $loop->iteration ?? '#' }}
         </span>
     </div>

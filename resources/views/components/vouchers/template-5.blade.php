@@ -1,10 +1,10 @@
 @props(['voucher', 'router'])
 
-<div class="w-full max-w-sm bg-amber-50 border-2 border-amber-800 border-dashed rounded-lg p-1 break-inside-avoid">
+<div class="w-full max-w-sm bg-amber-50 border-2 border-amber-800 border-dashed p-1 break-inside-avoid">
     <div class="border border-amber-800/30 rounded p-4 h-full relative">
         <!-- Ticket Cutout Circles -->
-        <div class="absolute top-1/2 -left-2 w-4 h-4 bg-white rounded-full border-r border-amber-800"></div>
-        <div class="absolute top-1/2 -right-2 w-4 h-4 bg-white rounded-full border-l border-amber-800"></div>
+        <div class="absolute top-1/2 -left-2 w-4 h-4 bg-white border-r border-amber-800"></div>
+        <div class="absolute top-1/2 -right-2 w-4 h-4 bg-white border-l border-amber-800"></div>
 
         <div class="text-center border-b border-amber-800/20 pb-3 mb-3">
             <h2 class="font-serif font-bold text-amber-900 text-xl tracking-wide uppercase">{{ $router->name }}</h2>

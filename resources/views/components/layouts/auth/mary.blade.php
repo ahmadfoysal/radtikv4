@@ -23,7 +23,7 @@
         <div class="w-full max-w-md">
             {{-- Brand / Logo --}}
             {{-- <a href="{{ route('home') }}" class="mb-6 flex items-center justify-center gap-2" wire:navigate>
-                <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-base-100 shadow-sm">
+                <span class="inline-flex h-10 w-10 items-center justify-center bg-base-100 shadow-sm">
                     <x-app-logo-icon class="size-7 text-base-content" />
                 </span>
                 <span class="sr-only">{{ config('app.name') }}</span>

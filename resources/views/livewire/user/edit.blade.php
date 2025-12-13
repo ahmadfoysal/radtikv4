@@ -1,4 +1,4 @@
-<x-mary-card title="Edit User" separator class="max-w-4xl mx-auto rounded-2xl bg-base-200">
+<x-mary-card title="Edit User" separator class="max-w-4xl mx-auto bg-base-100">
     <x-mary-form wire:submit="update">
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div class="col-span-1">

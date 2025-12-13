@@ -1,4 +1,4 @@
-<x-mary-card title="{{ __('Import Routers') }}" separator class="max-w-4xl mx-auto bg-base-200 shadow-md rounded-2xl">
+<x-mary-card title="{{ __('Import Routers') }}" separator class="max-w-4xl mx-auto bg-base-100 shadow-md">
 
     {{-- Tabs --}}
     <x-mary-tabs wire:model="selectedTab" class="mb-6">
@@ -35,7 +35,7 @@
                                 </div>
                             </div>
 
-                            <div class="overflow-x-auto rounded-lg border border-base-300 bg-base-100">
+                            <div class="overflow-x-auto border border-base-300 bg-base-100">
                                 <table class="table table-zebra text-sm">
                                     <thead>
                                         <tr>

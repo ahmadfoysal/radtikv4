@@ -39,18 +39,17 @@
     </style>
 </head>
 
-<body class="bg-white p-6 min-h-screen">
+<body class="bg-base-100 p-6 min-h-screen">
 
     <!-- Action bar -->
-    <div class="no-print fixed top-0 left-0 right-0 bg-white shadow-md p-4 flex justify-between items-center z-50">
+    <div class="no-print fixed top-0 left-0 right-0 bg-base-100 shadow-md p-4 flex justify-between items-center z-50 border-b border-base-300">
         <div>
-            <h1 class="text-xl font-bold text-gray-800">Printing {{ $voucherCount }} Vouchers</h1>
-            <p class="text-sm text-gray-500">{{ $router->name }}</p>
+            <h1 class="text-xl font-bold text-base-content">Printing {{ $voucherCount }} Vouchers</h1>
+            <p class="text-sm text-base-content/70">{{ $router->name }}</p>
         </div>
         <div class="flex gap-3">
-            <button onclick="window.history.back()" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Back</button>
-            <button onclick="window.print()"
-                class="px-6 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700">Print / Save PDF</button>
+            <button onclick="window.history.back()" class="btn btn-ghost">Back</button>
+            <button onclick="window.print()" class="btn btn-primary">Print / Save PDF</button>
         </div>
     </div>
 

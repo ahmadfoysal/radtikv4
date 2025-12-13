@@ -1,6 +1,6 @@
 <section class="w-full">
     {{-- Header --}}
-    <x-mary-card class="mb-4 bg-base-200 border-0 shadow-sm">
+    <x-mary-card class="mb-4 bg-base-100 border border-base-300 shadow-sm">
         <div class="px-4 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div class="flex items-center gap-2">
                 <x-mary-icon name="o-signal" class="w-6 h-6 text-primary" />
@@ -25,7 +25,7 @@
     {{-- Sessions Table --}}
     <div class="px-2 sm:px-4">
         @if($router_id && !empty($sessions))
-            <x-mary-card class="bg-base-200 overflow-x-auto">
+            <x-mary-card class="bg-base-100 overflow-x-auto">
                 <table class="table table-zebra w-full">
                     <thead>
                         <tr>
@@ -62,14 +62,14 @@
                 </table>
             </x-mary-card>
         @elseif($router_id && empty($sessions) && !$loading)
-            <x-mary-card class="bg-base-200">
+            <x-mary-card class="bg-base-100">
                 <div class="p-8 text-center opacity-70">
                     <x-mary-icon name="o-inbox" class="w-12 h-12 mx-auto mb-2" />
                     <p>No active sessions found for this router.</p>
                 </div>
             </x-mary-card>
         @elseif(!$router_id)
-            <x-mary-card class="bg-base-200">
+            <x-mary-card class="bg-base-100">
                 <div class="p-8 text-center opacity-70">
                     <x-mary-icon name="o-server" class="w-12 h-12 mx-auto mb-2" />
                     <p>Please select a router to view active sessions.</p>
@@ -78,7 +78,7 @@
         @endif
 
         @if($loading)
-            <x-mary-card class="bg-base-200">
+            <x-mary-card class="bg-base-100">
                 <div class="p-8 text-center">
                     <span class="loading loading-spinner loading-lg text-primary"></span>
                     <p class="mt-2">Loading active sessions...</p>

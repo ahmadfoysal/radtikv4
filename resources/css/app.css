@@ -2,7 +2,29 @@
 
 /* DaisyUI plugin + themes */
 @plugin "daisyui" {
-    themes: light --default, dark --prefersdark;
+    themes: 
+        light --default, 
+        dark --prefersdark,
+        corporate,
+        business,
+        retro,
+        cyberpunk,
+        valentine,
+        halloween,
+        garden,
+        forest,
+        aqua,
+        lofi,
+        pastel,
+        fantasy,
+        wireframe,
+        black,
+        luxury,
+        dracula,
+        cmyk,
+        autumn,
+        nord,
+        sunset;
 }
 
 /* View sources (Blade) */
@@ -48,14 +70,15 @@
     }
 }
 
-/* Base border color normalization */
+/* Base border color normalization - use DaisyUI base-300 */
 @layer base {
     *,
     ::after,
     ::before,
     ::backdrop,
     ::file-selector-button {
-        border-color: var(--color-gray-200, currentColor);
+        border-color: var(--fallback-bc, oklch(var(--bc) / 0.2));
+        border-radius: 0 !important;
     }
 }
 
@@ -85,7 +108,56 @@
     }
 }
 @layer components {
+    /* All cards should use base-100 to stand out from body background */
     .mary-card {
-        @apply border border-gray-200;
+        @apply border border-base-300 bg-base-100 rounded-none;
+    }
+    
+    /* Tables should also use base-100 for consistency */
+    table {
+        @apply bg-base-100 rounded-none;
+    }
+    
+    /* Ensure table rows have subtle hover states */
+    tbody tr:hover {
+        @apply bg-base-200/50;
+    }
+    
+    /* Remove rounded corners from all DaisyUI components */
+    .btn, .card, .input, .select, .textarea, .badge, .alert, .modal, .dropdown, .menu, .drawer, .rounded-box, [class*="rounded"] {
+        border-radius: 0 !important;
+    }
+}
+
+/* ------------------ */
+/*  BACKGROUND SYSTEM */
+/* ------------------ */
+
+/* Ensure body has soft neutral background */
+@layer base {
+    body {
+        @apply bg-base-200;
+        min-height: 100vh;
+    }
+    
+    /* Ensure main content area maintains background */
+    main, [role="main"] {
+        @apply bg-base-200;
+    }
+    
+    /* Content wrapper should maintain background */
+    .px-0, .px-4, .px-6 {
+        /* Inherit background from parent */
+    }
+}
+
+/* Sidebar styling - distinct from body */
+@layer components {
+    /* Sidebar should stand out from body background */
+    [data-drawer], 
+    aside,
+    .drawer-side,
+    [class*="sidebar"] {
+        @apply bg-base-100;
     }
 }

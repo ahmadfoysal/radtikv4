@@ -1,5 +1,5 @@
 <div class="max-w-4xl mx-auto">
-    <x-mary-card title="Ticket Details" separator class="rounded-2xl bg-base-200">
+    <x-mary-card title="Ticket Details" separator class=" bg-base-100">
 
         {{-- Back Button --}}
         <div class="mb-3">
@@ -116,7 +116,7 @@
                         </svg>
                         Status
                     </label>
-                    <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-40">
+                    <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100  w-40">
                         <li><a wire:click="changeStatus('open')">Open</a></li>
                         <li><a wire:click="changeStatus('in_progress')">In Progress</a></li>
                         <li><a wire:click="changeStatus('solved')">Solved</a></li>
@@ -143,7 +143,7 @@
     </x-mary-card>
 
     {{-- Conversation Timeline --}}
-    <x-mary-card title="Conversation Timeline" separator class="mt-6 rounded-2xl bg-base-200">
+    <x-mary-card title="Conversation Timeline" separator class="mt-6 bg-base-100">
         {{-- Timeline --}}
         <div class="max-h-96 overflow-y-auto mb-6" id="messageThread">
             @forelse ($ticket->messages as $message)
@@ -151,7 +151,7 @@
                     {{-- Timeline dot --}}
                     <div class="flex flex-col items-center">
                         <div class="avatar placeholder">
-                            <div class="w-8 h-8 rounded-full {{ $message->user_id === auth()->id() ? 'bg-primary text-primary-content' : 'bg-base-300' }}">
+                            <div class="w-8 h-8 {{ $message->user_id === auth()->id() ? 'bg-primary text-primary-content' : 'bg-base-300' }}">
                                 <span class="text-xs">{{ substr($message->user->name, 0, 1) }}</span>
                             </div>
                         </div>
@@ -166,7 +166,7 @@
                             <span class="font-semibold text-sm">{{ $message->user->name }}</span>
                             <span class="text-xs opacity-60">{{ $message->created_at->format('d-m-Y H:i') }}</span>
                         </div>
-                        <div class="p-3 rounded-lg {{ $message->user_id === auth()->id() ? 'bg-primary/10' : 'bg-base-100' }}">
+                        <div class="p-3 {{ $message->user_id === auth()->id() ? 'bg-primary/10' : 'bg-base-100' }}">
                             {{ $message->message }}
                         </div>
                     </div>

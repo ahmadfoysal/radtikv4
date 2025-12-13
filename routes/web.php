@@ -62,6 +62,7 @@ Route::middleware(['auth'])->group(function () {
 
     /* Admin Routes */
     Route::get('/admin/payment-gateways', App\Livewire\Admin\PaymentGatewaySettings::class)->name('admin.payment-gateways');
+    Route::get('/admin/theme-settings', App\Livewire\Admin\ThemeSettings::class)->name('admin.theme-settings');
 
     /* Knowledgebase Routes */
     Route::get('/knowledgebase', App\Livewire\Knowledgebase\Index::class)->name('knowledgebase.index');
