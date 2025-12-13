@@ -2,14 +2,10 @@
     <div class="grid gap-4 md:grid-cols-2">
         <x-mary-card class=" border border-base-300 bg-base-100">
             <x-slot name="title">Assigned Routers</x-slot>
-            <div class="grid grid-cols-3 gap-2 text-sm">
+            <div class="grid grid-cols-2 gap-2 text-sm">
                 <div>
                     <p class="text-xs text-base-content/60">Total</p>
                     <p class="text-2xl font-semibold">{{ number_format($routerStats['total']) }}</p>
-                </div>
-                <div>
-                    <p class="text-xs text-base-content/60">Radius Enabled</p>
-                    <p class="text-2xl font-semibold">{{ number_format($routerStats['radiusEnabled']) }}</p>
                 </div>
                 <div>
                     <p class="text-xs text-base-content/60">Login Access</p>
@@ -50,10 +46,9 @@
                             </div>
                             <span class="text-xs text-base-content/60">Owner: {{ $assignment->router?->user?->name ?? 'N/A' }}</span>
                         </div>
-                        <div class="mt-2 grid gap-2 text-xs text-base-content/70 sm:grid-cols-3">
+                        <div class="mt-2 grid gap-2 text-xs text-base-content/70 sm:grid-cols-2">
                             <span>Zone: {{ $assignment->router?->zone?->name ?? 'Unassigned' }}</span>
                             <span>Hotspot login: {{ $assignment->router?->login_address ?? 'Not shared' }}</span>
-                            <span>Radius: {{ $assignment->router?->use_radius ? 'Enabled' : 'Disabled' }}</span>
                         </div>
                         <div class="mt-2 text-xs text-base-content/60">
                             Assigned {{ $assignment->created_at->diffForHumans() }} by {{ $assignment->assignedBy?->name ?? 'System' }}

@@ -148,12 +148,6 @@ class User extends Authenticatable
         return $this->resellerRouters()->get();
     }
 
-    // Radius Servers relation
-    public function radiusServers()
-    {
-        return $this->hasMany(RadiusServer::class);
-    }
-
     // Profiles relation
     public function profiles()
     {

@@ -1,13 +1,5 @@
 <x-mary-card title="Generate Vouchers" separator class="max-w-4xl mx-auto bg-base-100">
 
-    {{-- === Mode Switcher (One Line) === --}}
-    <div class="flex justify-center mb-6">
-        <x-mary-radio wire:model="type" :options="[
-            ['id' => 'mikrotik', 'name' => 'MikroTik Hotspot'],
-            ['id' => 'radius', 'name' => 'RADIUS Server', 'disabled' => false],
-        ]" inline />
-    </div>
-
     {{-- === Content Area with Loading State === --}}
     <div class="relative">
 
@@ -21,7 +13,7 @@
 
             {{-- Profile Selection (Dynamic based on Type) --}}
             <div class="col-span-1 sm:col-span-2">
-                <x-mary-select label="{{ $type === 'mikrotik' ? 'MikroTik User Profile' : 'RADIUS User Profile' }}"
+                <x-mary-select label="Profile"
                     icon="o-wifi" wire:model="profile_id" :options="$available_profiles" option-label="name" option-value="id"
                     placeholder="Select a profile" />
             </div>

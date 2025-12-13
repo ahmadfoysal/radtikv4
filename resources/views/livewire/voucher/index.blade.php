@@ -36,21 +36,6 @@
                 </button>
             </div>
 
-            {{-- Channel group: All | MT | Radius --}}
-            <div class="join">
-                <button class="btn btn-sm join-item {{ $channel === 'all' ? 'btn-primary' : 'btn-ghost' }}"
-                    wire:click="$set('channel','all')">
-                    All
-                </button>
-                <button class="btn btn-sm join-item {{ $channel === 'mikrotik' ? 'btn-primary' : 'btn-ghost' }}"
-                    wire:click="$set('channel','mikrotik')">
-                    MT
-                </button>
-                <button class="btn btn-sm join-item {{ $channel === 'radius' ? 'btn-primary' : 'btn-ghost' }}"
-                    wire:click="$set('channel','radius')">
-                    Radius
-                </button>
-            </div>
 
             {{-- Generate --}}
             <x-mary-button icon="o-plus" label="Generate" class="btn-sm btn-primary"
@@ -65,14 +50,13 @@
             @forelse($vouchers as $v)
                 @php
                     $badge = $statusColor($v->status);
-                    $iconC = $channelColor($v->is_radius);
                 @endphp
 
                 <div class="bg-base-100 p-4 shadow-sm hover:shadow-md border border-base-300">
 
                     <div class="flex items-center gap-3">
                         <div class="p-3 bg-base-100">
-                            <x-mary-icon name="s-ticket" class="w-6 h-6 {{ $iconC }}" />
+                            <x-mary-icon name="s-ticket" class="w-6 h-6 text-primary" />
                         </div>
 
                         <div class="flex-1 min-w-0">
@@ -81,10 +65,6 @@
                             </div>
 
                             <div class="mt-1 flex items-center gap-1 text-xs">
-                                <span class="badge badge-xs {{ $v->is_radius ? 'badge-accent' : 'badge-primary' }}">
-                                    {{ $v->is_radius ? 'RADIUS' : 'MikroTik' }}
-                                </span>
-
                                 <span class="badge badge-xs {{ $badge }} capitalize">
                                     {{ $v->status }}
                                 </span>

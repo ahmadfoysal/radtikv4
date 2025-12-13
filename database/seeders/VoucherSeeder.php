@@ -63,7 +63,6 @@ class VoucherSeeder extends Seeder
                     'bytes_in' => random_int(1_000_000, 120_000_000),
                     'bytes_out' => random_int(1_000_000, 120_000_000),
                     'up_time' => sprintf('%dh %02dm', rand(1, 72), rand(0, 59)),
-                    'is_radius' => (bool) ($i % 2),
                     'batch' => $batch,
                     'created_at' => $now,
                     'updated_at' => $now,

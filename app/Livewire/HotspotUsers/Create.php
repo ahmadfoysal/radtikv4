@@ -108,7 +108,6 @@ class Create extends Component
                 'user_id' => auth()->id(),
                 'router_id' => $this->router_id,
                 'user_profile_id' => $userProfile->id,
-                'is_radius' => false,
                 'bytes_in' => 0,
                 'bytes_out' => 0,
                 'activated_at' => now(),

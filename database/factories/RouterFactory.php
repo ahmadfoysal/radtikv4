@@ -30,8 +30,6 @@ class RouterFactory extends Factory
             'note' => fake()->sentence(),
             'user_id' => User::factory(),
             'zone_id' => null,
-            'use_radius' => false,
-            'radius_id' => null,
             'app_key' => Str::random(32),
             'monthly_expense' => fake()->randomFloat(2, 0, 1000),
             'logo' => null,

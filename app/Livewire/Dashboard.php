@@ -151,7 +151,6 @@ class Dashboard extends Component
                 'routers.package',
                 'routers.monthly_expense',
                 'routers.created_at',
-                'routers.use_radius',
                 'routers.login_address',
                 'routers.zone_id',
             ]);
@@ -217,7 +216,7 @@ class Dashboard extends Component
         $assignments = ResellerRouter::where('reseller_id', $user->id)
             ->with([
                 'router' => function ($query) {
-                    $query->select('id', 'name', 'address', 'login_address', 'zone_id', 'user_id', 'use_radius');
+                    $query->select('id', 'name', 'address', 'login_address', 'zone_id', 'user_id',);
                     $query->with(['zone:id,name', 'user:id,name']);
                 },
                 'assignedBy:id,name',
@@ -229,7 +228,6 @@ class Dashboard extends Component
 
         $routerStats = [
             'total' => $assignments->count(),
-            'radiusEnabled' => $assignments->filter(fn ($assignment) => $assignment->router?->use_radius)->count(),
             'withLogin' => $assignments->filter(fn ($assignment) => filled($assignment->router?->login_address))->count(),
         ];
 

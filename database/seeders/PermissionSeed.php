@@ -65,14 +65,6 @@ class PermissionSeed extends Seeder
             'delete_profiles',
             'assign_profiles',
 
-            // RADIUS Management (Limited)
-            'view_radius_profiles',
-            'create_radius_profiles',
-            'edit_radius_profiles',
-            'view_radius_logs',
-            'view_online_users',
-            'view_radius_accounting',
-
             // Bandwidth & Monitoring
             'view_live_bandwidth',
             'view_bandwidth_history',

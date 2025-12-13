@@ -23,8 +23,6 @@ return new class extends Migration
             $table->string('note')->nullable();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->foreignId('zone_id')->nullable()->constrained()->nullOnDelete();
-            $table->boolean('use_radius')->default(false);
-            $table->foreignId('radius_id')->nullable()->constrained('radius_servers')->nullOnDelete();
             $table->string('app_key')->nullable();
             $table->decimal('monthly_expense', 8, 2)->default(0);
             $table->string('logo')->nullable();

@@ -12,8 +12,6 @@ class Voucher extends Model
         'name',
         'username',
         'password',
-        'router_profile',
-        'radius_profile',
         'expires_at',
         'user_id',
         'router_id',

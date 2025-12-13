@@ -27,7 +27,6 @@ return new class extends Migration
             $table->bigInteger('bytes_in')->default(0);
             $table->bigInteger('bytes_out')->default(0);
             $table->string('up_time')->nullable();
-            $table->boolean('is_radius')->default(false);
             $table->string('batch');
             $table->timestamps();
         });

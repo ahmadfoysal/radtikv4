@@ -27,7 +27,6 @@ class MikrotikApiController extends Controller
         // Fetch vouchers with Profile relation
         $vouchers = $router->vouchers()
             ->with('profile')
-            ->where('is_radius', false)
             ->where('status', 'inactive')
             // ->limit(50) // Adjusted limit
             ->get();
@@ -84,7 +83,6 @@ class MikrotikApiController extends Controller
         $vouchers = Voucher::with('profile')
             ->where('router_id', $router->id)
             ->whereIn('status', ['active', 'inactive'])
-            ->where('is_radius', false)
             ->get();
 
         // Format: username;password;profile;comment

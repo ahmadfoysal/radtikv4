@@ -287,7 +287,7 @@ class Show extends Component
 
     protected function computeHotspotUserStats(): array
     {
-        $base = $this->router->vouchers()->where('is_radius', false);
+        $base = $this->router->vouchers();
         $today = Carbon::today();
         $startWeek = Carbon::now()->startOfWeek();
         $endWeek = Carbon::now()->endOfWeek();
@@ -302,7 +302,7 @@ class Show extends Component
 
     protected function computeActivityStats(): array
     {
-        $base = $this->router->vouchers()->where('is_radius', false);
+        $base = $this->router->vouchers();
         $today = Carbon::today();
         $startWeek = Carbon::now()->startOfWeek();
         $endWeek = Carbon::now()->endOfWeek();

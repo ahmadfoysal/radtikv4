@@ -13,9 +13,6 @@ class Generate extends Component
 {
     use Toast;
 
-    // === Mode Selection ===
-    public string $type = 'mikrotik'; // 'mikrotik' | 'radius'
-
     // === Inputs ===
     #[V(['required', 'integer', 'min:1', 'max:5000'])]
     public int $quantity = 10;
@@ -51,10 +48,7 @@ class Generate extends Component
         $this->loadProfiles();
     }
 
-    /**
-     * লোডিং লজিক এখন একদম সিম্পল।
-     * সরাসরি ইউজারের রিলেশন থেকে প্রোফাইলগুলো লোড হবে।
-     */
+    /* Load profiles */
     public function loadProfiles()
     {
         $this->available_profiles = auth()->user()->profiles()
@@ -156,7 +150,6 @@ class Generate extends Component
                 'user_id' => $userId,
                 'router_id' => $this->router_id, // Required by Schema
                 'user_profile_id' => $this->profile_id, // Unified Profile ID
-                'is_radius' => $this->type === 'radius',
                 'created_at' => $now,
                 'updated_at' => $now,
                 'bytes_in' => 0,

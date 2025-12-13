@@ -19,27 +19,18 @@ class Index extends Component
 
     public int $perPage = 24;
 
-    // Filters
-    public string $channel = 'all';  // all | mikrotik | radius
-
     public string $status = 'all';
 
     public string $routerFilter = 'all';
 
     protected $queryString = [
         'q' => ['except' => ''],
-        'channel' => ['except' => 'all'],
         'status' => ['except' => 'all'],
         'createdBy' => ['except' => 'all'],
         'page' => ['except' => 1],
     ];
 
     public function updatingQ()
-    {
-        $this->resetPage();
-    }
-
-    public function updatingChannel()
     {
         $this->resetPage();
     }
@@ -73,10 +64,6 @@ class Index extends Component
                 });
             })
 
-            // channel filter from is_radius
-            ->when($this->channel === 'mikrotik', fn ($q) => $q->where('is_radius', 0))
-            ->when($this->channel === 'radius', fn ($q) => $q->where('is_radius', 1))
-
             // router filter
             ->when(
                 $this->routerFilter !== 'all' && $this->routerFilter !== '' && $this->routerFilter !== null,
@@ -101,11 +88,6 @@ class Index extends Component
             'disabled' => 'badge-error',
             default => 'badge-ghost',
         };
-    }
-
-    protected function channelColor(int $is_radius): string
-    {
-        return $is_radius ? 'text-accent' : 'text-primary';
     }
 
     public function delete(int $id)
@@ -142,7 +124,6 @@ class Index extends Component
 
             // send helpers to view
             'statusColor' => fn ($s) => $this->statusColor($s),
-            'channelColor' => fn ($c) => $this->channelColor($c),
         ]);
     }
 }
