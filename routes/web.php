@@ -25,9 +25,9 @@ Route::middleware(['auth'])->group(function () {
     /* Router Routes */
     Route::get('/routers', App\Livewire\Router\Index::class)->name('routers.index');
     Route::get('/router/add', App\Livewire\Router\Create::class)->name('routers.create');
+    Route::get('/router/import', App\Livewire\Router\Import::class)->name('routers.import');
     Route::get('/router/{router}/edit', App\Livewire\Router\Edit::class)->name('routers.edit');
     Route::get('/router/{router}', App\Livewire\Router\Show::class)->name('routers.show');
-    Route::get('/router/import', App\Livewire\Router\Import::class)->name('routers.import');
 
     /* Voucher Routes */
     Route::get('/vouchers', App\Livewire\Voucher\Index::class)->name('vouchers.index');
@@ -78,6 +78,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/hotspot/session-cookies', App\Livewire\HotspotUsers\SessionCookies::class)->name('hotspot.sessionCookies');
         Route::get('/hotspot/logs', App\Livewire\HotspotUsers\Logs::class)->name('hotspot.logs');
     });
+
+    /* System Logs Routes */
+    Route::get('/reports/logs', App\Livewire\ActivityLog\Index::class)->name('activity.logs');
 });
 
 /* Hotspot User sync */

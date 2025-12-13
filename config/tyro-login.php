@@ -59,7 +59,7 @@ return [
     | Environment: TYRO_LOGIN_LAYOUT=centered
     |
     */
-    'layout' => env('TYRO_LOGIN_LAYOUT', 'centered'),
+    'layout' => env('TYRO_LOGIN_LAYOUT', 'card'),
 
     /*
     |--------------------------------------------------------------------------
@@ -89,7 +89,7 @@ return [
     'branding' => [
         // Your application name shown on all auth pages
         // Defaults to APP_NAME from Laravel config, or 'Laravel' if not set
-        'app_name' => env('TYRO_LOGIN_APP_NAME', env('APP_NAME', 'Laravel')),
+        'app_name' => env('TYRO_LOGIN_APP_NAME', env('APP_NAME', 'Radtik')),
 
         // Logo URL (recommended: SVG or high-res PNG)
         // Set to null to use text-based logo with app name
@@ -408,7 +408,7 @@ return [
     */
     'two_factor' => [
         // Enable/disable 2FA globally
-        'enabled' => env('TYRO_LOGIN_2FA_ENABLED', true),
+        'enabled' => env('TYRO_LOGIN_2FA_ENABLED', false),
 
         // Page title for setup
         'setup_title' => env('TYRO_LOGIN_2FA_SETUP_TITLE', 'Two Factor Authentication'),

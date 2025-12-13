@@ -49,6 +49,14 @@
         </x-slot:brand>
 
         <x-slot:actions>
+            {{-- User Balance --}}
+            @auth
+                <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-base-200">
+                    <x-mary-icon name="o-banknotes" class="w-5 h-5 text-primary" />
+                    <span class="font-semibold text-sm sm:text-base">BDT {{ number_format(auth()->user()->balance, 2) }}</span>
+                </div>
+            @endauth
+
             {{-- Theme toggle --}}
             <button type="button" class="btn btn-ghost btn-sm" title="Toggle theme" onclick="window.__toggleTheme?.()">
                 <x-mary-icon id="radtik-theme-icon" name="o-moon" class="w-5 h-5" />
