@@ -27,11 +27,16 @@ class AppServiceProvider extends ServiceProvider
         // Gate before callback: Admins can do everything, resellers need specific permissions
         Gate::before(function ($user, $ability) {
             // If user is admin or superadmin, allow all actions
-            if ($user->hasRole('admin') || $user->hasRole('superadmin')) {
+            if ($user->hasRole('admin')) {
                 return true;
             }
-            // For resellers, check if they have the specific permission
-            // Return null to continue with normal permission check
+
+            // For resellers, check if they have the specific permission assigned
+            if ($user->hasRole('reseller')) {
+                return $user->hasPermissionTo($ability);
+            }
+
+            // For other roles, let normal permission checks proceed
             return null;
         });
     }

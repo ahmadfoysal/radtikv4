@@ -3,6 +3,7 @@
 namespace App\Livewire\Router;
 
 use App\MikroTik\Installer\ScriptInstaller;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Contracts\View\View;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Livewire\Component;
@@ -11,7 +12,7 @@ use Mary\Traits\Toast;
 
 class Index extends Component
 {
-    use Toast, WithPagination;
+    use AuthorizesRequests, Toast, WithPagination;
 
     public string $q = '';
 
@@ -30,9 +31,7 @@ class Index extends Component
 
     public function mount(): void
     {
-        if (! auth()->user()->hasRole('admin')) {
-            abort(403, 'Unauthorized action.');
-        }
+        $this->authorize('view_router');
     }
 
     public function updatingQ(): void
@@ -71,6 +70,8 @@ class Index extends Component
 
     public function ping(int $id): void
     {
+        $this->authorize('ping_router');
+
         $this->pingingId = $id;
         $this->pingedId = null;
         $this->pingSuccess = null;
@@ -99,6 +100,9 @@ class Index extends Component
 
     public function installScripts(int $routerId): void
     {
+        //authorize user to install scripts
+        $this->authorize('install_scripts');
+
         try {
             $router = auth()->user()->routers()->findOrFail($routerId);
 
@@ -115,6 +119,7 @@ class Index extends Component
 
     public function render(): View
     {
+        $this->authorize('view_router');
         return view('livewire.router.index', [
             'routers' => $this->paginatedRouters(),
         ]);

@@ -3,6 +3,7 @@
 namespace App\Livewire\Router;
 
 use App\Models\Router;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Str;
@@ -13,13 +14,18 @@ use Mary\Traits\Toast;
 
 class Import extends Component
 {
-    use Toast, WithFileUploads;
+    use AuthorizesRequests, Toast, WithFileUploads;
 
-    
+
 
     public string $selectedTab = 'mikhmon';
 
     protected $queryString = ['selectedTab' => ['except' => 'mikhmon']];
+
+    public function mount(): void
+    {
+        $this->authorize('import_router_configs');
+    }
 
     // কেবল .php (চাইলে txt যোগ করুন)
     #[Rule(['required', 'file', 'max:4096', 'extensions:php'])]
@@ -50,6 +56,7 @@ class Import extends Component
 
     public function import(): void
     {
+        $this->authorize('import_router_configs');
         $this->validate();
 
         if (empty($this->parsed)) {

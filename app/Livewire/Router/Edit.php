@@ -5,6 +5,7 @@ namespace App\Livewire\Router;
 use App\Models\Package;
 use App\Models\Router;
 use App\Models\VoucherTemplate;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
@@ -15,7 +16,7 @@ use Mary\Traits\Toast;
 
 class Edit extends Component
 {
-    use Toast, WithFileUploads;
+    use AuthorizesRequests, Toast, WithFileUploads;
 
     public Router $router;
 
@@ -51,9 +52,7 @@ class Edit extends Component
 
     public function mount(Router $router): void
     {
-        if ($router->user_id !== Auth::id() && ! Auth::user()->hasRole('admin')) {
-            abort(403, 'Unauthorized action.');
-        }
+        $this->authorize('edit_router');
 
         $this->router = $router;
 
@@ -70,6 +69,7 @@ class Edit extends Component
 
     public function update(): void
     {
+        $this->authorize('edit_router');
         $this->validate();
 
         $updateData = [

@@ -10,6 +10,7 @@ use App\MikroTik\Installer\ScriptInstaller;
 use App\MikroTik\Scripts\PullProfilesScript;
 use App\Models\Router;
 use Carbon\Carbon;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 use Mary\Traits\Toast;
@@ -17,7 +18,7 @@ use RouterOS\Query;
 
 class Show extends Component
 {
-    use Toast;
+    use AuthorizesRequests, Toast;
 
     public Router $router;
 
@@ -67,9 +68,7 @@ class Show extends Component
 
     public function mount(Router $router): void
     {
-        if (! auth()->user()->hasRole('admin')) {
-            abort(403, 'Unauthorized action.');
-        }
+        $this->authorize('view_router');
 
         $this->router = $router;
 
@@ -106,7 +105,7 @@ class Show extends Component
             $this->errorMessage = null;
         } catch (\Throwable $e) {
             $this->errorMessage = $e->getMessage();
-            $this->error('Router refresh failed: '.$e->getMessage());
+            $this->error('Router refresh failed: ' . $e->getMessage());
         }
     }
 
@@ -119,7 +118,7 @@ class Show extends Component
             $this->errorMessage = null;
         } catch (\Throwable $e) {
             $this->errorMessage = $e->getMessage();
-            $this->error('Traffic refresh failed: '.$e->getMessage());
+            $this->error('Traffic refresh failed: ' . $e->getMessage());
         }
     }
 
@@ -138,7 +137,7 @@ class Show extends Component
             return $this->diagnostics()->interfaces($this->router);
         } catch (\Throwable $e) {
             $this->errorMessage = $e->getMessage();
-            $this->error('Failed to load interfaces: '.$e->getMessage());
+            $this->error('Failed to load interfaces: ' . $e->getMessage());
 
             return [];
         }
@@ -161,9 +160,9 @@ class Show extends Component
 
     protected function buildChartData(): array
     {
-        $labels = array_map(fn ($row) => $row['label'] ?? '', $this->trafficSeries);
-        $rx = array_map(fn ($row) => round(($row['rx'] ?? 0) / 1_000_000, 2), $this->trafficSeries);
-        $tx = array_map(fn ($row) => round(($row['tx'] ?? 0) / 1_000_000, 2), $this->trafficSeries);
+        $labels = array_map(fn($row) => $row['label'] ?? '', $this->trafficSeries);
+        $rx = array_map(fn($row) => round(($row['rx'] ?? 0) / 1_000_000, 2), $this->trafficSeries);
+        $tx = array_map(fn($row) => round(($row['tx'] ?? 0) / 1_000_000, 2), $this->trafficSeries);
 
         $lastRx = ! empty($rx) ? end($rx) : 0;
         $lastTx = ! empty($tx) ? end($tx) : 0;
@@ -174,7 +173,7 @@ class Show extends Component
                 'labels' => $labels,
                 'datasets' => [
                     [
-                        'label' => 'Rx Mbps '.($lastRx !== null ? " ({$lastRx})" : ''),
+                        'label' => 'Rx Mbps ' . ($lastRx !== null ? " ({$lastRx})" : ''),
                         'data' => $rx,
                         'borderColor' => '#fe51b6ff',
                         'backgroundColor' => 'rgba(247, 12, 145, 0.2)',
@@ -189,7 +188,7 @@ class Show extends Component
                     ],
 
                     [
-                        'label' => 'Tx Mbps'.($lastTx !== null ? " ({$lastTx})" : ''),
+                        'label' => 'Tx Mbps' . ($lastTx !== null ? " ({$lastTx})" : ''),
                         'data' => $tx,
                         'borderColor' => '#51a7feff',
                         'backgroundColor' => 'rgba(81, 167, 254, 0.2)',
@@ -251,7 +250,7 @@ class Show extends Component
             return is_array($profiles) ? $profiles : [];
         } catch (\Throwable $e) {
             $this->errorMessage = $e->getMessage();
-            $this->error('Failed to load profiles: '.$e->getMessage());
+            $this->error('Failed to load profiles: ' . $e->getMessage());
 
             return [];
         }
@@ -265,7 +264,7 @@ class Show extends Component
             $names = array_column($definitions, 'name');
             $remote = collect($this->schedulerManager()->list($this->router, $names))->keyBy('name');
         } catch (\Throwable $e) {
-            $this->error('Failed to load schedulers: '.$e->getMessage());
+            $this->error('Failed to load schedulers: ' . $e->getMessage());
             $remote = collect();
         }
 
@@ -342,13 +341,13 @@ class Show extends Component
 
         $parts = [];
         if ($months) {
-            $parts[] = $months.' '.($months > 1 ? 'months' : 'month');
+            $parts[] = $months . ' ' . ($months > 1 ? 'months' : 'month');
         }
         if ($weeks) {
-            $parts[] = $weeks.' '.($weeks > 1 ? 'weeks' : 'week');
+            $parts[] = $weeks . ' ' . ($weeks > 1 ? 'weeks' : 'week');
         }
         if ($days || empty($parts)) {
-            $parts[] = $days.' '.($days === 1 ? 'day' : 'days');
+            $parts[] = $days . ' ' . ($days === 1 ? 'day' : 'days');
         }
 
         return implode(' ', $parts);
@@ -376,6 +375,8 @@ class Show extends Component
 
     public function syncScripts(): void
     {
+        $this->authorize('sync_router_data');
+
         try {
             /** @var ScriptInstaller $installer */
             $installer = app(ScriptInstaller::class);
@@ -387,12 +388,14 @@ class Show extends Component
 
             $this->success('Scripts synced successfully.');
         } catch (\Throwable $e) {
-            $this->error('Failed to sync scripts: '.$e->getMessage());
+            $this->error('Failed to sync scripts: ' . $e->getMessage());
         }
     }
 
     public function syncSchedulers(): void
     {
+        $this->authorize('sync_router_data');
+
         try {
             /** @var ScriptInstaller $installer */
             $installer = app(ScriptInstaller::class);
@@ -402,7 +405,7 @@ class Show extends Component
 
             $this->success('Schedulers synced successfully.');
         } catch (\Throwable $e) {
-            $this->error('Failed to sync schedulers: '.$e->getMessage());
+            $this->error('Failed to sync schedulers: ' . $e->getMessage());
         }
     }
 
@@ -413,7 +416,7 @@ class Show extends Component
             $this->schedulerStatuses = $this->loadSchedulerStatuses();
             $this->success("Scheduler {$name} triggered.");
         } catch (\Throwable $e) {
-            $this->error('Failed to run scheduler: '.$e->getMessage());
+            $this->error('Failed to run scheduler: ' . $e->getMessage());
         }
     }
 
@@ -441,6 +444,8 @@ class Show extends Component
 
     public function syncProfiles(): void
     {
+        $this->authorize('sync_router_data');
+
         try {
             /** @var ScriptInstaller $installer */
             $installer = app(ScriptInstaller::class);
@@ -462,7 +467,7 @@ class Show extends Component
             $this->profiles = $this->loadProfiles();
             $this->success('Profiles synced successfully.');
         } catch (\Throwable $e) {
-            $this->error('Failed to sync profiles: '.$e->getMessage());
+            $this->error('Failed to sync profiles: ' . $e->getMessage());
         }
     }
 
@@ -484,19 +489,103 @@ class Show extends Component
 
     public function deleteRouter(): void
     {
+        $this->authorize('delete_router');
+
         if (strtolower(trim($this->deleteConfirmation)) !== 'delete') {
             $this->error('Please type "delete" to confirm deletion.');
             return;
         }
 
         try {
+            // Load router with relation counts
+            $this->router->loadCount([
+                'vouchers',
+                'resellerAssignments',
+            ]);
+
             $routerName = $this->router->name;
+
+            // Check for vouchers - this will block deletion due to restrictOnDelete constraint
+            if ($this->router->vouchers_count > 0) {
+                $activeCount = $this->router->vouchers()->where('status', 'active')->count();
+                $totalCount = $this->router->vouchers_count;
+
+                $message = "This router cannot be deleted because it has {$totalCount} voucher(s) associated with it";
+                if ($activeCount > 0) {
+                    $message .= " ({$activeCount} active)";
+                }
+                $message .= ". Please delete or reassign all vouchers before deleting this router.";
+
+                $this->error(
+                    title: 'Cannot Delete Router',
+                    description: $message
+                );
+                return;
+            }
+
+            // Check for reseller assignments
+            if ($this->router->resellerAssignments_count > 0) {
+                $resellerCount = $this->router->resellerAssignments_count;
+
+                $this->error(
+                    title: 'Cannot Delete Router',
+                    description: "This router cannot be deleted because it is assigned to {$resellerCount} reseller(s). Please unassign the router from all resellers before attempting to delete it."
+                );
+                return;
+            }
+
+            // Attempt to delete
             $this->router->delete();
 
-            $this->success("Router '{$routerName}' deleted successfully.");
+            $this->success(
+                title: 'Router Deleted',
+                description: "Router '{$routerName}' has been deleted successfully."
+            );
             $this->redirect(route('routers.index'), navigate: true);
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Catch database constraint violations
+            $errorCode = $e->getCode();
+            $errorMessage = $e->getMessage();
+
+            // Check if it's a foreign key constraint violation
+            if ($errorCode === '23000' || str_contains($errorMessage, 'foreign key constraint')) {
+                // Try to get more specific information
+                try {
+                    $this->router->loadCount(['vouchers', 'resellerAssignments']);
+
+                    if ($this->router->vouchers_count > 0) {
+                        $this->error(
+                            title: 'Cannot Delete Router',
+                            description: "This router cannot be deleted because it has {$this->router->vouchers_count} voucher(s) associated with it. The database prevents deletion to maintain data integrity. Please delete or reassign all vouchers before attempting to delete this router."
+                        );
+                    } elseif ($this->router->resellerAssignments_count > 0) {
+                        $this->error(
+                            title: 'Cannot Delete Router',
+                            description: "This router cannot be deleted because it is assigned to {$this->router->resellerAssignments_count} reseller(s). Please unassign the router from all resellers before attempting to delete it."
+                        );
+                    } else {
+                        $this->error(
+                            title: 'Cannot Delete Router',
+                            description: 'This router cannot be deleted because it has related records that prevent deletion. Please remove all associated data (vouchers, invoices, or other related records) before attempting to delete this router.'
+                        );
+                    }
+                } catch (\Throwable) {
+                    $this->error(
+                        title: 'Cannot Delete Router',
+                        description: 'This router cannot be deleted because it has related records that prevent deletion. Please remove all associated data before attempting to delete this router.'
+                    );
+                }
+            } else {
+                $this->error(
+                    title: 'Failed to Delete Router',
+                    description: 'An error occurred while deleting the router: ' . $errorMessage
+                );
+            }
         } catch (\Throwable $e) {
-            $this->error('Failed to delete router: '.$e->getMessage());
+            $this->error(
+                title: 'Failed to Delete Router',
+                description: 'An unexpected error occurred: ' . $e->getMessage()
+            );
         }
     }
 }

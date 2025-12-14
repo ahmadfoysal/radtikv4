@@ -5,6 +5,7 @@ namespace App\Livewire\Router;
 use App\Models\Package;
 use App\Models\Router;
 use App\Models\VoucherTemplate;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
@@ -15,7 +16,7 @@ use Mary\Traits\Toast;
 
 class Create extends Component
 {
-    use Toast, WithFileUploads;
+    use AuthorizesRequests, Toast, WithFileUploads;
 
     #[Rule(['required', 'string', 'max:100'])]
     public string $name = '';
@@ -49,6 +50,8 @@ class Create extends Component
 
     public function mount(): void
     {
+        $this->authorize('add_router');
+
         $this->voucher_template_id = VoucherTemplate::query()
             ->where('is_active', true)
             ->value('id') ?? VoucherTemplate::query()->value('id');
@@ -56,6 +59,7 @@ class Create extends Component
 
     public function save()
     {
+        $this->authorize('add_router');
         $this->validate();
 
         $user = Auth::user();

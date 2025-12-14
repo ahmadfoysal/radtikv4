@@ -107,6 +107,44 @@ class ResellerPermissions extends Component
         $this->loadResellerOptions($value);
     }
 
+    public function search(string $value = ''): void
+    {
+        $this->loadResellerOptions($value);
+    }
+
+    public function selectAllPermissions(): void
+    {
+        $allPermissionNames = collect($this->routerPermissions)
+            ->pluck('name')
+            ->toArray();
+        
+        // Check if all permissions are already selected
+        $allSelected = count($allPermissionNames) === count($this->selectedPermissions) 
+            && empty(array_diff($allPermissionNames, $this->selectedPermissions));
+        
+        if ($allSelected) {
+            // Deselect all
+            $this->selectedPermissions = [];
+        } else {
+            // Select all
+            $this->selectedPermissions = $allPermissionNames;
+        }
+    }
+    
+    public function areAllPermissionsSelected(): bool
+    {
+        if (empty($this->routerPermissions)) {
+            return false;
+        }
+        
+        $allPermissionNames = collect($this->routerPermissions)
+            ->pluck('name')
+            ->toArray();
+        
+        return count($allPermissionNames) === count($this->selectedPermissions) 
+            && empty(array_diff($allPermissionNames, $this->selectedPermissions));
+    }
+
     protected function loadResellerOptions(?string $term = null): void
     {
         $this->resellerOptions = $this->resellerQuery($term)
