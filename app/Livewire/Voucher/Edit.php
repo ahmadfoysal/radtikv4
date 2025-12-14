@@ -28,9 +28,14 @@ class Edit extends Component
 
     public function mount(Voucher $voucher): void
     {
-        // Check if user has permission to edit this voucher
-        if ($voucher->user_id !== Auth::id() && !Auth::user()->hasRole('admin')) {
-            abort(403, 'You do not have permission to edit this voucher.');
+        $this->authorize('edit_vouchers');
+
+        // Verify user has access to the voucher's router
+        $user = Auth::user();
+        try {
+            $router = $user->getAuthorizedRouter($voucher->router_id);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            abort(403, 'You are not authorized to edit this voucher.');
         }
 
         $this->voucher = $voucher;
@@ -44,9 +49,10 @@ class Edit extends Component
 
     protected function loadProfiles(): void
     {
-        $profiles = Auth::user()->profiles()->orderBy('name')->get();
+        $user = Auth::user();
+        $profiles = $user->getAccessibleProfiles();
 
-        $this->available_profiles = $profiles->map(fn ($p) => [
+        $this->available_profiles = $profiles->map(fn($p) => [
             'id' => $p->id,
             'name' => $p->name . ($p->rate_limit ? ' (' . $p->rate_limit . ')' : ''),
         ])->toArray();
@@ -54,9 +60,30 @@ class Edit extends Component
 
     public function update(): void
     {
+        $this->authorize('edit_vouchers');
         $this->validate();
 
         try {
+            $user = Auth::user();
+
+            // Verify user still has access to the voucher's router
+            try {
+                $router = $user->getAuthorizedRouter($this->voucher->router_id);
+            } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+                $this->error('You are not authorized to edit this voucher.');
+                return;
+            }
+
+            // Verify the selected profile is accessible
+            if ($this->user_profile_id) {
+                $accessibleProfiles = $user->getAccessibleProfiles();
+                $selectedProfile = $accessibleProfiles->firstWhere('id', $this->user_profile_id);
+                if (!$selectedProfile) {
+                    $this->error('Selected profile is not accessible or does not exist.');
+                    return;
+                }
+            }
+
             // Update voucher in database
             $this->voucher->update([
                 'username' => $this->username,

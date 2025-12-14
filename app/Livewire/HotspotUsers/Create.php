@@ -31,6 +31,7 @@ class Create extends Component
 
     public function mount()
     {
+        $this->authorize('create_single_user');
     }
 
     public function updatedRouterId($value)
@@ -42,17 +43,18 @@ class Create extends Component
         }
 
         try {
-            $router = auth()->user()->routers()->find($value);
-            if (!$router) {
+            $user = auth()->user();
+            try {
+                $router = $user->getAuthorizedRouter($value);
+            } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
                 $this->available_profiles = [];
                 $this->profile = null;
                 return;
             }
 
-            // Load profiles from database instead of MikroTik
-            $profiles = auth()->user()->profiles()->orderBy('name')->get();
+            $profiles = $user->getAccessibleProfiles();
 
-            $this->available_profiles = $profiles->map(fn ($p) => [
+            $this->available_profiles = $profiles->map(fn($p) => [
                 'id' => $p->id,
                 'name' => $p->name . ($p->rate_limit ? ' (' . $p->rate_limit . ')' : ''),
             ])->toArray();
@@ -68,24 +70,29 @@ class Create extends Component
 
     public function save()
     {
+        $this->authorize('create_single_user');
         $this->validate();
 
         try {
-            $router = auth()->user()->routers()->findOrFail($this->router_id);
+            $user = auth()->user();
+            $router = $user->getAuthorizedRouter($this->router_id);
             $manager = app(HotspotUserManager::class);
+
+            // Get accessible profiles based on user role
+            $accessibleProfiles = $user->getAccessibleProfiles();
 
             // Get selected profile from database
             $selectedProfile = null;
             if ($this->profile) {
-                $selectedProfile = auth()->user()->profiles()->find($this->profile);
+                $selectedProfile = $accessibleProfiles->firstWhere('id', $this->profile);
                 if (!$selectedProfile) {
-                    $this->error('Selected profile not found.');
+                    $this->error('Selected profile not found or you are not authorized to use it.');
                     return;
                 }
             }
 
             // Get user profile ID - ensure it exists (for voucher record)
-            $userProfile = $selectedProfile ?? auth()->user()->profiles()->first();
+            $userProfile = $selectedProfile ?? $accessibleProfiles->first();
             if (!$userProfile) {
                 $this->error('No bandwidth profile found. Please create a bandwidth profile in the Profile Management section first.');
                 return;
@@ -108,7 +115,7 @@ class Create extends Component
 
             // Create record in vouchers table only after successful MikroTik creation
             $batch = 'HS' . now()->format('ymdHis') . Str::upper(Str::random(4));
-            
+
             Voucher::create([
                 'name' => $this->username,
                 'username' => $this->username,
@@ -125,7 +132,7 @@ class Create extends Component
             ]);
 
             $this->success('Hotspot user created successfully in MikroTik and database.');
-            
+
             // Reset form
             $this->reset(['username', 'password']);
             $this->profile = null;
@@ -141,8 +148,15 @@ class Create extends Component
 
     public function render()
     {
+        $user = auth()->user();
+        $routers = $user->getAccessibleRouters()->map(fn($router) => [
+            'id' => $router->id,
+            'name' => $router->name,
+            'address' => $router->address,
+        ]);
+
         return view('livewire.hotspot-users.create', [
-            'routers' => auth()->user()->routers()->orderBy('name')->get(['id', 'name', 'address']),
+            'routers' => $routers,
         ]);
     }
 }

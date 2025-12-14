@@ -17,7 +17,7 @@ class ActiveSessions extends Component
 
     public function mount()
     {
-        // Initialize empty
+        $this->authorize('view_active_sessions');
     }
 
     public function updatedRouterId($value)
@@ -40,11 +40,13 @@ class ActiveSessions extends Component
         $this->loading = true;
 
         try {
-            $router = auth()->user()->routers()->findOrFail($this->router_id);
+
+            $router = auth()->user()->getAuthorizedRouter($this->router_id);
+
             $manager = app(HotspotUserManager::class);
-            
+
             $this->sessions = $manager->getActiveSessions($router);
-            
+
             if (empty($this->sessions)) {
                 $this->info('No active sessions found.');
             }
@@ -58,12 +60,16 @@ class ActiveSessions extends Component
 
     public function deleteSession(string $sessionId)
     {
+        $this->authorize('delete_active_session');
+
         try {
-            $router = auth()->user()->routers()->findOrFail($this->router_id);
+            $user = auth()->user();
+            $router = $user->getAuthorizedRouter($this->router_id);
+
             $manager = app(HotspotUserManager::class);
-            
+
             $manager->removeActiveUser($router, $sessionId);
-            
+
             $this->success('Session removed successfully.');
             $this->loadSessions();
         } catch (\Throwable $e) {
@@ -73,8 +79,14 @@ class ActiveSessions extends Component
 
     public function render()
     {
+        $user = auth()->user();
+        $routers = $user->getAccessibleRouters()->map(fn($router) => [
+            'id' => $router->id,
+            'name' => $router->name,
+        ]);
+
         return view('livewire.hotspot-users.active-sessions', [
-            'routers' => auth()->user()->routers()->orderBy('name')->get(['id', 'name']),
+            'routers' => $routers,
         ]);
     }
 }

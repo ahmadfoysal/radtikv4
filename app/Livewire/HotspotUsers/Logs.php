@@ -17,7 +17,7 @@ class Logs extends Component
 
     public function mount()
     {
-        // Initialize empty
+        $this->authorize('view_hotspot_logs');
     }
 
     public function updatedRouterId($value)
@@ -42,9 +42,9 @@ class Logs extends Component
         try {
             $router = auth()->user()->routers()->findOrFail($this->router_id);
             $manager = app(HotspotUserManager::class);
-            
+
             $this->logs = $manager->getHotspotLogs($router);
-            
+
             if (empty($this->logs)) {
                 $this->info('No hotspot logs found.');
             }

@@ -20,6 +20,9 @@ class PermissionSeed extends Seeder
         // create permissions
         $permissions = [
 
+            // Dashboard
+            'view_dashboard',
+
             // Router Management
             'add_router',
             'edit_router',
@@ -28,6 +31,7 @@ class PermissionSeed extends Seeder
             'ping_router',
             'install_scripts',
             'import_router_configs',
+            'sync_router_data',
             'view_router_logs',
 
             // Hotspot User Management
@@ -36,12 +40,15 @@ class PermissionSeed extends Seeder
             'edit_hotspot_users',
             'delete_hotspot_users',
             'view_active_sessions',
+            'delete_active_session',
             'view_session_cookies',
+            'delete_session_cookie',
             'view_hotspot_logs',
             'disconnect_users',
 
             // Voucher Management
             'view_vouchers',
+            'view_voucher_list',
             'edit_vouchers',
             'delete_vouchers',
             'generate_vouchers',
@@ -54,7 +61,7 @@ class PermissionSeed extends Seeder
             'view_live_bandwidth',
             'view_router_health',
 
-            //Report
+            // Reports
             'view_reports',
             'view_voucher_logs',
         ];

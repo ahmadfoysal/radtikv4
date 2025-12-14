@@ -17,7 +17,7 @@ class SessionCookies extends Component
 
     public function mount()
     {
-        // Initialize empty
+        $this->authorize('view_session_cookies');
     }
 
     public function updatedRouterId($value)
@@ -42,9 +42,9 @@ class SessionCookies extends Component
         try {
             $router = auth()->user()->routers()->findOrFail($this->router_id);
             $manager = app(HotspotUserManager::class);
-            
+
             $this->cookies = $manager->getSessionCookies($router);
-            
+
             if (empty($this->cookies)) {
                 $this->info('No session cookies found.');
             }
@@ -58,12 +58,14 @@ class SessionCookies extends Component
 
     public function deleteCookie(string $cookieId)
     {
+        $this->authorize('delete_session_cookie');
+
         try {
             $router = auth()->user()->routers()->findOrFail($this->router_id);
             $manager = app(HotspotUserManager::class);
-            
+
             $manager->deleteSessionCookie($router, $cookieId);
-            
+
             $this->success('Cookie removed successfully.');
             $this->loadCookies();
         } catch (\Throwable $e) {

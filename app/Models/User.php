@@ -113,7 +113,7 @@ class User extends Authenticatable
     }
 
     // Admins relation
-    public function admins()
+    public function admin()
     {
         return $this->belongsTo(User::class, 'admin_id');
     }
@@ -146,6 +146,65 @@ class User extends Authenticatable
     public function getResellerRouters()
     {
         return $this->resellerRouters()->get();
+    }
+
+    /**
+     * Get an authorized router by ID based on user role.
+     * For admins: returns router from their routers() relation.
+     * For resellers: returns router from their resellerRouters() relation.
+     * 
+     * @param int|string $routerId
+     * @return Router
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     */
+    public function getAuthorizedRouter($routerId): Router
+    {
+        if ($this->isAdmin()) {
+            return $this->routers()->findOrFail($routerId);
+        } elseif ($this->isReseller()) {
+            return $this->resellerRouters()->findOrFail($routerId);
+        }
+
+        throw new \Illuminate\Database\Eloquent\ModelNotFoundException(
+            'No router found or user is not authorized to access this router.'
+        );
+    }
+
+    /**
+     * Get all routers accessible by the user based on their role.
+     * For admins: returns their routers.
+     * For resellers: returns their assigned reseller routers.
+     * 
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getAccessibleRouters()
+    {
+        if ($this->isAdmin()) {
+            return $this->routers()->orderBy('name')->get();
+        } elseif ($this->isReseller()) {
+            return $this->resellerRouters()->orderBy('name')->get();
+        }
+
+        return collect();
+    }
+
+    /**
+     * Get all profiles accessible by the user based on their role.
+     * For admins: returns their own profiles.
+     * For resellers: returns their admin's profiles.
+     * 
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getAccessibleProfiles()
+    {
+        if ($this->isAdmin()) {
+            return $this->profiles()->orderBy('name')->get();
+        } elseif ($this->isReseller()) {
+            $admin = $this->admin;
+            return $admin ? $admin->profiles()->orderBy('name')->get() : collect();
+        }
+
+        return collect();
     }
 
     // Profiles relation

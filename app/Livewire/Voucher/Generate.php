@@ -45,17 +45,30 @@ class Generate extends Component
 
     public function mount()
     {
+        $this->authorize('generate_vouchers');
         $this->loadProfiles();
+    }
+
+    public function updatedRouterId($value)
+    {
+        if ($value) {
+            // Reload profiles when router changes
+            $this->loadProfiles();
+            // Reset profile selection
+            $this->profile_id = '';
+        }
     }
 
     /* Load profiles */
     public function loadProfiles()
     {
-        $this->available_profiles = auth()->user()->profiles()
-            ->orderBy('name')
-            ->get()
-            ->map(fn ($p) => ['id' => $p->id, 'name' => $p->name])
-            ->all();
+        $user = auth()->user();
+        $profiles = $user->getAccessibleProfiles();
+
+        $this->available_profiles = $profiles->map(fn($p) => [
+            'id' => $p->id,
+            'name' => $p->name
+        ])->toArray();
     }
 
     // === Generators ===
@@ -75,30 +88,52 @@ class Generate extends Component
 
     public function save()
     {
+        $this->authorize('generate_vouchers');
         $this->validate();
 
-        $codes = $this->generateCodes();
-        $rows = $this->buildRows($codes);
+        try {
+            $user = auth()->user();
 
-        Voucher::insert($rows);
+            // Verify user has access to the selected router
+            try {
+                $router = $user->getAuthorizedRouter($this->router_id);
+            } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+                $this->error('You are not authorized to generate vouchers for this router.');
+                return;
+            }
 
-        // Log bulk voucher generation
-        \App\Services\ActivityLogger::logCustom(
-            'bulk_generated',
-            null,
-            "Generated {$this->quantity} vouchers in batch {$rows[0]['batch']}",
-            [
-                'quantity' => $this->quantity,
-                'batch' => $rows[0]['batch'],
-                'router_id' => $this->router_id,
-                'profile_id' => $this->profile_id,
-                'type' => $this->type,
-            ]
-        );
+            // Verify user has access to the selected profile
+            $accessibleProfiles = $user->getAccessibleProfiles();
+            $selectedProfile = $accessibleProfiles->firstWhere('id', $this->profile_id);
+            if (!$selectedProfile) {
+                $this->error('Selected profile is not accessible or does not exist.');
+                return;
+            }
 
-        $this->success('Vouchers generated successfully.');
-        // nevigat to route
-        $this->redirect(route('vouchers.index'), navigate: true);
+            $codes = $this->generateCodes();
+            $rows = $this->buildRows($codes);
+
+            Voucher::insert($rows);
+
+            // Log bulk voucher generation
+            \App\Services\ActivityLogger::logCustom(
+                'bulk_generated',
+                null,
+                "Generated {$this->quantity} vouchers in batch {$rows[0]['batch']}",
+                [
+                    'quantity' => $this->quantity,
+                    'batch' => $rows[0]['batch'],
+                    'router_id' => $this->router_id,
+                    'profile_id' => $this->profile_id,
+                ]
+            );
+
+            $this->success('Vouchers generated successfully.');
+            // nevigat to route
+            $this->redirect(route('vouchers.index'), navigate: true);
+        } catch (\Throwable $e) {
+            $this->error('Failed to generate vouchers: ' . $e->getMessage());
+        }
     }
 
     protected function generateCodes(): array
@@ -117,7 +152,7 @@ class Generate extends Component
                     $rnd .= $cs[random_int(0, $max)];
                 }
 
-                $u = $this->prefix.$serial.$rnd;
+                $u = $this->prefix . $serial . $rnd;
 
                 // Collision fallback
                 if ($attempts++ > 5 && isset($seen[$u])) {
@@ -134,7 +169,7 @@ class Generate extends Component
 
     protected function buildRows(array $codes): array
     {
-        $batch = 'B'.now()->format('ymdHis').Str::upper(Str::random(4));
+        $batch = 'B' . now()->format('ymdHis') . Str::upper(Str::random(4));
         $userId = auth()->id();
         $now = now();
 
@@ -168,8 +203,15 @@ class Generate extends Component
 
     public function render()
     {
+        $user = auth()->user();
+        $routers = $user->getAccessibleRouters()->map(fn($router) => [
+            'id' => $router->id,
+            'name' => $router->name,
+            'address' => $router->address,
+        ]);
+
         return view('livewire.voucher.generate', [
-            'routers' => Router::orderBy('name')->get(['id', 'name', 'address']),
+            'routers' => $routers,
         ]);
     }
 }

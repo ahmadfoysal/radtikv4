@@ -34,7 +34,7 @@ class BulkManager extends Component
 
     public function mount()
     {
-        // No initial load needed
+        $this->authorize('view_voucher_list');
     }
 
     public function updated($prop)
@@ -54,16 +54,26 @@ class BulkManager extends Component
             return;
         }
 
-        // Fix for SQL Strict Mode (Error 3065):
-        // Group by batch and order by the latest created_at within that group
-        $this->batches = Voucher::where('router_id', $this->router_id)
-            ->select('batch')
-            ->groupBy('batch')
-            ->orderByRaw('MAX(created_at) DESC')
-            ->limit(50)
-            ->pluck('batch')
-            ->map(fn ($b) => ['id' => $b, 'name' => $b])
-            ->toArray();
+        try {
+            // Verify user has access to this router
+            $user = auth()->user();
+            $router = $user->getAuthorizedRouter($this->router_id);
+
+            // Fix for SQL Strict Mode (Error 3065):
+            // Group by batch and order by the latest created_at within that group
+            $this->batches = Voucher::where('router_id', $this->router_id)
+                ->select('batch')
+                ->groupBy('batch')
+                ->orderByRaw('MAX(created_at) DESC')
+                ->limit(50)
+                ->pluck('batch')
+                ->map(fn($b) => ['id' => $b, 'name' => $b])
+                ->toArray();
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            $this->error('You are not authorized to access this router.');
+            $this->batches = [];
+            $this->router_id = null;
+        }
     }
 
     // Central query logic
@@ -73,17 +83,26 @@ class BulkManager extends Component
             return null;
         }
 
-        return Voucher::query()
-            ->with('profile')
-            ->where('router_id', $this->router_id)
-            ->when($this->batch, fn ($q) => $q->where('batch', $this->batch))
-            ->when($this->status !== 'all', fn ($q) => $q->where('status', $this->status))
-            ->orderBy('id', 'desc');
+        try {
+            // Verify user has access to this router
+            $user = auth()->user();
+            $router = $user->getAuthorizedRouter($this->router_id);
+
+            return Voucher::query()
+                ->with('profile')
+                ->where('router_id', $this->router_id)
+                ->when($this->batch, fn($q) => $q->where('batch', $this->batch))
+                ->when($this->status !== 'all', fn($q) => $q->where('status', $this->status))
+                ->orderBy('id', 'desc');
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return null;
+        }
     }
 
     // Handles both Bulk Delete (no arg) and Single Delete (id arg)
     public function delete($id = null)
     {
+        $this->authorize('bulk_delete_vouchers');
         if ($id) {
             // Single Delete
             Voucher::where('id', $id)->delete();
@@ -131,6 +150,7 @@ class BulkManager extends Component
 
     public function print()
     {
+        $this->authorize('print_vouchers');
         $query = $this->getQuery();
 
         if (! $query || $query->count() === 0) {
@@ -156,25 +176,38 @@ class BulkManager extends Component
             return;
         }
 
-        $voucher = Voucher::where('router_id', $this->router_id)->find($voucherId);
+        try {
+            // Verify user has access to this router
+            $user = auth()->user();
+            $router = $user->getAuthorizedRouter($this->router_id);
 
-        if (! $voucher) {
-            $this->error('Voucher not found for the selected router.');
+            $voucher = Voucher::where('router_id', $this->router_id)->find($voucherId);
 
-            return;
+            if (! $voucher) {
+                $this->error('Voucher not found for the selected router.');
+
+                return;
+            }
+
+            $url = route('vouchers.print.single', ['voucher' => $voucherId]);
+
+            $this->js("window.open('$url', '_blank');");
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            $this->error('You are not authorized to access this router.');
         }
-
-        $url = route('vouchers.print.single', ['voucher' => $voucherId]);
-
-        $this->js("window.open('$url', '_blank');");
     }
 
     public function render()
     {
         $query = $this->getQuery();
+        $user = auth()->user();
+        $routers = $user->getAccessibleRouters()->map(fn($router) => [
+            'id' => $router->id,
+            'name' => $router->name,
+        ]);
 
         return view('livewire.voucher.bulk-manager', [
-            'routers' => Router::orderBy('name')->get(['id', 'name']),
+            'routers' => $routers,
             'vouchers' => $query ? $query->get() : [],
             'total_count' => $query ? $query->count() : 0,
         ]);

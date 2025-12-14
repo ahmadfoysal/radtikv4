@@ -32,7 +32,13 @@ class Dashboard extends Component
                 ->title(__('Dashboard'));
         }
 
-        return view('livewire.dashboard.reseller', $this->dataForReseller($user))
+        if ($user->isReseller()) {
+            $this->authorize('view_dashboard');
+            return view('livewire.dashboard.reseller', $this->dataForReseller($user))
+                ->title(__('Dashboard'));
+        }
+
+        return view('livewire.dashboard.guest')
             ->title(__('Dashboard'));
     }
 
@@ -65,14 +71,14 @@ class Dashboard extends Component
 
         $routerOverview = [
             'total' => $routers->count(),
-            'withPackage' => $routers->filter(fn ($router) => ! empty($router->package))->count(),
-            'expiringToday' => $routers->filter(fn ($router) => $this->endsOn($router, $today))->count(),
-            'expiringWeek' => $routers->filter(fn ($router) => $this->endsWithinDays($router, 7))->count(),
+            'withPackage' => $routers->filter(fn($router) => ! empty($router->package))->count(),
+            'expiringToday' => $routers->filter(fn($router) => $this->endsOn($router, $today))->count(),
+            'expiringWeek' => $routers->filter(fn($router) => $this->endsWithinDays($router, 7))->count(),
         ];
 
         $packageBreakdown = $routers
-            ->groupBy(fn ($router) => $router->package['name'] ?? 'Unassigned')
-            ->map(fn (Collection $group) => [
+            ->groupBy(fn($router) => $router->package['name'] ?? 'Unassigned')
+            ->map(fn(Collection $group) => [
                 'count' => $group->count(),
                 'billing' => $group->first()->package['billing_cycle'] ?? null,
             ])
@@ -139,8 +145,8 @@ class Dashboard extends Component
         $routerQuery = $user->routers()
             ->with(['zone:id,name'])
             ->withCount([
-                'vouchers as active_vouchers_count' => fn ($q) => $q->where('status', 'active'),
-                'vouchers as expired_vouchers_count' => fn ($q) => $q->where('status', 'expired'),
+                'vouchers as active_vouchers_count' => fn($q) => $q->where('status', 'active'),
+                'vouchers as expired_vouchers_count' => fn($q) => $q->where('status', 'expired'),
             ]);
 
         $routers = $routerQuery
@@ -157,16 +163,16 @@ class Dashboard extends Component
 
         $routerStats = [
             'total' => $routers->count(),
-            'expiringToday' => $routers->filter(fn ($router) => $this->endsOn($router, Carbon::today()))->count(),
-            'expiringWeek' => $routers->filter(fn ($router) => $this->endsWithinDays($router, 7))->count(),
-            'withoutPackage' => $routers->filter(fn ($router) => empty($router->package))->count(),
+            'expiringToday' => $routers->filter(fn($router) => $this->endsOn($router, Carbon::today()))->count(),
+            'expiringWeek' => $routers->filter(fn($router) => $this->endsWithinDays($router, 7))->count(),
+            'withoutPackage' => $routers->filter(fn($router) => empty($router->package))->count(),
             'monthlyExpense' => $routers->sum('monthly_expense'),
         ];
 
         $routerUsage = $routers
-            ->groupBy(fn ($router) => $router->package['name'] ?? 'Unassigned')
-            ->map(fn (Collection $group) => $group->count())
-            ->sortByDesc(fn ($count) => $count)
+            ->groupBy(fn($router) => $router->package['name'] ?? 'Unassigned')
+            ->map(fn(Collection $group) => $group->count())
+            ->sortByDesc(fn($count) => $count)
             ->take(6);
 
         $recentRouters = $routers->sortByDesc('created_at')->take(5);
@@ -191,8 +197,8 @@ class Dashboard extends Component
             ->get(['id', 'amount', 'status', 'category', 'created_at']);
 
         $routerAlerts = $routers
-            ->filter(fn ($router) => $this->endsWithinDays($router, 10))
-            ->sortBy(fn ($router) => $this->packageEndDate($router->package ?? []))
+            ->filter(fn($router) => $this->endsWithinDays($router, 10))
+            ->sortBy(fn($router) => $this->packageEndDate($router->package ?? []))
             ->take(6);
 
         $balance = $user->balance ?? 0;
@@ -202,7 +208,7 @@ class Dashboard extends Component
         $voucherQuery = Voucher::whereIn('router_id', $routerIds);
         $today = Carbon::today();
         $startOfWeek = Carbon::now()->startOfWeek();
-        
+
         $voucherStats = [
             'total' => (clone $voucherQuery)->count(),
             'active' => (clone $voucherQuery)->where('status', 'active')->count(),
@@ -253,7 +259,7 @@ class Dashboard extends Component
         // Invoice Statistics
         $invoiceQuery = Invoice::where('user_id', $user->id);
         $startOfMonth = Carbon::now()->startOfMonth();
-        
+
         $invoiceStats = [
             'total' => (clone $invoiceQuery)->count(),
             'paid' => (clone $invoiceQuery)->where('status', 'completed')->count(),
@@ -356,12 +362,12 @@ class Dashboard extends Component
 
         $routerStats = [
             'total' => $assignments->count(),
-            'withLogin' => $assignments->filter(fn ($assignment) => filled($assignment->router?->login_address))->count(),
+            'withLogin' => $assignments->filter(fn($assignment) => filled($assignment->router?->login_address))->count(),
         ];
 
         $zonesBreakdown = $assignments
-            ->groupBy(fn ($assignment) => $assignment->router?->zone?->name ?? 'Unassigned zone')
-            ->map(fn (Collection $group) => $group->count())
+            ->groupBy(fn($assignment) => $assignment->router?->zone?->name ?? 'Unassigned zone')
+            ->map(fn(Collection $group) => $group->count())
             ->sortDesc();
 
         $voucherStats = [

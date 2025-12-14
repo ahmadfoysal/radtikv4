@@ -2,10 +2,7 @@
 
 namespace App\Livewire\Voucher;
 
-use App\Models\Router;
-use App\Models\Voucher;
-use Illuminate\Contracts\View\View;
-use Illuminate\Pagination\LengthAwarePaginator;
+use App\Services\VoucherService;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Mary\Traits\Toast;
@@ -14,6 +11,13 @@ class Index extends Component
 {
     use Toast;
     use WithPagination;
+
+    protected VoucherService $voucherService;
+
+    public function boot(VoucherService $voucherService): void
+    {
+        $this->voucherService = $voucherService;
+    }
 
     public string $q = '';
 
@@ -29,6 +33,11 @@ class Index extends Component
         'createdBy' => ['except' => 'all'],
         'page' => ['except' => 1],
     ];
+
+    public function mount()
+    {
+        $this->authorize('view_vouchers');
+    }
 
     public function updatingQ()
     {
@@ -50,31 +59,19 @@ class Index extends Component
         $this->perPage += 24;
     }
 
-    protected function vouchers(): LengthAwarePaginator
+    protected function vouchers()
     {
+        $user = auth()->user();
 
-        \Log::info('routerFilter', ['value' => $this->routerFilter]);
-
-        return Voucher::query()
-            ->when($this->q !== '', function ($q) {
-                $term = '%'.strtolower($this->q).'%';
-                $q->where(function ($s) use ($term) {
-                    $s->whereRaw('LOWER(username) LIKE ?', [$term])
-                        ->orWhereRaw('LOWER(batch) LIKE ?', [$term]);
-                });
-            })
-
-            // router filter
-            ->when(
-                $this->routerFilter !== 'all' && $this->routerFilter !== '' && $this->routerFilter !== null,
-                fn ($q) => $q->where('router_id', (int) $this->routerFilter)
-            )
-
-            // status
-            ->when($this->status !== 'all', fn ($q) => $q->where('status', $this->status))
-
-            ->orderByDesc('id')
-            ->paginate($this->perPage);
+        return $this->voucherService->getPaginatedVouchers(
+            $user,
+            [
+                'q' => $this->q,
+                'status' => $this->status,
+                'routerFilter' => $this->routerFilter,
+            ],
+            $this->perPage
+        );
     }
 
     protected function statusColor(string $s): string
@@ -92,38 +89,60 @@ class Index extends Component
 
     public function delete(int $id)
     {
-        $v = Voucher::find($id);
-        if (! $v) {
-            return;
+        $this->authorize('delete_vouchers');
+
+        $user = auth()->user();
+        $result = $this->voucherService->deleteVoucher($user, $id);
+
+        if ($result['success']) {
+            $this->success(title: 'Deleted');
+            $this->resetPage();
+        } else {
+            $this->error($result['message']);
         }
-
-        $v->delete();
-
-        $this->success(title: 'Deleted');
-        $this->resetPage();
     }
 
     public function toggleDisable(int $id)
     {
-        $v = Voucher::find($id);
-        if (! $v) {
-            return;
+        $this->authorize('edit_vouchers');
+
+        $user = auth()->user();
+        $result = $this->voucherService->toggleVoucherStatus($user, $id);
+
+        if ($result['success']) {
+            $this->success(title: 'Updated');
+        } else {
+            $this->error($result['message']);
         }
+    }
 
-        $v->status = $v->status === 'disabled' ? 'active' : 'disabled';
-        $v->save();
-
-        $this->success(title: 'Updated');
+    //reset voucher
+    public function resetVoucher(int $id)
+    {
+        $this->authorize('reset_vouchers');
+        $user = auth()->user();
+        $result = $this->voucherService->resetVoucher($user, $id);
+        if ($result['success']) {
+            $this->success(title: 'Reset', description: 'Voucher reset successfully.');
+        } else {
+            $this->error(title: 'Error', description: $result['message']);
+        }
     }
 
     public function render()
     {
+        $user = auth()->user();
+        $routers = $user->getAccessibleRouters()->map(fn($router) => [
+            'id' => $router->id,
+            'name' => $router->name,
+        ]);
+
         return view('livewire.voucher.index', [
             'vouchers' => $this->vouchers(),
-            'routers' => Router::orderBy('name')->get(['id', 'name']),
+            'routers' => $routers,
 
             // send helpers to view
-            'statusColor' => fn ($s) => $this->statusColor($s),
+            'statusColor' => fn($s) => $this->statusColor($s),
         ]);
     }
 }
