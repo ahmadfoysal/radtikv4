@@ -21,6 +21,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/user/add', App\Livewire\User\Create::class)->name('users.create');
     Route::get('/user/{user}/edit', App\Livewire\User\Edit::class)->name('users.edit');
     Route::get('/reseller/assign-router', App\Livewire\Admin\AssignResellerRouters::class)->name('reseller.assign-router');
+    Route::get('/resellers/permissions', App\Livewire\Admin\ResellerPermissions::class)->name('resellers.permissions');
 
     /* Router Routes */
     Route::get('/routers', App\Livewire\Router\Index::class)->name('routers.index');

@@ -34,7 +34,7 @@
 
     {{-- Header --}}
     {{-- Header (compact, single card) --}}
-    <x-mary-card class="bg-base-100 border border-base-300 shadow-sm">
+    <x-mary-card class="bg-base-100 border border-base-300 shadow-sm rounded-none">
         <div class="grid grid-cols-1 gap-4 lg:grid-cols-3 text-xs sm:text-sm">
 
             {{-- Router info --}}
@@ -144,22 +144,22 @@
     <div class="space-y-2">
         <div class="text-sm uppercase font-semibold opacity-70">Hotspot User Status</div>
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <x-mary-card class="bg-base-100 border border-base-300 shadow-sm">
+            <x-mary-card class="bg-base-100 border border-base-300 shadow-sm rounded-none">
                 <div class="text-xs uppercase opacity-60">All Hotspot Users</div>
                 <div class="text-3xl font-semibold">{{ $hotspotUserStats['all'] ?? 0 }}</div>
             </x-mary-card>
 
-            <x-mary-card class="bg-base-100 border border-base-300 shadow-sm">
+            <x-mary-card class="bg-base-100 border border-base-300 shadow-sm rounded-none">
                 <div class="text-xs uppercase opacity-60">Active Hotspot Users</div>
                 <div class="text-3xl font-semibold text-success">{{ $hotspotUserStats['active'] ?? 0 }}</div>
             </x-mary-card>
 
-            <x-mary-card class="bg-base-100 border border-base-300 shadow-sm">
+            <x-mary-card class="bg-base-100 border border-base-300 shadow-sm rounded-none">
                 <div class="text-xs uppercase opacity-60">Expiring Today</div>
                 <div class="text-3xl font-semibold text-warning">{{ $hotspotUserStats['expiring_today'] ?? 0 }}</div>
             </x-mary-card>
 
-            <x-mary-card class="bg-base-100 border border-base-300 shadow-sm">
+            <x-mary-card class="bg-base-100 border border-base-300 shadow-sm rounded-none">
                 <div class="text-xs uppercase opacity-60">Expiring This Week</div>
                 <div class="text-3xl font-semibold text-error">{{ $hotspotUserStats['expiring_week'] ?? 0 }}</div>
             </x-mary-card>
@@ -170,22 +170,22 @@
     <div class="space-y-2">
         <div class="text-sm uppercase font-semibold opacity-70">Activation & Sales</div>
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <x-mary-card class="bg-base-100 border border-base-300 shadow-sm">
+            <x-mary-card class="bg-base-100 border border-base-300 shadow-sm rounded-none">
                 <div class="text-xs uppercase opacity-60">Activated Today</div>
                 <div class="text-3xl font-semibold text-primary">{{ $activityStats['activated_today'] ?? 0 }}</div>
             </x-mary-card>
 
-            <x-mary-card class="bg-base-100 border border-base-300 shadow-sm">
+            <x-mary-card class="bg-base-100 border border-base-300 shadow-sm rounded-none">
                 <div class="text-xs uppercase opacity-60">Activated This Week</div>
                 <div class="text-3xl font-semibold text-primary">{{ $activityStats['activated_week'] ?? 0 }}</div>
             </x-mary-card>
 
-            <x-mary-card class="bg-base-100 border border-base-300 shadow-sm">
+            <x-mary-card class="bg-base-100 border border-base-300 shadow-sm rounded-none">
                 <div class="text-xs uppercase opacity-60">Sales Today</div>
                 <div class="text-3xl font-semibold text-success">{{ $activityStats['sales_today'] ?? 0 }}</div>
             </x-mary-card>
 
-            <x-mary-card class="bg-base-100 border border-base-300 shadow-sm">
+            <x-mary-card class="bg-base-100 border border-base-300 shadow-sm rounded-none">
                 <div class="text-xs uppercase opacity-60">Sales This Week</div>
                 <div class="text-3xl font-semibold text-success">{{ $activityStats['sales_week'] ?? 0 }}</div>
             </x-mary-card>
@@ -193,7 +193,7 @@
     </div>
 
     {{-- Full-width traffic --}}
-    <x-mary-card class="bg-base-100 border border-base-300 shadow-sm" wire:poll.10s="refreshTrafficData">
+    <x-mary-card class="bg-base-100 border border-base-300 shadow-sm rounded-none" wire:poll.10s="refreshTrafficData">
         <div class="flex flex-col gap-4">
             <div>
                 <div class="text-sm uppercase opacity-60">Live Traffic</div>
@@ -216,7 +216,7 @@
     <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
 
         {{-- Scripts Health --}}
-        <x-mary-card class="bg-base-100 border border-base-300 shadow-sm flex flex-col">
+        <x-mary-card class="bg-base-100 border border-base-300 shadow-sm flex flex-col rounded-none">
             <div class="flex items-center justify-between mb-2">
                 <div class="text-sm uppercase opacity-60">Scripts Health</div>
 
@@ -266,7 +266,7 @@
 
 
         {{-- Hotspot Profiles --}}
-        <x-mary-card class="bg-base-100 border border-base-300 shadow-sm flex flex-col">
+        <x-mary-card class="bg-base-100 border border-base-300 shadow-sm flex flex-col rounded-none">
             <div class="flex items-center justify-between mb-2">
                 <div class="text-sm uppercase opacity-60">Hotspot Profiles</div>
 
@@ -308,7 +308,7 @@
 
 
         {{-- Router Schedulers --}}
-        <x-mary-card class="bg-base-100 border border-base-300 shadow-sm flex flex-col">
+        <x-mary-card class="bg-base-100 border border-base-300 shadow-sm flex flex-col rounded-none">
             <div class="flex items-center justify-between mb-2">
                 <div class="text-sm uppercase opacity-60">Router Schedulers</div>
 
@@ -376,6 +376,72 @@
 
     </div>
 
+    {{-- Delete Router Section --}}
+    <x-mary-card class="bg-base-100 border border-error/30 shadow-sm rounded-none">
+        <div class="space-y-4">
+            <div class="flex items-center gap-2">
+                <x-mary-icon name="o-exclamation-triangle" class="w-5 h-5 text-error" />
+                <h3 class="text-lg font-semibold text-error">Danger Zone</h3>
+            </div>
+            
+            <div class="space-y-2">
+                <p class="text-sm text-base-content/70">
+                    Deleting this router will permanently remove it and all associated data. This action cannot be undone.
+                </p>
+                
+                <x-mary-button 
+                    icon="o-trash" 
+                    label="Delete Router" 
+                    class="btn-error"
+                    wire:click="openDeleteModal" />
+            </div>
+        </div>
+    </x-mary-card>
 
+    {{-- Delete Confirmation Modal --}}
+    <x-mary-modal wire:model="showDeleteModal" title="Delete Router" class="backdrop-blur">
+        <div class="space-y-4">
+            <x-mary-alert icon="o-exclamation-triangle" class="alert-error">
+                <div class="space-y-1">
+                    <div class="font-semibold">Warning: This action cannot be undone!</div>
+                    <div class="text-sm">
+                        Deleting <strong>{{ $router->name }}</strong> will permanently remove:
+                    </div>
+                    <ul class="text-sm list-disc list-inside ml-2 space-y-1">
+                        <li>The router configuration</li>
+                        <li>All associated vouchers</li>
+                        <li>All hotspot users</li>
+                        <li>All related data</li>
+                    </ul>
+                </div>
+            </x-mary-alert>
+
+            <div class="space-y-2">
+                <label class="text-sm font-medium">
+                    Type <strong class="text-error">"delete"</strong> to confirm:
+                </label>
+                <x-mary-input 
+                    wire:model="deleteConfirmation"
+                    placeholder="Type 'delete' to confirm"
+                    class="w-full"
+                    autofocus />
+            </div>
+        </div>
+
+        <x-slot:actions>
+            <x-mary-button 
+                label="Cancel" 
+                class="btn-ghost"
+                wire:click="closeDeleteModal" />
+            
+            <x-mary-button 
+                icon="o-trash" 
+                label="Delete Router" 
+                class="btn-error"
+                wire:click="deleteRouter"
+                spinner="deleteRouter"
+                :disabled="strtolower(trim($deleteConfirmation)) !== 'delete'" />
+        </x-slot:actions>
+    </x-mary-modal>
 
 </section>

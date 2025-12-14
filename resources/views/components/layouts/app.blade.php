@@ -58,14 +58,14 @@
                     console.warn('Failed to save theme:', e);
                 }
                 
-                // Update icon
+                // Dispatch event for any listeners (icon will be updated by event listener)
+                window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme: target } }));
+                
+                // Update icon to show current theme (not target)
                 const icon = document.getElementById('radtik-theme-icon');
                 if (icon) {
-                    icon.setAttribute('name', target === 'dark' ? 'o-sun' : 'o-moon');
+                    icon.setAttribute('name', target === 'dark' ? 'o-moon' : 'o-sun');
                 }
-                
-                // Dispatch event for any listeners
-                window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme: target } }));
                 
                 return target;
             };
@@ -97,7 +97,7 @@
 
             {{-- Theme toggle (Light/Dark only) --}}
             <button type="button" class="btn btn-ghost btn-sm" title="Toggle theme" id="theme-toggle-btn">
-                <x-mary-icon id="radtik-theme-icon" name="o-moon" class="w-5 h-5" />
+                <x-mary-icon id="radtik-theme-icon" name="o-sun" class="w-5 h-5" />
                 <span class="ml-1 hidden sm:inline">Theme</span>
             </button>
 
@@ -146,13 +146,19 @@
 
     @livewireScripts
     <script>
-        // Set initial icon and attach toggle button once DOM exists
-        document.addEventListener('DOMContentLoaded', function() {
+        // Function to update theme icon based on current theme
+        function updateThemeIcon() {
             const cur = document.documentElement.getAttribute('data-theme') || 'dark';
             const i = document.getElementById('radtik-theme-icon');
             if (i) {
-                i.setAttribute('name', cur === 'dark' ? 'o-sun' : 'o-moon');
+                // Show sun icon in light mode, moon icon in dark mode
+                i.setAttribute('name', cur === 'dark' ? 'o-moon' : 'o-sun');
             }
+        }
+
+        // Set initial icon and attach toggle button once DOM exists
+        document.addEventListener('DOMContentLoaded', function() {
+            updateThemeIcon();
             
             // Attach click handler to toggle button
             const toggleBtn = document.getElementById('theme-toggle-btn');
@@ -162,6 +168,23 @@
                 });
             }
         });
+
+        // Update icon on Livewire navigation (for SPA-like navigation)
+        document.addEventListener('livewire:navigated', function() {
+            updateThemeIcon();
+        });
+
+        // Also listen for any theme changes
+        window.addEventListener('theme-changed', function() {
+            updateThemeIcon();
+        });
+
+        // Update icon immediately if DOM is already loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', updateThemeIcon);
+        } else {
+            updateThemeIcon();
+        }
     </script>
 </body>
 

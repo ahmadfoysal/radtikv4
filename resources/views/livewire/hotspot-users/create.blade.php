@@ -22,7 +22,7 @@
                     placeholder="Select a profile (optional)" 
                     :disabled="!$router_id || empty($available_profiles)" />
                 @if($router_id && empty($available_profiles))
-                    <p class="text-xs text-warning mt-1">No profiles found for this router</p>
+                    <p class="text-xs text-warning mt-1">No profiles found. Please create a profile in the Profile Management section first.</p>
                 @endif
             </div>
 
@@ -30,7 +30,7 @@
             <x-mary-input label="Username" wire:model="username" placeholder="Enter username" icon="o-user" />
 
             {{-- Password --}}
-            <x-mary-input label="Password" wire:model="password" placeholder="Enter password" icon="o-key" />
+            <x-mary-input label="Password" type="password" wire:model="password" placeholder="Enter password" icon="o-key" />
 
         </div>
     </div>

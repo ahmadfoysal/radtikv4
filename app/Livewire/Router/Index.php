@@ -97,20 +97,6 @@ class Index extends Component
         }
     }
 
-    public function delete(int $id): void
-    {
-        $router = auth()->user()->routers()->findOrFail($id);
-        $router->delete();
-
-        $paginator = $this->paginatedRouters();
-
-        if ($paginator->currentPage() > 1 && $paginator->isEmpty()) {
-            $this->previousPage(); // অথবা previousPage('page') যদি কাস্টম পেজ নেম থাকে
-        }
-
-        $this->success('Router deleted successfully.');
-    }
-
     public function installScripts(int $routerId): void
     {
         try {

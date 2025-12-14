@@ -221,15 +221,6 @@
                                     href="{{ route('routers.edit', $router) }}" 
                                     wire:navigate />
                             </div>
-                            <div class="tooltip" data-tip="Delete Router">
-                                <x-mary-button icon="o-trash"
-                                    class="btn-ghost btn-xs !px-2 text-error hover:bg-error/10"
-                                    wire:click="delete({{ $router->id }})" 
-                                    spinner="delete({{ $router->id }})"
-                                    wire:loading.attr="disabled" 
-                                    wire:target="delete({{ $router->id }})"
-                                    onclick="return confirm('Are you sure you want to delete {{ $router->name }}?')" />
-                            </div>
                         </div>
                     </div>
                 </div>

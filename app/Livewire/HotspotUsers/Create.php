@@ -4,6 +4,7 @@ namespace App\Livewire\HotspotUsers;
 
 use App\MikroTik\Actions\HotspotUserManager;
 use App\Models\Router;
+use App\Models\UserProfile;
 use App\Models\Voucher;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Rule as V;
@@ -17,8 +18,8 @@ class Create extends Component
     #[V(['required', 'exists:routers,id'])]
     public $router_id = null;
 
-    #[V(['nullable', 'string', 'max:255'])]
-    public $profile = '';
+    #[V(['nullable', 'integer', 'exists:user_profiles,id'])]
+    public $profile = null;
 
     #[V(['required', 'string', 'min:3', 'max:64'])]
     public string $username = '';
@@ -36,7 +37,7 @@ class Create extends Component
     {
         if (!$value) {
             $this->available_profiles = [];
-            $this->profile = '';
+            $this->profile = null;
             return;
         }
 
@@ -44,25 +45,24 @@ class Create extends Component
             $router = auth()->user()->routers()->find($value);
             if (!$router) {
                 $this->available_profiles = [];
-                $this->profile = '';
+                $this->profile = null;
                 return;
             }
 
-            $manager = app(HotspotUserManager::class);
-            $profiles = $manager->getHotspotProfiles($router);
+            // Load profiles from database instead of MikroTik
+            $profiles = auth()->user()->profiles()->orderBy('name')->get();
 
-            $this->available_profiles = collect($profiles)
-                ->map(fn ($p) => ['id' => $p['name'] ?? '', 'name' => $p['name'] ?? ''])
-                ->filter(fn ($p) => !empty($p['id']))
-                ->values()
-                ->all();
+            $this->available_profiles = $profiles->map(fn ($p) => [
+                'id' => $p->id,
+                'name' => $p->name . ($p->rate_limit ? ' (' . $p->rate_limit . ')' : ''),
+            ])->toArray();
 
             // Reset profile selection when router changes
-            $this->profile = '';
+            $this->profile = null;
         } catch (\Throwable $e) {
             $this->error('Failed to load profiles: ' . $e->getMessage());
             $this->available_profiles = [];
-            $this->profile = '';
+            $this->profile = null;
         }
     }
 
@@ -74,19 +74,30 @@ class Create extends Component
             $router = auth()->user()->routers()->findOrFail($this->router_id);
             $manager = app(HotspotUserManager::class);
 
-            // Get user profile ID - ensure it exists
-            $userProfile = auth()->user()->profiles()->first();
+            // Get selected profile from database
+            $selectedProfile = null;
+            if ($this->profile) {
+                $selectedProfile = auth()->user()->profiles()->find($this->profile);
+                if (!$selectedProfile) {
+                    $this->error('Selected profile not found.');
+                    return;
+                }
+            }
+
+            // Get user profile ID - ensure it exists (for voucher record)
+            $userProfile = $selectedProfile ?? auth()->user()->profiles()->first();
             if (!$userProfile) {
                 $this->error('No bandwidth profile found. Please create a bandwidth profile in the Profile Management section first.');
                 return;
             }
 
-            // Create user in MikroTik first
+            // Create user in MikroTik first - use profile name from database
+            $profileName = $selectedProfile ? $selectedProfile->name : null;
             $result = $manager->addUser(
                 $router,
                 $this->username,
                 $this->password,
-                $this->profile ?: null
+                $profileName
             );
 
             // Check if MikroTik creation was successful
@@ -116,7 +127,8 @@ class Create extends Component
             $this->success('Hotspot user created successfully in MikroTik and database.');
             
             // Reset form
-            $this->reset(['username', 'password', 'profile']);
+            $this->reset(['username', 'password']);
+            $this->profile = null;
         } catch (\Throwable $e) {
             $this->error('Failed to create hotspot user: ' . $e->getMessage());
         }

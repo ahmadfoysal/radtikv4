@@ -6,6 +6,7 @@ use App\Models\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Storage;
 
 class Router extends Model
 {
@@ -36,6 +37,15 @@ class Router extends Model
     public function decryptedPassword(): string
     {
         return Crypt::decryptString($this->password);
+    }
+
+    public function getLogoUrlAttribute(): ?string
+    {
+        if (!$this->logo) {
+            return null;
+        }
+
+        return Storage::url($this->logo);
     }
 
     //is Expired

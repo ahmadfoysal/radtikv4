@@ -19,31 +19,33 @@ class PermissionSeed extends Seeder
 
         // create permissions
         $permissions = [
-            'manage users',
-            'manage products',
-            'view reports',
-            'edit settings',
-        ];
-
-        $permission = [
             'view_dashboard',
             'view_reseller_analytics',
             'view_system_health',
 
             // Router Management (Assigned Only)
             'view_assigned_routers',
+            'view_router_details',
             'edit_assigned_routers',
-            'view_router_logs',
+            'delete_assigned_routers',
             'ping_assigned_routers',
             'view_router_status',
+            'view_router_logs',
+            'view_router_statistics',
+            'manage_router_vouchers',
+            'manage_router_profiles',
+            'sync_router_data',
             'import_router_configs',
 
             // Hotspot User Management
             'view_hotspot_users',
+            'create_single_user',
             'create_hotspot_users',
             'edit_hotspot_users',
             'delete_hotspot_users',
             'view_active_sessions',
+            'view_session_cookies',
+            'view_hotspot_logs',
             'disconnect_users',
             'view_disconnected_users',
             'bulk_create_users',
@@ -53,10 +55,13 @@ class PermissionSeed extends Seeder
             'create_vouchers',
             'edit_vouchers',
             'delete_vouchers',
+            'generate_vouchers',
             'generate_voucher_batches',
             'print_vouchers',
+            'print_single_voucher',
             'export_vouchers',
             'bulk_delete_vouchers',
+            'reset_voucher',
 
             // Profile Management
             'view_profiles',
@@ -95,8 +100,9 @@ class PermissionSeed extends Seeder
             'edit_sub_users',
             'assign_router_access',
         ];
+
         foreach ($permissions as $permission) {
-            Permission::create(['name' => $permission]);
+            Permission::firstOrCreate(['name' => $permission]);
         }
     }
 }

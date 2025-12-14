@@ -7,13 +7,15 @@ use App\Models\Router;
 use App\Models\VoucherTemplate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Mary\Traits\Toast;
 
 class Edit extends Component
 {
-    use Toast;
+    use Toast, WithFileUploads;
 
     public Router $router;
 
@@ -44,6 +46,9 @@ class Edit extends Component
     #[Rule(['nullable', 'integer', 'exists:packages,id'])]
     public ?int $package_id = null;
 
+    #[Rule(['nullable', 'image', 'max:2048', 'mimes:jpg,jpeg,png,svg,webp'])]
+    public $logo = null;
+
     public function mount(Router $router): void
     {
         if ($router->user_id !== Auth::id() && ! Auth::user()->hasRole('admin')) {
@@ -67,7 +72,7 @@ class Edit extends Component
     {
         $this->validate();
 
-        $this->router->update([
+        $updateData = [
             'name' => $this->name,
             'address' => $this->address,
             'login_address' => $this->login_address,
@@ -77,7 +82,19 @@ class Edit extends Component
             'voucher_template_id' => $this->voucher_template_id,
             'monthly_expense' => $this->monthly_expense,
             'package' => $this->packageSnapshotForUpdate(),
-        ]);
+        ];
+
+        // Handle logo upload - replace old logo if new one is uploaded
+        if ($this->logo) {
+            // Delete old logo if exists
+            if ($this->router->logo) {
+                Storage::disk('public')->delete($this->router->logo);
+            }
+            // Store new logo
+            $updateData['logo'] = $this->logo->store('logos', 'public');
+        }
+
+        $this->router->update($updateData);
 
         $this->success(title: 'Success', description: 'Router updated successfully.');
 

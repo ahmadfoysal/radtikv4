@@ -15,5 +15,5 @@ return [
     |
     */
 
-    'default_theme' => env('APP_DEFAULT_THEME', 'garden'),
+    'default_theme' => env('APP_DEFAULT_THEME', 'lofi'),
 ];

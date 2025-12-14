@@ -465,4 +465,38 @@ class Show extends Component
             $this->error('Failed to sync profiles: '.$e->getMessage());
         }
     }
+
+    public string $deleteConfirmation = '';
+
+    public bool $showDeleteModal = false;
+
+    public function openDeleteModal(): void
+    {
+        $this->showDeleteModal = true;
+        $this->deleteConfirmation = '';
+    }
+
+    public function closeDeleteModal(): void
+    {
+        $this->showDeleteModal = false;
+        $this->deleteConfirmation = '';
+    }
+
+    public function deleteRouter(): void
+    {
+        if (strtolower(trim($this->deleteConfirmation)) !== 'delete') {
+            $this->error('Please type "delete" to confirm deletion.');
+            return;
+        }
+
+        try {
+            $routerName = $this->router->name;
+            $this->router->delete();
+
+            $this->success("Router '{$routerName}' deleted successfully.");
+            $this->redirect(route('routers.index'), navigate: true);
+        } catch (\Throwable $e) {
+            $this->error('Failed to delete router: '.$e->getMessage());
+        }
+    }
 }

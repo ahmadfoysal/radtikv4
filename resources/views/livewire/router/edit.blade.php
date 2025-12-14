@@ -1,3 +1,6 @@
+@php
+    use Illuminate\Support\Facades\Storage;
+@endphp
 <x-mary-card title="Edit Router" separator class="max-w-4xl mx-auto bg-base-100">
     <x-mary-form wire:submit="update">
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -28,12 +31,12 @@
                 <x-mary-password label="Password" type="password" wire:model.live.debounce.500ms="password" right />
             </div>
 
-            <div class="sm:col-span-2">
+            <div>
                 <x-mary-select label="Voucher Template" wire:model.live="voucher_template_id" :options="$voucherTemplates->map(fn($t) => ['id' => $t->id, 'name' => $t->name])->toArray()"
                     option-label="name" option-value="id" placeholder="Select a voucher template" />
             </div>
 
-            <div class="sm:col-span-2">
+            <div>
                 @php
                     $packageOptions = $packages->map(fn($p) => [
                         'id' => $p->id,
@@ -53,9 +56,30 @@
                     placeholder="Select a package (optional)" />
             </div>
 
-            <div class="sm:col-span-2">
+            <div>
                 <x-mary-input label="Monthly Expense" type="number" min="0" step="0.01"
                     wire:model.live.debounce.500ms="monthly_expense" placeholder="0.00" />
+            </div>
+
+            <div>
+                <x-mary-file label="Logo" wire:model="logo" accept="image/*" />
+                @error('logo')
+                    <div class="text-error text-sm mt-1">{{ $message }}</div>
+                @enderror
+                <div class="mt-2 flex items-center gap-4">
+                    @if ($logo)
+                        <div>
+                            <p class="text-xs text-base-content/60 mb-1">New Logo Preview:</p>
+                            <img src="{{ $logo->temporaryUrl() }}" alt="New logo preview" class="h-20 w-20 object-contain border border-base-300" />
+                        </div>
+                    @endif
+                    @if ($router->logo && !$logo)
+                        <div>
+                            <p class="text-xs text-base-content/60 mb-1">Current Logo:</p>
+                            <img src="{{ Storage::url($router->logo) }}" alt="Current logo" class="h-20 w-20 object-contain border border-base-300" />
+                        </div>
+                    @endif
+                </div>
             </div>
         </div>
 
