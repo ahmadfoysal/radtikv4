@@ -31,10 +31,10 @@ class User extends Authenticatable
         'address',
         'profile_image',
         'country',
-        'balance',
-        'commission',
+        // 'balance', // SECURITY: Removed from fillable to prevent mass assignment
+        // 'commission', // SECURITY: Only superadmin can modify via specific logic
         'admin_id',
-        'subscription',
+        // 'subscription', // SECURITY: Should be managed through dedicated methods
         'is_active',
         'last_login_at',
         'is_phone_verified',
@@ -42,9 +42,10 @@ class User extends Authenticatable
         'email_notifications',
         'login_alerts',
         'preferred_language',
-        'two_factor_secret',
-        'two_factor_recovery_codes',
-        'two_factor_confirmed_at',
+        // Two-factor auth fields removed for security
+        // 'two_factor_secret',
+        // 'two_factor_recovery_codes',
+        // 'two_factor_confirmed_at',
     ];
 
     /**

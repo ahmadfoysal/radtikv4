@@ -70,6 +70,14 @@ class Show extends Component
     {
         $this->authorize('view_router');
 
+        // Verify user has access to this specific router
+        $user = auth()->user();
+        try {
+            $user->getAuthorizedRouter($router->id);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            abort(403, 'You are not authorized to view this router.');
+        }
+
         $this->router = $router;
 
         $this->interfaces = $this->fetchInterfaces();

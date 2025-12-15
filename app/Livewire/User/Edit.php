@@ -3,12 +3,15 @@
 namespace App\Livewire\User;
 
 use App\Models\User;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 
 class Edit extends Component
 {
+    use AuthorizesRequests;
+    
     public User $user;
 
     #[Validate('required|string|max:255')]
@@ -30,6 +33,9 @@ class Edit extends Component
 
     public function mount(User $user): void
     {
+        // Authorization check using policy
+        $this->authorize('update', $user);
+        
         $this->user = $user->load('roles'); // Load roles for blade conditions
         $this->name = $user->name;
         $this->email = $user->email;
@@ -45,6 +51,9 @@ class Edit extends Component
 
     public function update()
     {
+        // Re-check authorization before update
+        $this->authorize('update', $this->user);
+        
         // Validate basic fields
         $rules = [
             'name' => 'required|string|max:255',
@@ -84,6 +93,9 @@ class Edit extends Component
 
     public function delete(): void
     {
+        // Authorization check using policy
+        $this->authorize('delete', $this->user);
+        
         $this->user->delete();
 
         session()->flash('success', 'User deleted successfully.');

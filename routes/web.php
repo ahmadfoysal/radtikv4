@@ -91,26 +91,40 @@ Route::middleware(['auth'])->group(function () {
 
 /* Hotspot User sync */
 Route::get('/mikrotik/api/pull-inactive-users', [MikrotikApiController::class, 'pullInactiveUsers'])
-    ->name('mikrotik.pullInactiveUsers')->middleware('check.router.subscription');
+    ->name('mikrotik.pullInactiveUsers')
+    ->middleware(['check.router.subscription', 'throttle:120,1']); // Rate limit: 120 req/min
 Route::get('/mikrotik/api/pull-active-users', [MikrotikApiController::class, 'pullActiveUsers'])
-    ->name('mikrotik.pullActiveUsers')->middleware('check.router.subscription');
+    ->name('mikrotik.pullActiveUsers')
+    ->middleware(['check.router.subscription', 'throttle:120,1']);
 Route::post('/mikrotik/api/push-active-users', [MikrotikApiController::class, 'pushActiveUsers'])
-    ->name('mikrotik.pushActiveUsers')->withoutMiddleware([VerifyCsrfToken::class])->middleware('check.router.subscription');
+    ->name('mikrotik.pushActiveUsers')
+    ->withoutMiddleware([VerifyCsrfToken::class])
+    ->middleware(['check.router.subscription', 'throttle:120,1']);
 Route::get('/mikrotik/api/sync-orphans', [MikrotikApiController::class, 'syncOrphans'])
-    ->name('mikrotik.syncOrphans')->withoutMiddleware([VerifyCsrfToken::class])->middleware('check.router.subscription');
+    ->name('mikrotik.syncOrphans')
+    ->withoutMiddleware([VerifyCsrfToken::class])
+    ->middleware(['check.router.subscription', 'throttle:120,1']);
 
 /* Hotspot profile sync */
 Route::get('/mikrotik/api/pull-profiles', [MikrotikApiController::class, 'pullProfiles'])
-    ->name('mikrotik.pullProfiles')->middleware('check.router.subscription');
+    ->name('mikrotik.pullProfiles')
+    ->middleware(['check.router.subscription', 'throttle:120,1']);
 Route::get('/mikrotik/api/pull-updated-profiles', [MikrotikApiController::class, 'pullUpdatedProfiles'])
-    ->name('mikrotik.pullUpdatedProfiles')->middleware('check.router.subscription');
+    ->name('mikrotik.pullUpdatedProfiles')
+    ->middleware(['check.router.subscription', 'throttle:120,1']);
 
 /* Payment Gateway Callbacks (without CSRF) */
 Route::post('/payment/cryptomus/callback', [App\Http\Controllers\PaymentCallbackController::class, 'cryptomus'])
-    ->withoutMiddleware([VerifyCsrfToken::class])->name('payment.cryptomus.callback');
+    ->withoutMiddleware([VerifyCsrfToken::class])
+    ->middleware('throttle:60,1') // Rate limit: 60 requests per minute
+    ->name('payment.cryptomus.callback');
 Route::post('/payment/paystation/callback', [App\Http\Controllers\PaymentCallbackController::class, 'paystation'])
-    ->withoutMiddleware([VerifyCsrfToken::class])->name('payment.paystation.callback');
+    ->withoutMiddleware([VerifyCsrfToken::class])
+    ->middleware('throttle:60,1') // Rate limit: 60 requests per minute
+    ->name('payment.paystation.callback');
 
 /* Deploy route */
 Route::post('/api/deploy', [App\Http\Controllers\Api\DeployController::class, 'deploy'])
-    ->withoutMiddleware([VerifyCsrfToken::class])->name('deploy');
+    ->withoutMiddleware([VerifyCsrfToken::class])
+    ->middleware('throttle:10,1') // Rate limit: 10 deployments per minute
+    ->name('deploy');

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\User;
 
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
@@ -9,7 +10,7 @@ use Mary\Traits\Toast;
 
 class Create extends Component
 {
-    use Toast;
+    use AuthorizesRequests, Toast;
 
     #[Validate('required|string|max:255')]
     public $name;
@@ -28,6 +29,12 @@ class Create extends Component
 
     #[Validate('nullable|string|max:255')]
     public $country;
+
+    public function mount(): void
+    {
+        // Authorization check - only superadmin and admin can create users
+        $this->authorize('create', \App\Models\User::class);
+    }
 
     public function save()
     {
