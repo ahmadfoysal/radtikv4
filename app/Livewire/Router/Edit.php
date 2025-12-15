@@ -54,6 +54,14 @@ class Edit extends Component
     {
         $this->authorize('edit_router');
 
+        // Verify user has access to this specific router
+        $user = auth()->user();
+        try {
+            $user->getAuthorizedRouter($router->id);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            abort(403, 'You are not authorized to edit this router.');
+        }
+
         $this->router = $router;
 
         $this->name = $router->name;
@@ -70,6 +78,16 @@ class Edit extends Component
     public function update(): void
     {
         $this->authorize('edit_router');
+        
+        // Re-verify user has access to this router
+        $user = auth()->user();
+        try {
+            $user->getAuthorizedRouter($this->router->id);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            $this->error('You are not authorized to edit this router.');
+            return;
+        }
+        
         $this->validate();
 
         $updateData = [
@@ -86,11 +104,16 @@ class Edit extends Component
 
         // Handle logo upload - replace old logo if new one is uploaded
         if ($this->logo) {
+            // Validate logo is actually an image and not malicious
+            $validated = $this->validate([
+                'logo' => 'required|image|max:2048|mimes:jpg,jpeg,png,svg,webp|dimensions:max_width=2000,max_height=2000',
+            ]);
+            
             // Delete old logo if exists
             if ($this->router->logo) {
                 Storage::disk('public')->delete($this->router->logo);
             }
-            // Store new logo
+            // Store new logo with a random name to prevent path traversal
             $updateData['logo'] = $this->logo->store('logos', 'public');
         }
 

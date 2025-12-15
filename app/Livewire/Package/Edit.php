@@ -3,13 +3,14 @@
 namespace App\Livewire\Package;
 
 use App\Models\Package;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 use Mary\Traits\Toast;
 
 class Edit extends Component
 {
-    use Toast;
+    use AuthorizesRequests, Toast;
 
     public Package $package;
 
@@ -45,6 +46,9 @@ class Edit extends Component
 
     public function mount(Package $package): void
     {
+        // Only superadmin can edit packages
+        abort_unless(auth()->user()?->hasRole('superadmin'), 403, 'Only superadmins can edit packages.');
+        
         $this->package = $package;
         $this->name = $package->name;
         $this->price_monthly = (string) $package->price_monthly;
