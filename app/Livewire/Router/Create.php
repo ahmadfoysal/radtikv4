@@ -43,7 +43,7 @@ class Create extends Component
     public float $monthly_expense = 0.0;
 
     #[Rule(['required', 'integer', 'exists:packages,id'])]
-    public ?int $package_id = null;
+    public int $package_id;
 
     #[Rule(['nullable', 'image', 'max:2048', 'mimes:jpg,jpeg,png,svg,webp'])]
     public $logo = null;
@@ -51,6 +51,12 @@ class Create extends Component
     public function mount(): void
     {
         $this->authorize('add_router');
+
+        $user = Auth::user();
+
+        if ($user->isReseller() && !$user->admin) {
+            abort(403, 'Reseller must be assigned to an admin to create routers.');
+        }
 
         $this->voucher_template_id = VoucherTemplate::query()
             ->where('is_active', true)
@@ -63,6 +69,16 @@ class Create extends Component
         $this->validate();
 
         $user = Auth::user();
+
+        // Determine who will be billed and own the router
+        $billingUser = $user->isReseller() ? $user->admin : $user;
+        $routerOwner = $user->isReseller() ? $user->admin : $user;
+
+        if (!$billingUser) {
+            $this->error(title: 'Error', description: 'Reseller must be assigned to an admin to create routers.');
+            return;
+        }
+
         $voucherTemplateId = $this->voucher_template_id
             ?? VoucherTemplate::query()->where('is_active', true)->value('id')
             ?? VoucherTemplate::query()->value('id');
@@ -73,49 +89,26 @@ class Create extends Component
             $logoPath = $this->logo->store('logos', 'public');
         }
 
-        // If package is selected, use the subscription service
-        if ($this->package_id) {
-            $package = Package::find($this->package_id);
+        // All routers require a package - use the subscription service
+        $package = Package::find($this->package_id);
 
-            if (! $package) {
-                $this->error(title: 'Error', description: 'Selected package not found.');
+        if (! $package) {
+            $this->error(title: 'Error', description: 'Selected package not found.');
 
-                return;
-            }
+            return;
+        }
 
-            // Check if user has enough balance
-            if (! $user->hasBalanceForPackage($package)) {
-                $this->error(title: 'Insufficient Balance', description: 'You do not have enough balance to subscribe to this package.');
+        // Check if billing user (admin) has enough balance
+        if (! $billingUser->hasBalanceForPackage($package)) {
+            $billingUserType = $user->isReseller() ? 'admin' : 'you';
+            $this->error(title: 'Insufficient Balance', description: "Your {$billingUserType} does not have enough balance to subscribe to this package.");
 
-                return;
-            }
+            return;
+        }
 
-            try {
-                // Use the subscription service to create router with billing
-                $user->subscribeRouterWithPackage([
-                    'name' => $this->name,
-                    'address' => $this->address,
-                    'login_address' => $this->login_address,
-                    'port' => $this->port,
-                    'username' => $this->username,
-                    'password' => Crypt::encryptString($this->password),
-                    'app_key' => bin2hex(random_bytes(16)),
-                    'voucher_template_id' => $voucherTemplateId,
-                    'monthly_expense' => $this->monthly_expense,
-                    'logo' => $logoPath,
-                ], $package);
-            } catch (\RuntimeException $e) {
-                // Delete uploaded logo if router creation fails
-                if ($logoPath) {
-                    Storage::disk('public')->delete($logoPath);
-                }
-                $this->error(title: 'Error', description: $e->getMessage());
-
-                return;
-            }
-        } else {
-            // Create router without package (no billing)
-            Router::create([
+        try {
+            // Use the subscription service - billing user gets billed, router owner gets the router
+            $billingUser->subscribeRouterWithPackage([
                 'name' => $this->name,
                 'address' => $this->address,
                 'login_address' => $this->login_address,
@@ -123,11 +116,19 @@ class Create extends Component
                 'username' => $this->username,
                 'password' => Crypt::encryptString($this->password),
                 'app_key' => bin2hex(random_bytes(16)),
-                'user_id' => Auth::id(),
+                'user_id' => $routerOwner->id,  // Router belongs to admin, not reseller
                 'voucher_template_id' => $voucherTemplateId,
                 'monthly_expense' => $this->monthly_expense,
                 'logo' => $logoPath,
-            ]);
+            ], $package);
+        } catch (\RuntimeException $e) {
+            // Delete uploaded logo if router creation fails
+            if ($logoPath) {
+                Storage::disk('public')->delete($logoPath);
+            }
+            $this->error(title: 'Error', description: $e->getMessage());
+
+            return;
         }
 
         // Reset form (keep port default)
@@ -147,6 +148,7 @@ class Create extends Component
             ->where('is_active', true)
             ->value('id') ?? VoucherTemplate::query()->value('id');
         $this->monthly_expense = 0.0;
+        $this->package_id = Package::query()->orderBy('name')->value('id');
 
         // Optional: toast/notify
         $this->success(title: 'Success', description: 'Router added successfully.');

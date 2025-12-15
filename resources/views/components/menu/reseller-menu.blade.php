@@ -5,6 +5,12 @@
         {{-- DASHBOARD --}}
         <x-mary-menu-item title="Dashboard" icon="o-home" link="/dashboard" />
 
+        {{-- ROUTER MANAGEMENT --}}
+        <x-mary-menu-sub title="Routers" icon="o-server-stack">
+            <x-mary-menu-item title="All Routers" icon="o-list-bullet" link="/routers" />
+            <x-mary-menu-item title="Add New Router" icon="o-plus-circle" link="/router/add" />
+            {{-- <x-mary-menu-item title="Import Routers" icon="o-plus-circle" link="/router/import" /> --}}
+        </x-mary-menu-sub>
         {{-- VOUCHERS --}}
         <x-mary-menu-sub title="Vouchers" icon="o-ticket">
             <x-mary-menu-item title="Voucher List" icon="o-rectangle-stack" link="/vouchers" />
@@ -29,8 +35,7 @@
 
         {{-- ADMIN SETTINGS --}}
         <x-mary-menu-sub title="Profile & Password" icon="o-cog-6-tooth">
-            <x-mary-menu-item title="Profile" icon="o-adjustments-horizontal" link="/settings/profile" />
-            <x-mary-menu-item title="Password & Security" icon="o-shield-check" link="/settings/security" />
+            <x-mary-menu-item title="Profile & Security" icon="o-shield-check" link="/settings/profile" wire:navigate />
         </x-mary-menu-sub>
 
         {{-- SUPPORT --}}

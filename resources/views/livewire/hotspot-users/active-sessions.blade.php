@@ -11,7 +11,7 @@
                 <x-mary-select 
                     icon="o-server" 
                     wire:model.live="router_id" 
-                    :options="$routers->map(fn($r) => ['id' => $r->id, 'name' => $r->name])->toArray()"
+                    :options="$routers->map(fn($r) => ['id' => $r['id'], 'name' => $r['name']])->toArray()"
                     option-label="name" 
                     option-value="id" 
                     placeholder="Select a router" 

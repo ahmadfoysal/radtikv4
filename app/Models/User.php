@@ -6,6 +6,7 @@ namespace App\Models;
 use App\Models\Traits\HasBilling;
 use App\Models\Traits\HasRouterBilling;
 use App\Models\Traits\LogsActivity;
+use HasinHayder\TyroLogin\Traits\HasTwoFactorAuth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -15,7 +16,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasBilling, HasFactory, HasRoles, HasRouterBilling, LogsActivity, Notifiable;
+    use HasBilling, HasFactory, HasRoles, HasRouterBilling, HasTwoFactorAuth, LogsActivity, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -38,6 +39,12 @@ class User extends Authenticatable
         'last_login_at',
         'is_phone_verified',
         'expiration_date',
+        'email_notifications',
+        'login_alerts',
+        'preferred_language',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
+        'two_factor_confirmed_at',
     ];
 
     /**
@@ -69,6 +76,9 @@ class User extends Authenticatable
             'password' => 'hashed',
             'balance' => 'decimal:2',
             'commission' => 'decimal:2',
+            'email_notifications' => 'boolean',
+            'login_alerts' => 'boolean',
+            'two_factor_confirmed_at' => 'datetime',
         ];
     }
 
@@ -148,6 +158,23 @@ class User extends Authenticatable
         return $this->resellerRouters()->get();
     }
 
+    public function profileAssignments()
+    {
+        return $this->hasMany(ResellerProfile::class, 'reseller_id');
+    }
+
+    public function resellerProfiles()
+    {
+        return $this->belongsToMany(UserProfile::class, 'reseller_profile', 'reseller_id', 'profile_id')
+            ->withPivot('assigned_by')
+            ->withTimestamps();
+    }
+
+    public function getResellerProfiles()
+    {
+        return $this->resellerProfiles()->get();
+    }
+
     /**
      * Get an authorized router by ID based on user role.
      * For admins: returns router from their routers() relation.
@@ -191,7 +218,7 @@ class User extends Authenticatable
     /**
      * Get all profiles accessible by the user based on their role.
      * For admins: returns their own profiles.
-     * For resellers: returns their admin's profiles.
+     * For resellers: returns their assigned profiles from the admin.
      * 
      * @return \Illuminate\Database\Eloquent\Collection
      */
@@ -200,8 +227,8 @@ class User extends Authenticatable
         if ($this->isAdmin()) {
             return $this->profiles()->orderBy('name')->get();
         } elseif ($this->isReseller()) {
-            $admin = $this->admin;
-            return $admin ? $admin->profiles()->orderBy('name')->get() : collect();
+            // Get profiles assigned to this reseller
+            return $this->resellerProfiles()->orderBy('name')->get();
         }
 
         return collect();

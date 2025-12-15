@@ -32,4 +32,16 @@ class UserProfile extends Model
     {
         return $this->hasMany(Voucher::class, 'user_profile', 'id');
     }
+
+    public function resellerAssignments()
+    {
+        return $this->hasMany(ResellerProfile::class, 'profile_id');
+    }
+
+    public function assignedResellers()
+    {
+        return $this->belongsToMany(User::class, 'reseller_profile', 'profile_id', 'reseller_id')
+            ->withPivot('assigned_by')
+            ->withTimestamps();
+    }
 }

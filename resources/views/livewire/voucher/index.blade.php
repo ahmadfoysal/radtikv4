@@ -13,7 +13,7 @@
                 wire:model.live="q" />
 
             {{-- Router Select --}}
-            <x-mary-select class="w-32 sm:w-40" placeholder="Router" :options="$routers->map(fn($r) => ['id' => $r->id, 'name' => $r->name])->toArray()" option-label="name"
+            <x-mary-select class="w-32 sm:w-40" placeholder="Router" :options="$routers->map(fn($r) => ['id' => $r['id'], 'name' => $r['name']])->toArray()" option-label="name"
                 option-value="id" wire:model.live="routerFilter" />
 
             {{-- Status group: All | Active | Inactive | Disabled --}}

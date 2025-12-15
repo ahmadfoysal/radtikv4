@@ -9,7 +9,7 @@
         <x-mary-menu-sub title="Routers" icon="o-server-stack">
             <x-mary-menu-item title="All Routers" icon="o-list-bullet" link="/routers" />
             <x-mary-menu-item title="Add New Router" icon="o-plus-circle" link="/router/add" />
-            <x-mary-menu-item title="Import Routers" icon="o-plus-circle" link="/router/import" />
+            {{-- <x-mary-menu-item title="Import Routers" icon="o-plus-circle" link="/router/import" /> --}}
         </x-mary-menu-sub>
 
         {{-- PROFILE MANAGEMENT --}}
@@ -40,6 +40,7 @@
             <x-mary-menu-item title="All Resellers" icon="o-list-bullet" link="/users" />
             <x-mary-menu-item title="Add Reseller" icon="o-user-plus" link="/user/add" />
             <x-mary-menu-item title="Assign Router" icon="o-server" link="/reseller/assign-router" />
+            <x-mary-menu-item title="Assign Profile" icon="o-rectangle-group" link="/reseller/assign-profile" />
             <x-mary-menu-item title="Reseller Permissions" icon="o-cube" link="/resellers/permissions" />
         </x-mary-menu-sub>
 
@@ -61,8 +62,8 @@
             <x-mary-menu-item title="General Settings" icon="o-adjustments-horizontal" link="/settings/general" />
             <x-mary-menu-item title="Theme Settings" icon="o-paint-brush" link="/admin/theme-settings" wire:navigate />
             <x-mary-menu-item title="Notification & Email" icon="o-envelope-open" link="/settings/email" />
-            <x-mary-menu-item title="Password & Security" icon="o-shield-check" link="/settings/security" />
-            <x-mary-menu-item title="Zone Management" icon="o-code-bracket" link="/zones" />
+            <x-mary-menu-item title="Profile & Security" icon="o-shield-check" link="/settings/profile" wire:navigate />
+            <x-mary-menu-item title="Zone Management" icon="o-globe-alt" link="/zones" />
         </x-mary-menu-sub>
 
         {{-- SUPPORT --}}

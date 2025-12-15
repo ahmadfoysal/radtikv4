@@ -41,11 +41,12 @@ class Index extends Component
 
     protected function paginatedRouters(): LengthAwarePaginator
     {
+        $user = auth()->user();
+        $accessibleRouters = $user->getAccessibleRouters();
+        $accessibleRouterIds = $accessibleRouters->pluck('id')->toArray();
 
-        // redirect error if user in not  admin
-
-        return auth()->user()
-            ->routers()
+        return \App\Models\Router::query()
+            ->whereIn('id', $accessibleRouterIds)
             ->with(['zone', 'voucherTemplate'])
             ->withCount([
                 'vouchers as total_vouchers_count',
@@ -77,7 +78,7 @@ class Index extends Component
         $this->pingSuccess = null;
 
         try {
-            $router = auth()->user()->routers()->findOrFail($id);
+            $router = auth()->user()->getAuthorizedRouter($id);
             $svc = app(\App\MikroTik\Actions\RouterManager::class);
             $ok = $svc->pingRouter($router);
 
@@ -104,7 +105,7 @@ class Index extends Component
         $this->authorize('install_scripts');
 
         try {
-            $router = auth()->user()->routers()->findOrFail($routerId);
+            $router = auth()->user()->getAuthorizedRouter($routerId);
 
             /** @var ScriptInstaller $installer */
             $installer = app(ScriptInstaller::class);

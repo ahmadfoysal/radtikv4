@@ -408,7 +408,7 @@ return [
     */
     'two_factor' => [
         // Enable/disable 2FA globally
-        'enabled' => env('TYRO_LOGIN_2FA_ENABLED', false),
+        'enabled' => env('TYRO_LOGIN_2FA_ENABLED', true),
 
         // Page title for setup
         'setup_title' => env('TYRO_LOGIN_2FA_SETUP_TITLE', 'Two Factor Authentication'),

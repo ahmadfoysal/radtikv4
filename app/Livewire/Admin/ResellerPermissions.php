@@ -117,11 +117,11 @@ class ResellerPermissions extends Component
         $allPermissionNames = collect($this->routerPermissions)
             ->pluck('name')
             ->toArray();
-        
+
         // Check if all permissions are already selected
-        $allSelected = count($allPermissionNames) === count($this->selectedPermissions) 
+        $allSelected = count($allPermissionNames) === count($this->selectedPermissions)
             && empty(array_diff($allPermissionNames, $this->selectedPermissions));
-        
+
         if ($allSelected) {
             // Deselect all
             $this->selectedPermissions = [];
@@ -130,18 +130,18 @@ class ResellerPermissions extends Component
             $this->selectedPermissions = $allPermissionNames;
         }
     }
-    
+
     public function areAllPermissionsSelected(): bool
     {
         if (empty($this->routerPermissions)) {
             return false;
         }
-        
+
         $allPermissionNames = collect($this->routerPermissions)
             ->pluck('name')
             ->toArray();
-        
-        return count($allPermissionNames) === count($this->selectedPermissions) 
+
+        return count($allPermissionNames) === count($this->selectedPermissions)
             && empty(array_diff($allPermissionNames, $this->selectedPermissions));
     }
 
@@ -151,7 +151,7 @@ class ResellerPermissions extends Component
             ->orderBy('name')
             ->limit(20)
             ->get()
-            ->map(fn (User $reseller) => [
+            ->map(fn(User $reseller) => [
                 'id' => $reseller->id,
                 'name' => $reseller->name,
                 'email' => $reseller->email,
@@ -163,40 +163,7 @@ class ResellerPermissions extends Component
 
     protected function loadRouterPermissions(): void
     {
-        $permissionNames = [
-            // Router Management
-            'view_assigned_routers',
-            'view_router_details',
-            'edit_assigned_routers',
-            'delete_assigned_routers',
-            'ping_assigned_routers',
-            'view_router_status',
-            'view_router_logs',
-            'view_router_statistics',
-            'manage_router_vouchers',
-            'manage_router_profiles',
-            'sync_router_data',
-            'import_router_configs',
-            
-            // Voucher Management
-            'view_vouchers',
-            'generate_vouchers',
-            'generate_voucher_batches',
-            'print_vouchers',
-            'print_single_voucher',
-            'reset_voucher',
-            'bulk_delete_vouchers',
-            
-            // Hotspot User Management
-            'create_single_user',
-            'view_active_sessions',
-            'view_session_cookies',
-            'view_hotspot_logs',
-        ];
-
-        $permissions = Permission::whereIn('name', $permissionNames)
-            ->orderBy('name')
-            ->get();
+        $permissions = Permission::orderBy('name')->get();
 
         $this->routerPermissions = $permissions->map(function (Permission $permission) {
             return [
@@ -267,7 +234,7 @@ class ResellerPermissions extends Component
         }
 
         $exists = collect($this->resellerOptions)
-            ->contains(fn ($option) => (int) $option['id'] === (int) $this->resellerId);
+            ->contains(fn($option) => (int) $option['id'] === (int) $this->resellerId);
 
         if (!$exists) {
             $reseller = $this->resellerQuery(null)
@@ -300,7 +267,7 @@ class ResellerPermissions extends Component
             'manage_router_profiles' => 'Manage hotspot profiles on routers',
             'sync_router_data' => 'Synchronize data with MikroTik routers',
             'import_router_configs' => 'Import router configurations',
-            
+
             // Voucher Management
             'view_vouchers' => 'View list of vouchers',
             'generate_vouchers' => 'Generate new vouchers',
@@ -309,13 +276,13 @@ class ResellerPermissions extends Component
             'print_single_voucher' => 'Print individual voucher',
             'reset_voucher' => 'Reset voucher password and status',
             'bulk_delete_vouchers' => 'Delete multiple vouchers at once',
-            
+
             // Hotspot User Management
             'create_single_user' => 'Create a single hotspot user',
             'view_active_sessions' => 'View currently active hotspot sessions',
             'view_session_cookies' => 'View session cookies for hotspot users',
             'view_hotspot_logs' => 'View hotspot activity logs',
-            
+
             default => 'Router management permission',
         };
     }

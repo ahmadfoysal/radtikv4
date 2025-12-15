@@ -21,18 +21,19 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/user/add', App\Livewire\User\Create::class)->name('users.create');
     Route::get('/user/{user}/edit', App\Livewire\User\Edit::class)->name('users.edit');
     Route::get('/reseller/assign-router', App\Livewire\Admin\AssignResellerRouters::class)->name('reseller.assign-router');
+    Route::get('/reseller/assign-profile', App\Livewire\Admin\AssignResellerProfiles::class)->name('reseller.assign-profile');
     Route::get('/resellers/permissions', App\Livewire\Admin\ResellerPermissions::class)->name('resellers.permissions');
 
     /* Router Routes */
     Route::get('/routers', App\Livewire\Router\Index::class)->name('routers.index');
     Route::get('/router/add', App\Livewire\Router\Create::class)->name('routers.create');
-    Route::get('/router/import', App\Livewire\Router\Import::class)->name('routers.import');
+    // Route::get('/router/import', App\Livewire\Router\Import::class)->name('routers.import');
     Route::get('/router/{router}/edit', App\Livewire\Router\Edit::class)->name('routers.edit');
     Route::get('/router/{router}', App\Livewire\Router\Show::class)->name('routers.show');
 
     /* Voucher Routes */
     Route::get('/vouchers', App\Livewire\Voucher\Index::class)->name('vouchers.index');
-    Route::get('/voucher/add', App\Livewire\Voucher\Create::class)->name('vouchers.create');
+    Route::get('/voucher/add', App\Livewire\Voucher\Generate::class)->name('vouchers.create');
     Route::get('/voucher/{voucher}/edit', App\Livewire\Voucher\Edit::class)->name('vouchers.edit');
     Route::get('/vouchers/generate', App\Livewire\Voucher\Generate::class)->name('vouchers.generate');
     Route::get('/vouchers/bulk-manager', App\Livewire\Voucher\BulkManager::class)->name('vouchers.bulk-manager');
@@ -74,15 +75,18 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/docs/{slug}', App\Livewire\Docs\Show::class)->name('docs.show');
 
     /* Hotspot Users Routes */
-    Route::middleware(['role:admin'])->group(function () {
-        Route::get('/hotspot/users/create', App\Livewire\HotspotUsers\Create::class)->name('hotspot.users.create');
-        Route::get('/hotspot/sessions', App\Livewire\HotspotUsers\ActiveSessions::class)->name('hotspot.sessions');
-        Route::get('/hotspot/session-cookies', App\Livewire\HotspotUsers\SessionCookies::class)->name('hotspot.sessionCookies');
-        Route::get('/hotspot/logs', App\Livewire\HotspotUsers\Logs::class)->name('hotspot.logs');
-    });
+
+    Route::get('/hotspot/users/create', App\Livewire\HotspotUsers\Create::class)->name('hotspot.users.create');
+    Route::get('/hotspot/sessions', App\Livewire\HotspotUsers\ActiveSessions::class)->name('hotspot.sessions');
+    Route::get('/hotspot/session-cookies', App\Livewire\HotspotUsers\SessionCookies::class)->name('hotspot.sessionCookies');
+    Route::get('/hotspot/logs', App\Livewire\HotspotUsers\Logs::class)->name('hotspot.logs');
+
 
     /* System Logs Routes */
     Route::get('/reports/logs', App\Livewire\ActivityLog\Index::class)->name('activity.logs');
+
+    /* Settings */
+    Route::get('/settings/profile', App\Livewire\Settings\Profile::class)->name('settings.profile');
 });
 
 /* Hotspot User sync */

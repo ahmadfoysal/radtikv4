@@ -19,10 +19,6 @@ class PermissionSeed extends Seeder
 
         // create permissions
         $permissions = [
-
-            // Dashboard
-            'view_dashboard',
-
             // Router Management
             'add_router',
             'edit_router',

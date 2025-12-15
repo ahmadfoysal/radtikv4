@@ -59,7 +59,7 @@ class Logs extends Component
     public function render()
     {
         return view('livewire.hotspot-users.logs', [
-            'routers' => auth()->user()->routers()->orderBy('name')->get(['id', 'name']),
+            'routers' => auth()->user()->getAccessibleRouters(),
         ]);
     }
 }

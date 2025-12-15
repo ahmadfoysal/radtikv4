@@ -7,7 +7,7 @@
 
             {{-- Router Selection --}}
             <div class="col-span-1 sm:col-span-2">
-                <x-mary-select label="Select Router" icon="o-server" wire:model.live="router_id" :options="$routers->map(fn($r) => ['id' => $r->id, 'name' => $r->name])->toArray()"
+                <x-mary-select label="Select Router" icon="o-server" wire:model.live="router_id" :options="$routers->map(fn($r) => ['id' => $r['id'], 'name' => $r['name']])->toArray()"
                     option-label="name" option-value="id" placeholder="Choose a router to assign vouchers" />
             </div>
 

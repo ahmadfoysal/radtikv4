@@ -33,7 +33,6 @@ class Dashboard extends Component
         }
 
         if ($user->isReseller()) {
-            $this->authorize('view_dashboard');
             return view('livewire.dashboard.reseller', $this->dataForReseller($user))
                 ->title(__('Dashboard'));
         }
