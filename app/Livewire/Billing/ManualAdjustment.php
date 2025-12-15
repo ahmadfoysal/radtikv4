@@ -38,7 +38,8 @@ class ManualAdjustment extends Component
 
     public function mount(): void
     {
-        //  abort_unless(auth()->user()?->hasRole('superadmin'), 403);
+        // Only superadmin can perform manual adjustments
+        abort_unless(auth()->user()?->hasRole('superadmin'), 403, 'Only superadmins can perform manual balance adjustments.');
 
         $this->loadAdminOptions();
     }

@@ -21,7 +21,7 @@ class Invoice extends Model
         'payment_gateway_id',
         'amount',
         'currency',
-        'balance_after',
+        // 'balance_after', // SECURITY: Should be set automatically, not mass assignable
         'description',
         'meta',
     ];

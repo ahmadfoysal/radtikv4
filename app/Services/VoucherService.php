@@ -37,7 +37,9 @@ class VoucherService
 
         $query = Voucher::query()
             // Only show vouchers from accessible routers
-            ->whereIn('router_id', $accessibleRouterIds);
+            ->whereIn('router_id', $accessibleRouterIds)
+            // Eager load relationships to prevent N+1 queries
+            ->with(['router:id,name', 'profile:id,name', 'creator:id,name']);
 
         // Apply search filter
         if (!empty($filters['q'])) {

@@ -28,6 +28,9 @@ class AppServiceProvider extends ServiceProvider
 
         // Register policies
         Gate::policy(User::class, UserPolicy::class);
+        Gate::policy(\App\Models\Router::class, \App\Policies\RouterPolicy::class);
+        Gate::policy(\App\Models\Voucher::class, \App\Policies\VoucherPolicy::class);
+        Gate::policy(\App\Models\Ticket::class, \App\Policies\TicketPolicy::class);
 
         // Gate before callback: Admins can do everything, resellers need specific permissions
         Gate::before(function ($user, $ability) {

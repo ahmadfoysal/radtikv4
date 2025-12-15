@@ -10,8 +10,8 @@ use Illuminate\Support\Facades\Process;
 
 class DeployController extends Controller
 {
-    // check1234
-    private const WEBHOOK_SECRET = 'services.github.token';
+    // Secret key should be stored in config/services.php as 'github.webhook_secret'
+    private const WEBHOOK_SECRET = 'github.webhook_secret';
 
     private const GITHUB_SIGNATURE_HEADER = 'X-Hub-Signature-256';
 
@@ -27,7 +27,7 @@ class DeployController extends Controller
 
         // If secret is not set in .env, deployment is disabled or misconfigured.
         if (empty($secret)) {
-            Log::error('GitHub Webhook secret is not configured.');
+            Log::error('GitHub Webhook secret is not configured. Set GITHUB_WEBHOOK_SECRET in your .env file.');
 
             return response()->json(['message' => 'Server misconfiguration'], 500);
         }

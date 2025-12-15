@@ -3,13 +3,14 @@
 namespace App\Livewire\Package;
 
 use App\Models\Package;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 use Mary\Traits\Toast;
 
 class Create extends Component
 {
-    use Toast;
+    use AuthorizesRequests, Toast;
 
     #[Validate('required|string|max:255')]
     public string $name = '';
@@ -41,8 +42,17 @@ class Create extends Component
     #[Validate('boolean')]
     public bool $is_active = true;
 
+    public function mount(): void
+    {
+        // Only superadmin can create packages
+        abort_unless(auth()->user()?->hasRole('superadmin'), 403, 'Only superadmins can create packages.');
+    }
+
     public function save(): void
     {
+        // Re-check authorization
+        abort_unless(auth()->user()?->hasRole('superadmin'), 403);
+        
         $this->validate();
 
         Package::create([

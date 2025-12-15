@@ -12,11 +12,19 @@ class VoucherPrintController extends Controller
     {
         $data = $request->validate([
             'router_id' => 'required|integer|exists:routers,id',
-            'batch' => 'nullable|string',
+            'batch' => 'nullable|string|max:100',
             'status' => 'nullable|string|in:inactive,active,expired,all',
         ]);
 
-        $router = Router::with(['voucherTemplate'])->findOrFail($data['router_id']);
+        // Authorization: Verify user has access to this router
+        $user = auth()->user();
+        try {
+            $router = $user->getAuthorizedRouter($data['router_id']);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            abort(403, 'You are not authorized to print vouchers for this router.');
+        }
+
+        $router->load(['voucherTemplate']);
 
         $vouchers = $router->vouchers()
             ->with('profile')

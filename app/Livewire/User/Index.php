@@ -100,14 +100,21 @@ class Index extends Component
         $user = User::find($id);
 
         if (! $user) {
-            session()->flash('error', 'User not found.');
-
+            $this->error(
+                title: 'Not Found',
+                description: 'User not found.'
+            );
             return;
         }
 
-        if (auth()->id() === $user->id) {
-            session()->flash('error', 'You cannot delete your own account.');
-
+        // Authorization check using policy
+        try {
+            $this->authorize('delete', $user);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            $this->error(
+                title: 'Access Denied',
+                description: 'You are not authorized to delete this user.'
+            );
             return;
         }
 
@@ -135,17 +142,6 @@ class Index extends Component
     /** Impersonate user (only for superadmin) */
     public function impersonate(int $userId): void
     {
-        $currentUser = Auth::user();
-
-        // Only superadmin can impersonate
-        if (!$currentUser->hasRole('superadmin')) {
-            $this->error(
-                title: 'Access Denied',
-                description: 'You do not have permission to impersonate users.'
-            );
-            return;
-        }
-
         $userToImpersonate = User::find($userId);
 
         if (!$userToImpersonate) {
@@ -155,6 +151,19 @@ class Index extends Component
             );
             return;
         }
+
+        // Authorization check using policy
+        try {
+            $this->authorize('impersonate', $userToImpersonate);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            $this->error(
+                title: 'Access Denied',
+                description: 'You do not have permission to impersonate users.'
+            );
+            return;
+        }
+
+        $currentUser = Auth::user();
 
         // Store the original user ID in session to allow returning
         session(['impersonator_id' => $currentUser->id]);

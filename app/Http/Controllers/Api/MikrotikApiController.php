@@ -16,7 +16,13 @@ class MikrotikApiController extends Controller
      */
     public function pullInactiveUsers(Request $request)
     {
-        $token = $request->query('token');
+        // Validate request parameters
+        $validated = $request->validate([
+            'token' => 'required|string|max:255',
+            'format' => 'nullable|string|in:flat,json',
+        ]);
+
+        $token = $validated['token'];
 
         $router = Router::where('app_key', $token)->first();
 
@@ -71,7 +77,12 @@ class MikrotikApiController extends Controller
      */
     public function pullActiveUsers(Request $request)
     {
-        $token = $request->query('token');
+        // Validate request parameters
+        $validated = $request->validate([
+            'token' => 'required|string|max:255',
+        ]);
+
+        $token = $validated['token'];
         $router = Router::where('app_key', $token)->first();
 
         if (! $router) {
@@ -118,8 +129,12 @@ class MikrotikApiController extends Controller
      */
     public function pushActiveUsers(Request $request)
     {
-        // 1. Authenticate via URL Query Token
-        $token = $request->query('token');
+        // 1. Validate token
+        $validated = $request->validate([
+            'token' => 'required|string|max:255',
+        ]);
+
+        $token = $validated['token'];
 
         $router = Router::where('app_key', $token)->first();
 
@@ -277,8 +292,13 @@ class MikrotikApiController extends Controller
 
     public function pullProfiles(Request $request)
     {
-        // changed
-        $token = $request->query('token');
+        // Validate request parameters
+        $validated = $request->validate([
+            'token' => 'required|string|max:255',
+            'format' => 'nullable|string|in:flat,json',
+        ]);
+
+        $token = $validated['token'];
 
         $router = Router::where('app_key', $token)->first();
 
@@ -323,8 +343,12 @@ class MikrotikApiController extends Controller
      */
     public function syncOrphans(Request $request)
     {
-        // 1. Authenticate Router
-        $token = $request->query('token');
+        // 1. Validate token
+        $validated = $request->validate([
+            'token' => 'required|string|max:255',
+        ]);
+
+        $token = $validated['token'];
         $router = Router::where('app_key', $token)->first();
 
         if (! $router) {
@@ -365,7 +389,14 @@ class MikrotikApiController extends Controller
      */
     public function pullUpdatedProfiles(Request $request)
     {
-        $token = $request->query('token');
+        // Validate request parameters
+        $validated = $request->validate([
+            'token' => 'required|string|max:255',
+            'since' => 'nullable|date',
+            'format' => 'nullable|string|in:flat,json',
+        ]);
+
+        $token = $validated['token'];
         $router = Router::where('app_key', $token)->first();
 
         if (! $router) {
