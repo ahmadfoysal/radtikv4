@@ -84,16 +84,21 @@ class Invoices extends Component
 
     protected function invoiceQuery(): Builder
     {
-        $userId = auth()->id();
+        $query = Invoice::query()->with(['router:id,name']);
 
-        return Invoice::query()
-            ->with(['router:id,name'])
-            ->where('user_id', $userId)
+        // Role-based filtering
+        if (!auth()->user()->hasRole('superadmin')) {
+            // Admin and other roles see only their own invoices
+            $query->where('user_id', auth()->id());
+        }
+        // Superadmin sees all invoices (no user_id filter)
+
+        return $query
             ->when($this->type !== 'all', function (Builder $query) {
                 $query->where('type', $this->type);
             })
             ->when($this->search !== '', function (Builder $query) {
-                $term = '%'.mb_strtolower(trim($this->search)).'%';
+                $term = '%' . mb_strtolower(trim($this->search)) . '%';
 
                 $query->where(function (Builder $sub) use ($term) {
                     $sub->whereRaw('LOWER(category) LIKE ?', [$term])

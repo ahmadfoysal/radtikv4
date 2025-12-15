@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\User;
+use App\Policies\UserPolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
@@ -23,6 +25,9 @@ class AppServiceProvider extends ServiceProvider
     {
         Schema::disableForeignKeyConstraints();
         Schema::enableForeignKeyConstraints();
+
+        // Register policies
+        Gate::policy(User::class, UserPolicy::class);
 
         // Gate before callback: Admins can do everything, resellers need specific permissions
         Gate::before(function ($user, $ability) {

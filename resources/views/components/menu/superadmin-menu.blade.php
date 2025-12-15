@@ -14,7 +14,6 @@
 
         {{-- BILLING & TRANSACTIONS --}}
         <x-mary-menu-sub title="Billing" icon="o-credit-card">
-            <x-mary-menu-item title="Add Balance" icon="o-plus-circle" link="/billing/add-balance" wire:navigate />
             <x-mary-menu-item title="Invoices" icon="o-document-text" link="/billing/invoices" />
             <x-mary-menu-item title="Manual Adjustment" icon="o-pencil" link="/billing/manual-adjustment" />
             <x-mary-menu-item title="Transactions" icon="o-receipt-percent" link="/billing/transactions" />

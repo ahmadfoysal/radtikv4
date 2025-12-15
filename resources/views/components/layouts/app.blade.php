@@ -21,14 +21,14 @@
             // Get default theme - normalize to light/dark for user toggle
             const defaultTheme = @json($userTheme);
             const initial = saved || defaultTheme;
-            
+
             // Ensure we only use 'light' or 'dark' for user toggle
             const normalizedTheme = (initial === 'light' || initial === 'dark') ? initial : 'dark';
-            
+
             // Apply theme immediately
             const html = document.documentElement;
             html.setAttribute('data-theme', normalizedTheme);
-            
+
             // Update dark class for Tailwind dark mode
             if (normalizedTheme === 'dark') {
                 html.classList.add('dark');
@@ -40,33 +40,37 @@
             window.__toggleTheme = function() {
                 const current = html.getAttribute('data-theme') || 'dark';
                 const target = current === 'dark' ? 'light' : 'dark';
-                
+
                 // Apply theme
                 html.setAttribute('data-theme', target);
-                
+
                 // Update dark class
                 if (target === 'dark') {
                     html.classList.add('dark');
                 } else {
                     html.classList.remove('dark');
                 }
-                
+
                 // Save to localStorage
                 try {
                     localStorage.setItem(KEY, target);
                 } catch (e) {
                     console.warn('Failed to save theme:', e);
                 }
-                
+
                 // Dispatch event for any listeners (icon will be updated by event listener)
-                window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme: target } }));
-                
+                window.dispatchEvent(new CustomEvent('theme-changed', {
+                    detail: {
+                        theme: target
+                    }
+                }));
+
                 // Update icon to show current theme (not target)
                 const icon = document.getElementById('radtik-theme-icon');
                 if (icon) {
                     icon.setAttribute('name', target === 'dark' ? 'o-moon' : 'o-sun');
                 }
-                
+
                 return target;
             };
         })();
@@ -91,7 +95,8 @@
             @auth
                 <div class="flex items-center gap-2 px-3 py-2 bg-base-100 border border-base-300">
                     <x-mary-icon name="o-banknotes" class="w-5 h-5 text-primary" />
-                    <span class="font-semibold text-sm sm:text-base">BDT {{ number_format(auth()->user()->balance, 2) }}</span>
+                    <span class="font-semibold text-sm sm:text-base">BDT
+                        {{ number_format(auth()->user()->balance, 2) }}</span>
                 </div>
             @endauth
 
@@ -136,6 +141,11 @@
         </x-slot:sidebar>
 
         <x-slot:content>
+            {{-- Impersonation Banner --}}
+            @if (session('impersonator_id'))
+                <livewire:components.impersonation-banner />
+            @endif
+
             <div class="px-0 py-4 sm:px-4 lg:px-6 bg-base-200 min-h-screen">
                 {{ $slot }}
             </div>
@@ -159,7 +169,7 @@
         // Set initial icon and attach toggle button once DOM exists
         document.addEventListener('DOMContentLoaded', function() {
             updateThemeIcon();
-            
+
             // Attach click handler to toggle button
             const toggleBtn = document.getElementById('theme-toggle-btn');
             if (toggleBtn && window.__toggleTheme) {

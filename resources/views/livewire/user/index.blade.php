@@ -1,5 +1,6 @@
 <div class="max-w-7xl mx-auto">
-    <x-mary-card title="User List" class="shadow-sm border border-base-300">
+    <x-mary-card title="{{ auth()->user()->hasRole('superadmin') ? 'Admin Users' : 'Reseller Users' }}"
+        class="shadow-sm border border-base-300">
 
         {{-- Toolbar --}}
         <div class="flex flex-col sm:flex-row sm:flex-wrap sm:items-end sm:justify-end gap-4 mb-6">
@@ -48,6 +49,7 @@
                                 <x-mary-icon :name="$this->getSortIcon('phone')" class="w-4 h-4" />
                             </div>
                         </th>
+                        <th class="px-4 py-3 text-left">Role</th>
                         <th class="px-4 py-3 text-left">Address</th>
                         <th class="px-4 py-3 cursor-pointer text-left" wire:click="sortBy('created_at')">
                             <div class="flex items-center gap-2">
@@ -65,10 +67,32 @@
                             <td class="px-4 py-3 text-left font-medium">{{ $user->name }}</td>
                             <td class="px-4 py-3 text-left">{{ $user->email }}</td>
                             <td class="px-4 py-3">{{ $user->phone }}</td>
+                            <td class="px-4 py-3 text-left">
+                                @if ($user->roles->isNotEmpty())
+                                    <x-mary-badge value="{{ $user->roles->first()->name }}"
+                                        class="badge-{{ $user->roles->first()->name === 'admin' ? 'primary' : 'secondary' }}" />
+                                @else
+                                    <span class="text-gray-400">No role</span>
+                                @endif
+                            </td>
                             <td class="px-4 py-3 text-left">{{ $user->address }}</td>
                             <td class="px-4 py-3">{{ $user->created_at?->format('d-m-Y') }}</td>
                             <td class="px-4 py-3">
                                 <div class="flex justify-end gap-3">
+                                    @if (auth()->user()->hasRole('superadmin'))
+                                        {{-- Login As Button --}}
+                                        <button wire:click="impersonate({{ $user->id }})"
+                                            wire:loading.attr="disabled"
+                                            class="text-success hover:text-success/80 transition-colors"
+                                            title="Login as {{ $user->name }}"
+                                            onclick="return confirm('Are you sure you want to login as {{ $user->name }}?')">
+                                            <x-mary-icon name="o-arrow-right-on-rectangle" class="w-5 h-5"
+                                                wire:loading.remove wire:target="impersonate({{ $user->id }})" />
+                                            <x-mary-loading wire:loading wire:target="impersonate({{ $user->id }})"
+                                                class="w-5 h-5 text-success" />
+                                        </button>
+                                    @endif
+
                                     {{-- Edit Icon --}}
                                     <a href="{{ route('users.edit', $user) }}" wire:navigate
                                         class="text-primary hover:text-primary/80 transition-colors" title="Edit">
@@ -87,16 +111,17 @@
                                         <x-mary-loading wire:loading wire:target="delete({{ $user->id }})"
                                             class="w-5 h-5 text-error" />
                                     </button>
-
-
                                 </div>
                             </td>
-
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-4 py-10 text-center text-base-content/70">
-                                No users found.
+                            <td colspan="7" class="px-4 py-10 text-center text-base-content/70">
+                                @if (auth()->user()->hasRole('superadmin'))
+                                    No admin users found.
+                                @else
+                                    No reseller users found.
+                                @endif
                             </td>
                         </tr>
                     @endforelse

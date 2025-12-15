@@ -29,23 +29,26 @@ class Create extends Component
     #[Validate('nullable|string|max:255')]
     public $country;
 
-    #[Validate('required|numeric|min:0|max:100')]
-    public $commission = 0;
-
     public function save()
     {
         $this->validate();
 
         DB::transaction(function () {
-            $user = \App\Models\User::create([
+            $userData = [
                 'name' => $this->name,
                 'email' => $this->email,
                 'password' => bcrypt($this->password),
                 'phone' => $this->phone,
                 'address' => $this->address,
                 'country' => $this->country,
-                'commission' => $this->commission,
-            ]);
+            ];
+
+            // Set admin_id when admin creates a reseller
+            if (auth()->user()->hasRole('admin')) {
+                $userData['admin_id'] = auth()->id();
+            }
+
+            $user = \App\Models\User::create($userData);
 
             // Decide which role to give the new user
             $roleToAssign = null;

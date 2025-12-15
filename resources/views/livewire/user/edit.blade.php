@@ -22,10 +22,12 @@
                 <x-mary-input label="Address" wire:model.live.debounce.500ms="address" />
             </div>
 
-            <div class="col-span-1 sm:col-span-2">
-                <x-mary-input label="Commission (%)" type="number" step="0.01"
-                    wire:model.live.debounce.500ms="commission" />
-            </div>
+            @if (auth()->user()->hasRole('superadmin') && $user->hasRole('admin'))
+                <div class="col-span-1 sm:col-span-2">
+                    <x-mary-input label="Commission (%)" type="number" step="0.01"
+                        wire:model.live.debounce.500ms="commission" />
+                </div>
+            @endif
         </div>
 
         <x-slot:actions>

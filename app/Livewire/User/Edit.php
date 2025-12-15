@@ -26,12 +26,11 @@ class Edit extends Component
     #[Validate('nullable|string|max:255')]
     public ?string $address = null;
 
-    #[Validate('required|numeric|min:0|max:100')]
     public float $commission = 0;
 
     public function mount(User $user): void
     {
-        $this->user = $user;
+        $this->user = $user->load('roles'); // Load roles for blade conditions
         $this->name = $user->name;
         $this->email = $user->email;
         $this->phone = $user->phone;
@@ -46,13 +45,31 @@ class Edit extends Component
 
     public function update()
     {
-        // Update user fields
-        $validated = $this->validate();
+        // Validate basic fields
+        $rules = [
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email,' . $this->user->id,
+            'password' => 'nullable|string|min:8|max:255',
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:255',
+        ];
+
+        // Add commission validation only for superadmin editing admin
+        if (auth()->user()->hasRole('superadmin') && $this->user->hasRole('admin')) {
+            $rules['commission'] = 'required|numeric|min:0|max:100';
+        }
+
+        $validated = $this->validate($rules);
+
         $this->user->name = $validated['name'];
         $this->user->email = $validated['email'];
         $this->user->phone = $validated['phone'];
         $this->user->address = $validated['address'];
-        $this->user->commission = $validated['commission'];
+
+        // Only update commission for admin users when edited by superadmin
+        if (auth()->user()->hasRole('superadmin') && $this->user->hasRole('admin')) {
+            $this->user->commission = $validated['commission'];
+        }
 
         if (! empty($validated['password'])) {
             $this->user->password = Hash::make($validated['password']);

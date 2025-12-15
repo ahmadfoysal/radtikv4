@@ -4,13 +4,15 @@ namespace App\Livewire\User;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Mary\Traits\Toast;
 
 class Index extends Component
 {
-    use Toast, WithPagination;
+    use AuthorizesRequests, Toast, WithPagination;
 
     public string $search = '';
 
@@ -20,6 +22,12 @@ class Index extends Component
 
     public string $sortDirection = 'asc';
 
+    public function mount(): void
+    {
+        // Only superadmin and admin can access this page
+        $this->authorize('view', User::class);
+    }
+
     protected $queryString = [
         'search' => ['except' => ''],
         'perPage' => ['except' => 10],
@@ -28,12 +36,30 @@ class Index extends Component
         // Livewire নিজেই page হ্যান্ডেল করে; আলাদা করে লাগবে না
     ];
 
-    /** Common filtered query */
+    /** Common filtered query with role-based filtering */
     protected function filteredQuery(): Builder
     {
-        return User::query()->when($this->search !== '', function (Builder $q) {
-            $s = '%'.trim($this->search).'%';
-            $q->where(fn ($qq) => $qq->where('name', 'like', $s)
+        $currentUser = Auth::user();
+
+        $query = User::query();
+
+        // Role-based filtering
+        if ($currentUser->hasRole('superadmin')) {
+            // Superadmin sees all admins
+            $query->whereHas('roles', fn($q) => $q->where('name', 'admin'));
+        } elseif ($currentUser->hasRole('admin')) {
+            // Admin sees their resellers
+            $query->whereHas('roles', fn($q) => $q->where('name', 'reseller'))
+                ->where('admin_id', $currentUser->id);
+        } else {
+            // Other roles shouldn't access this, but just in case
+            $query->whereRaw('1 = 0'); // Return no results
+        }
+
+        // Apply search filters
+        return $query->when($this->search !== '', function (Builder $q) {
+            $s = '%' . trim($this->search) . '%';
+            $q->where(fn($qq) => $qq->where('name', 'like', $s)
                 ->orWhere('email', 'like', $s)
                 ->orWhere('phone', 'like', $s)
                 ->orWhere('address', 'like', $s));
@@ -106,9 +132,49 @@ class Index extends Component
         );
     }
 
+    /** Impersonate user (only for superadmin) */
+    public function impersonate(int $userId): void
+    {
+        $currentUser = Auth::user();
+
+        // Only superadmin can impersonate
+        if (!$currentUser->hasRole('superadmin')) {
+            $this->error(
+                title: 'Access Denied',
+                description: 'You do not have permission to impersonate users.'
+            );
+            return;
+        }
+
+        $userToImpersonate = User::find($userId);
+
+        if (!$userToImpersonate) {
+            $this->error(
+                title: 'User Not Found',
+                description: 'The user you are trying to impersonate does not exist.'
+            );
+            return;
+        }
+
+        // Store the original user ID in session to allow returning
+        session(['impersonator_id' => $currentUser->id]);
+
+        // Log in as the target user
+        Auth::login($userToImpersonate);
+
+        $this->success(
+            title: 'Impersonation Started',
+            description: "You are now logged in as {$userToImpersonate->name}."
+        );
+
+        // Redirect to dashboard
+        $this->redirect(route('dashboard'));
+    }
+
     public function render()
     {
         $users = $this->filteredQuery()
+            ->with('roles') // Load roles relationship
             ->orderBy($this->sortField, $this->sortDirection)
             ->paginate($this->perPage);
 
