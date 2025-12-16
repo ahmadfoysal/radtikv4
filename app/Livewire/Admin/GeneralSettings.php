@@ -4,17 +4,17 @@ namespace App\Livewire\Admin;
 
 use App\Models\GeneralSetting;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Mary\Traits\Toast;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class GeneralSettings extends Component
 {
-    use Toast, WithFileUploads;
+    use AuthorizesRequests, Toast, WithFileUploads;
 
-    // Company Information
+    // Company Information (User-specific)
     #[Rule(['required', 'string', 'max:255'])]
     public string $company_name = '';
 
@@ -35,26 +35,26 @@ class GeneralSettings extends Component
     #[Rule(['nullable', 'url', 'max:255'])]
     public string $company_website = '';
 
-    // System Settings
-    #[Rule(['required', 'string'])]
-    public string $timezone = 'UTC';
-
+    // User Preferences
     #[Rule(['required', 'string', 'max:50'])]
-    public string $date_format = 'Y-m-d';
+    public string $timezone = '';
 
-    #[Rule(['required', 'string', 'max:50'])]
-    public string $time_format = 'H:i:s';
+    #[Rule(['required', 'string', 'max:20'])]
+    public string $date_format = '';
+
+    #[Rule(['required', 'string', 'max:20'])]
+    public string $time_format = '';
 
     #[Rule(['required', 'string', 'max:10'])]
-    public string $currency = 'USD';
+    public string $currency = '';
 
-    #[Rule(['required', 'string', 'max:10'])]
-    public string $currency_symbol = '$';
+    #[Rule(['required', 'string', 'max:5'])]
+    public string $currency_symbol = '';
 
     #[Rule(['required', 'integer', 'min:5', 'max:100'])]
     public int $items_per_page = 10;
 
-    // Maintenance Mode
+    // Maintenance mode (superadmin only)
     #[Rule(['boolean'])]
     public bool $maintenance_mode = false;
 
@@ -62,15 +62,15 @@ class GeneralSettings extends Component
     public string $maintenance_message = '';
 
     public array $availableTimezones = [];
+    public array $availableCurrencies = [];
     public array $availableDateFormats = [];
     public array $availableTimeFormats = [];
-    public array $availableCurrencies = [];
 
     public function mount(): void
     {
         // Check if user is admin or superadmin
         $user = auth()->user();
-        abort_unless($user && ($user->isSuperAdmin() || $user->isAdmin()), 403);
+        abort_unless($user && ($user->isAdmin() || $user->isSuperAdmin()), 403);
 
         $this->loadSettings();
         $this->loadOptions();
@@ -83,80 +83,70 @@ class GeneralSettings extends Component
 
     public function loadSettings(): void
     {
-        $settings = GeneralSetting::where('is_active', true)->get()->keyBy('key');
+        $userId = auth()->id();
 
-        $this->company_name = $settings->get('company_name')?->value ?? 'RADTik v4';
-        $this->current_logo = $settings->get('company_logo')?->value ?? '';
-        $this->company_address = $settings->get('company_address')?->value ?? '';
-        $this->company_phone = $settings->get('company_phone')?->value ?? '';
-        $this->company_email = $settings->get('company_email')?->value ?? '';
-        $this->company_website = $settings->get('company_website')?->value ?? '';
+        // Load user-specific settings with fallback to global defaults
+        $this->company_name = GeneralSetting::getValue('company_name', auth()->user()->name ?? 'My Company', $userId);
+        $this->current_logo = GeneralSetting::getValue('company_logo', '', $userId);
+        $this->company_address = GeneralSetting::getValue('company_address', '', $userId);
+        $this->company_phone = GeneralSetting::getValue('company_phone', '', $userId);
+        $this->company_email = GeneralSetting::getValue('company_email', '', $userId);
+        $this->company_website = GeneralSetting::getValue('company_website', '', $userId);
 
-        $this->timezone = $settings->get('timezone')?->value ?? 'UTC';
-        $this->date_format = $settings->get('date_format')?->value ?? 'Y-m-d';
-        $this->time_format = $settings->get('time_format')?->value ?? 'H:i:s';
-        $this->currency = $settings->get('currency')?->value ?? 'USD';
-        $this->currency_symbol = $settings->get('currency_symbol')?->value ?? '$';
-        $this->items_per_page = (int) ($settings->get('items_per_page')?->value ?? 10);
+        // System preferences with global defaults
+        $this->timezone = GeneralSetting::getValue('timezone', GeneralSetting::getValue('default_timezone', 'UTC', null), $userId);
+        $this->date_format = GeneralSetting::getValue('date_format', GeneralSetting::getValue('default_date_format', 'Y-m-d', null), $userId);
+        $this->time_format = GeneralSetting::getValue('time_format', GeneralSetting::getValue('default_time_format', 'H:i:s', null), $userId);
+        $this->currency = GeneralSetting::getValue('currency', GeneralSetting::getValue('default_currency', 'USD', null), $userId);
+        $this->currency_symbol = GeneralSetting::getValue('currency_symbol', GeneralSetting::getValue('default_currency_symbol', '$', null), $userId);
+        $this->items_per_page = (int) GeneralSetting::getValue('items_per_page', GeneralSetting::getValue('default_items_per_page', '10', null), $userId);
 
-        $this->maintenance_mode = filter_var($settings->get('maintenance_mode')?->value ?? 'false', FILTER_VALIDATE_BOOLEAN);
-        $this->maintenance_message = $settings->get('maintenance_message')?->value ?? 'System is under maintenance. Please check back later.';
+        // Load maintenance mode for superadmin only
+        if (auth()->user()->isSuperAdmin()) {
+            $this->maintenance_mode = (bool) GeneralSetting::getValue('maintenance_mode', false, $userId);
+            $this->maintenance_message = GeneralSetting::getValue('maintenance_message', 'System is under maintenance. Please check back later.', $userId);
+        }
     }
 
     public function loadOptions(): void
     {
-        // Common timezones
         $this->availableTimezones = [
-            ['id' => 'UTC', 'name' => 'UTC'],
-            ['id' => 'America/New_York', 'name' => 'America/New York (EST)'],
-            ['id' => 'America/Chicago', 'name' => 'America/Chicago (CST)'],
-            ['id' => 'America/Los_Angeles', 'name' => 'America/Los Angeles (PST)'],
-            ['id' => 'Europe/London', 'name' => 'Europe/London (GMT)'],
-            ['id' => 'Europe/Paris', 'name' => 'Europe/Paris (CET)'],
-            ['id' => 'Asia/Dubai', 'name' => 'Asia/Dubai (GST)'],
-            ['id' => 'Asia/Dhaka', 'name' => 'Asia/Dhaka (BST)'],
-            ['id' => 'Asia/Kolkata', 'name' => 'Asia/Kolkata (IST)'],
-            ['id' => 'Asia/Singapore', 'name' => 'Asia/Singapore (SGT)'],
-            ['id' => 'Asia/Tokyo', 'name' => 'Asia/Tokyo (JST)'],
-            ['id' => 'Australia/Sydney', 'name' => 'Australia/Sydney (AEDT)'],
-        ];
-
-        $this->availableDateFormats = [
-            ['id' => 'Y-m-d', 'name' => 'YYYY-MM-DD (2025-12-16)'],
-            ['id' => 'd-m-Y', 'name' => 'DD-MM-YYYY (16-12-2025)'],
-            ['id' => 'm/d/Y', 'name' => 'MM/DD/YYYY (12/16/2025)'],
-            ['id' => 'd/m/Y', 'name' => 'DD/MM/YYYY (16/12/2025)'],
-            ['id' => 'F j, Y', 'name' => 'Month Day, Year (December 16, 2025)'],
-        ];
-
-        $this->availableTimeFormats = [
-            ['id' => 'H:i:s', 'name' => '24-hour (14:30:00)'],
-            ['id' => 'H:i', 'name' => '24-hour (14:30)'],
-            ['id' => 'h:i A', 'name' => '12-hour (02:30 PM)'],
-            ['id' => 'h:i:s A', 'name' => '12-hour (02:30:00 PM)'],
+            'UTC' => 'UTC',
+            'America/New_York' => 'Eastern Time (ET)',
+            'America/Chicago' => 'Central Time (CT)',
+            'America/Denver' => 'Mountain Time (MT)',
+            'America/Los_Angeles' => 'Pacific Time (PT)',
+            'Europe/London' => 'London (GMT)',
+            'Europe/Berlin' => 'Berlin (CET)',
+            'Asia/Tokyo' => 'Tokyo (JST)',
+            'Asia/Shanghai' => 'Shanghai (CST)',
+            'Asia/Dhaka' => 'Dhaka (BST)',
+            'Asia/Kolkata' => 'Mumbai (IST)',
         ];
 
         $this->availableCurrencies = [
-            ['id' => 'USD', 'symbol' => '$', 'name' => 'US Dollar (USD)'],
-            ['id' => 'EUR', 'symbol' => '€', 'name' => 'Euro (EUR)'],
-            ['id' => 'GBP', 'symbol' => '£', 'name' => 'British Pound (GBP)'],
-            ['id' => 'BDT', 'symbol' => '৳', 'name' => 'Bangladeshi Taka (BDT)'],
-            ['id' => 'INR', 'symbol' => '₹', 'name' => 'Indian Rupee (INR)'],
-            ['id' => 'AED', 'symbol' => 'د.إ', 'name' => 'UAE Dirham (AED)'],
-            ['id' => 'SAR', 'symbol' => 'ر.س', 'name' => 'Saudi Riyal (SAR)'],
-            ['id' => 'JPY', 'symbol' => '¥', 'name' => 'Japanese Yen (JPY)'],
-            ['id' => 'CNY', 'symbol' => '¥', 'name' => 'Chinese Yuan (CNY)'],
-            ['id' => 'AUD', 'symbol' => 'A$', 'name' => 'Australian Dollar (AUD)'],
+            'USD' => 'US Dollar ($)',
+            'EUR' => 'Euro (€)',
+            'GBP' => 'British Pound (£)',
+            'BDT' => 'Bangladeshi Taka (৳)',
+            'JPY' => 'Japanese Yen (¥)',
+            'INR' => 'Indian Rupee (₹)',
         ];
-    }
 
-    public function updatedCurrency($value): void
-    {
-        // Auto-update currency symbol when currency changes
-        $currency = collect($this->availableCurrencies)->firstWhere('id', $value);
-        if ($currency) {
-            $this->currency_symbol = $currency['symbol'];
-        }
+        $this->availableDateFormats = [
+            'Y-m-d' => 'YYYY-MM-DD (2024-12-16)',
+            'd/m/Y' => 'DD/MM/YYYY (16/12/2024)',
+            'm/d/Y' => 'MM/DD/YYYY (12/16/2024)',
+            'd-M-Y' => 'DD-MMM-YYYY (16-Dec-2024)',
+            'F j, Y' => 'Month DD, YYYY (December 16, 2024)',
+        ];
+
+        $this->availableTimeFormats = [
+            'H:i:s' => '24-hour format (14:30:45)',
+            'H:i' => '24-hour format without seconds (14:30)',
+            'h:i:s A' => '12-hour format (02:30:45 PM)',
+            'h:i A' => '12-hour format without seconds (02:30 PM)',
+        ];
     }
 
     public function saveSettings(): void
@@ -164,49 +154,37 @@ class GeneralSettings extends Component
         $this->validate();
 
         try {
-            // Handle logo upload with additional validation
-            $logoPath = $this->current_logo;
+            $userId = auth()->id();
+
+            // Handle file upload for company logo
             if ($this->company_logo) {
-                // Validate file type and size
-                $this->validate([
-                    'company_logo' => 'required|image|mimes:png,jpg,jpeg|max:2048'
-                ]);
-                
                 $logoPath = $this->company_logo->store('logos', 'public');
+                GeneralSetting::setValue('company_logo', $logoPath, 'string', $userId);
+                $this->current_logo = $logoPath;
             }
 
-            // Use database transaction for atomic updates
-            \DB::transaction(function () use ($logoPath) {
-                $settings = [
-                    'company_name' => $this->company_name,
-                    'company_logo' => $logoPath,
-                    'company_address' => $this->company_address,
-                    'company_phone' => $this->company_phone,
-                    'company_email' => $this->company_email,
-                    'company_website' => $this->company_website,
-                    'timezone' => $this->timezone,
-                    'date_format' => $this->date_format,
-                    'time_format' => $this->time_format,
-                    'currency' => $this->currency,
-                    'currency_symbol' => $this->currency_symbol,
-                    'items_per_page' => $this->items_per_page,
-                    'maintenance_mode' => $this->maintenance_mode,
-                    'maintenance_message' => $this->maintenance_message,
-                ];
+            // Save user-specific settings
+            GeneralSetting::setValue('company_name', $this->company_name, 'string', $userId);
+            GeneralSetting::setValue('company_address', $this->company_address, 'string', $userId);
+            GeneralSetting::setValue('company_phone', $this->company_phone, 'string', $userId);
+            GeneralSetting::setValue('company_email', $this->company_email, 'string', $userId);
+            GeneralSetting::setValue('company_website', $this->company_website, 'string', $userId);
+            GeneralSetting::setValue('timezone', $this->timezone, 'string', $userId);
+            GeneralSetting::setValue('date_format', $this->date_format, 'string', $userId);
+            GeneralSetting::setValue('time_format', $this->time_format, 'string', $userId);
+            GeneralSetting::setValue('currency', $this->currency, 'string', $userId);
+            GeneralSetting::setValue('currency_symbol', $this->currency_symbol, 'string', $userId);
+            GeneralSetting::setValue('items_per_page', $this->items_per_page, 'integer', $userId);
 
-                foreach ($settings as $key => $value) {
-                    GeneralSetting::setValue($key, $value);
-                }
-            });
+            // Save maintenance mode for superadmin only
+            if (auth()->user()->isSuperAdmin()) {
+                GeneralSetting::setValue('maintenance_mode', $this->maintenance_mode, 'boolean', $userId);
+                GeneralSetting::setValue('maintenance_message', $this->maintenance_message, 'string', $userId);
+            }
 
-            // Apply settings to Laravel config
-            GeneralSetting::applyToConfig();
+            $this->success('Settings saved successfully!', position: 'toast-top');
+            $this->reset(['company_logo']); // Clear file input
 
-            // Reset file upload
-            $this->company_logo = null;
-            $this->loadSettings();
-
-            $this->success('General settings saved successfully!');
         } catch (\Exception $e) {
             $this->error('Failed to save settings: ' . $e->getMessage());
         }
@@ -214,22 +192,41 @@ class GeneralSettings extends Component
 
     public function resetToDefaults(): void
     {
-        $this->company_name = 'RADTik v4';
-        $this->company_logo = null;
-        $this->current_logo = '';
+        $this->company_name = auth()->user()->name ?? 'My Company';
         $this->company_address = '';
         $this->company_phone = '';
         $this->company_email = '';
         $this->company_website = '';
-        $this->timezone = 'UTC';
-        $this->date_format = 'Y-m-d';
-        $this->time_format = 'H:i:s';
-        $this->currency = 'USD';
-        $this->currency_symbol = '$';
-        $this->items_per_page = 10;
-        $this->maintenance_mode = false;
-        $this->maintenance_message = 'System is under maintenance. Please check back later.';
 
-        $this->info('Settings reset to defaults. Don\'t forget to save!');
+        // Use global defaults
+        $this->timezone = GeneralSetting::getValue('default_timezone', 'UTC', null);
+        $this->date_format = GeneralSetting::getValue('default_date_format', 'Y-m-d', null);
+        $this->time_format = GeneralSetting::getValue('default_time_format', 'H:i:s', null);
+        $this->currency = GeneralSetting::getValue('default_currency', 'USD', null);
+        $this->currency_symbol = GeneralSetting::getValue('default_currency_symbol', '$', null);
+        $this->items_per_page = (int) GeneralSetting::getValue('default_items_per_page', '10', null);
+
+        // Reset maintenance mode for superadmin only
+        if (auth()->user()->isSuperAdmin()) {
+            $this->maintenance_mode = false;
+            $this->maintenance_message = 'System is under maintenance. Please check back later.';
+        }
+
+        $this->info('Settings reset to defaults. Click Save to apply changes.');
+    }
+
+    public function updatedCurrency(): void
+    {
+        // Auto-update currency symbol when currency changes
+        $currencySymbols = [
+            'USD' => '$',
+            'EUR' => '€',
+            'GBP' => '£',
+            'BDT' => '৳',
+            'JPY' => '¥',
+            'INR' => '₹',
+        ];
+
+        $this->currency_symbol = $currencySymbols[$this->currency] ?? '$';
     }
 }

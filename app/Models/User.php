@@ -284,6 +284,12 @@ class User extends Authenticatable
         return $this->hasMany(VoucherLog::class);
     }
 
+    // General Settings relation
+    public function generalSettings()
+    {
+        return $this->hasMany(GeneralSetting::class);
+    }
+
     // Tickets relations
     public function ticketsCreated()
     {

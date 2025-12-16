@@ -34,7 +34,8 @@
 
         {{-- ADMIN SETTINGS --}}
         <x-mary-menu-sub title="Admin Settings" icon="o-cog-6-tooth">
-            <x-mary-menu-item title="General Settings" icon="o-adjustments-horizontal" link="/admin/general-settings" wire:navigate />
+            <x-mary-menu-item title="General Settings" icon="o-adjustments-horizontal" link="/admin/general-settings"
+                wire:navigate />
             <x-mary-menu-item title="Theme Settings" icon="o-paint-brush" link="/admin/theme-settings" wire:navigate />
             <x-mary-menu-item title="Email & SMTP" icon="o-envelope-open" link="/superadmin/email-settings"
                 wire:navigate />
