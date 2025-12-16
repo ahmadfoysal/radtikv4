@@ -72,7 +72,7 @@ class EmailSetting extends Model
     public static function setValue(string $key, $value): bool
     {
         $setting = static::where('key', $key)->first();
-        
+
         if (!$setting) {
             return false;
         }
@@ -114,8 +114,14 @@ class EmailSetting extends Model
     {
         return static::where('is_active', true)
             ->whereIn('key', [
-                'mail_mailer', 'mail_host', 'mail_port', 'mail_username',
-                'mail_password', 'mail_encryption', 'mail_from_address', 'mail_from_name'
+                'mail_mailer',
+                'mail_host',
+                'mail_port',
+                'mail_username',
+                'mail_password',
+                'mail_encryption',
+                'mail_from_address',
+                'mail_from_name'
             ])
             ->get()
             ->keyBy('key')
