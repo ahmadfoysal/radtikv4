@@ -45,6 +45,8 @@ class User extends Authenticatable
         'two_factor_secret',
         'two_factor_recovery_codes',
         'two_factor_confirmed_at',
+        'suspended_at',
+        'suspension_reason',
     ];
 
     /**
@@ -114,6 +116,36 @@ class User extends Authenticatable
     public function resellerHasPermission(string $permission): bool
     {
         return $this->isReseller() && $this->hasPermissionTo($permission);
+    }
+
+    /**
+     * Check if the user is suspended
+     */
+    public function isSuspended(): bool
+    {
+        return !is_null($this->suspended_at);
+    }
+
+    /**
+     * Suspend the user with a reason
+     */
+    public function suspend(string $reason = null): void
+    {
+        $this->update([
+            'suspended_at' => now(),
+            'suspension_reason' => $reason,
+        ]);
+    }
+
+    /**
+     * Unsuspend the user
+     */
+    public function unsuspend(): void
+    {
+        $this->update([
+            'suspended_at' => null,
+            'suspension_reason' => null,
+        ]);
     }
 
     // Reseller relation

@@ -91,13 +91,15 @@
         </x-slot:brand>
 
         <x-slot:actions>
-            {{-- User Balance --}}
+            {{-- User Balance (only for admin) --}}
             @auth
-                <div class="flex items-center gap-2 px-3 py-2 bg-base-100 border border-base-300">
-                    <x-mary-icon name="o-banknotes" class="w-5 h-5 text-primary" />
-                    <span class="font-semibold text-sm sm:text-base">BDT
-                        {{ number_format(auth()->user()->balance, 2) }}</span>
-                </div>
+                @if (auth()->user()->hasRole('admin'))
+                    <div class="flex items-center gap-2 px-3 py-2 bg-base-100 border border-base-300">
+                        <x-mary-icon name="o-banknotes" class="w-5 h-5 text-primary" />
+                        <span class="font-semibold text-sm sm:text-base">BDT
+                            {{ number_format(auth()->user()->balance, 2) }}</span>
+                    </div>
+                @endif
             @endauth
 
             {{-- Theme toggle (Light/Dark only) --}}

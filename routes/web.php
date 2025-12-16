@@ -9,8 +9,8 @@ use Illuminate\Http\Request;
 // use request
 use Illuminate\Support\Facades\Route;
 
-// All routes below require login
-Route::middleware(['auth'])->group(function () {
+// All routes below require login and suspension check
+Route::middleware(['auth', 'check.suspended'])->group(function () {
 
     /* Dashboard Route */
     Route::get('/', App\Livewire\Dashboard::class)->name('home');
@@ -62,8 +62,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/support/contact/{ticket}', App\Livewire\Tickets\Show::class)->name('tickets.show');
     Route::get('/billing/add-balance', App\Livewire\Billing\AddBalance::class)->name('billing.add-balance');
 
+    /* Superadmin Routes */
+    Route::get('/superadmin/payment-gateways', App\Livewire\Admin\PaymentGatewaySettings::class)->name('superadmin.payment-gateways')->middleware('superadmin');
+    Route::get('/superadmin/email-settings', App\Livewire\Admin\EmailSettings::class)->name('superadmin.email-settings')->middleware('superadmin');
+
     /* Admin Routes */
-    Route::get('/admin/payment-gateways', App\Livewire\Admin\PaymentGatewaySettings::class)->name('admin.payment-gateways');
     Route::get('/admin/theme-settings', App\Livewire\Admin\ThemeSettings::class)->name('admin.theme-settings');
 
     /* Knowledgebase Routes */

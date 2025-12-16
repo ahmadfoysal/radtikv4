@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\EmailSetting;
 use App\Models\User;
 use App\Policies\UserPolicy;
 use Illuminate\Support\Facades\Gate;
@@ -25,6 +26,15 @@ class AppServiceProvider extends ServiceProvider
     {
         Schema::disableForeignKeyConstraints();
         Schema::enableForeignKeyConstraints();
+
+        // Apply email settings from database to Laravel config
+        try {
+            if (Schema::hasTable('email_settings')) {
+                EmailSetting::applyToConfig();
+            }
+        } catch (\Exception $e) {
+            // Ignore errors during migration or when table doesn't exist yet
+        }
 
         // Register policies
         Gate::policy(User::class, UserPolicy::class);

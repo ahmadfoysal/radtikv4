@@ -21,6 +21,11 @@ class RouterClient
      */
     public function make(Router $router): Client
     {
+        // Check if the router's owner is suspended
+        if ($router->user && $router->user->isSuspended()) {
+            throw new \Exception("Access denied: User account is suspended. Reason: " . ($router->user->suspension_reason ?? 'No reason provided'));
+        }
+
         $host = $router->address;              // prefer IP
         $port = (int) ($router->port ?: 8728);  // ensure correct field
         $useSSL = ($port === 8729) || (bool) ($router->use_tls ?? false);

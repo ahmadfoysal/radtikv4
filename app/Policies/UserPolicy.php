@@ -84,4 +84,23 @@ class UserPolicy
         // Cannot impersonate other superadmins
         return !$model->hasRole('superadmin');
     }
+
+    /**
+     * Determine if the user can suspend other users.
+     */
+    public function suspend(User $user, User $model): bool
+    {
+        // Only superadmin can suspend
+        if (!$user->hasRole('superadmin')) {
+            return false;
+        }
+
+        // Cannot suspend yourself
+        if ($user->id === $model->id) {
+            return false;
+        }
+
+        // Cannot suspend other superadmins
+        return !$model->hasRole('superadmin');
+    }
 }

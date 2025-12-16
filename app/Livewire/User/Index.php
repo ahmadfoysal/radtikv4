@@ -171,6 +171,61 @@ class Index extends Component
         $this->redirect(route('dashboard'));
     }
 
+    /** Suspend user (only for superadmin) */
+    public function suspendUser(int $userId): void
+    {
+        if (!Auth::user()->hasRole('superadmin')) {
+            $this->error(
+                title: 'Access Denied',
+                description: 'Only superadmin can suspend users.'
+            );
+            return;
+        }
+
+        $user = \App\Models\User::find($userId);
+        if (!$user) {
+            $this->error(title: 'Error', description: 'User not found.');
+            return;
+        }
+
+        if ($user->hasRole('superadmin')) {
+            $this->error(title: 'Error', description: 'Cannot suspend superadmin users.');
+            return;
+        }
+
+        $user->suspend('Suspended by ' . Auth::user()->name);
+
+        $this->success(
+            title: 'User Suspended',
+            description: "{$user->name} has been suspended successfully."
+        );
+    }
+
+    /** Unsuspend user (only for superadmin) */
+    public function unsuspendUser(int $userId): void
+    {
+        if (!Auth::user()->hasRole('superadmin')) {
+            $this->error(
+                title: 'Access Denied',
+                description: 'Only superadmin can unsuspend users.'
+            );
+            return;
+        }
+
+        $user = \App\Models\User::find($userId);
+        if (!$user) {
+            $this->error(title: 'Error', description: 'User not found.');
+            return;
+        }
+
+        $user->unsuspend();
+
+        $this->success(
+            title: 'User Unsuspended',
+            description: "{$user->name} has been unsuspended successfully."
+        );
+    }
+
     public function render()
     {
         $users = $this->filteredQuery()

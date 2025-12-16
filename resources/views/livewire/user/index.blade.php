@@ -50,6 +50,7 @@
                             </div>
                         </th>
                         <th class="px-4 py-3 text-left">Role</th>
+                        <th class="px-4 py-3 text-left">Status</th>
                         <th class="px-4 py-3 text-left">Address</th>
                         <th class="px-4 py-3 cursor-pointer text-left" wire:click="sortBy('created_at')">
                             <div class="flex items-center gap-2">
@@ -75,22 +76,67 @@
                                     <span class="text-gray-400">No role</span>
                                 @endif
                             </td>
+                            <td class="px-4 py-3 text-left">
+                                @if ($user->isSuspended())
+                                    <div class="flex items-center gap-2">
+                                        <x-mary-badge value="Suspended" class="badge-error" />
+                                        @if ($user->suspension_reason)
+                                            <div class="tooltip" data-tip="{{ $user->suspension_reason }}">
+                                                <x-mary-icon name="o-information-circle" class="w-4 h-4 text-error" />
+                                            </div>
+                                        @endif
+                                    </div>
+                                @else
+                                    <x-mary-badge value="Active" class="badge-success" />
+                                @endif
+                            </td>
                             <td class="px-4 py-3 text-left">{{ $user->address }}</td>
                             <td class="px-4 py-3">{{ $user->created_at?->format('d-m-Y') }}</td>
                             <td class="px-4 py-3">
                                 <div class="flex justify-end gap-3">
                                     @if (auth()->user()->hasRole('superadmin'))
-                                        {{-- Login As Button --}}
-                                        <button wire:click="impersonate({{ $user->id }})"
-                                            wire:loading.attr="disabled"
-                                            class="text-success hover:text-success/80 transition-colors"
-                                            title="Login as {{ $user->name }}"
-                                            onclick="return confirm('Are you sure you want to login as {{ $user->name }}?')">
-                                            <x-mary-icon name="o-arrow-right-on-rectangle" class="w-5 h-5"
-                                                wire:loading.remove wire:target="impersonate({{ $user->id }})" />
-                                            <x-mary-loading wire:loading wire:target="impersonate({{ $user->id }})"
-                                                class="w-5 h-5 text-success" />
-                                        </button>
+                                        {{-- Suspension Controls --}}
+                                        @if ($user->isSuspended())
+                                            <button wire:click="unsuspendUser({{ $user->id }})"
+                                                wire:loading.attr="disabled"
+                                                class="text-success hover:text-success/80 transition-colors"
+                                                title="Unsuspend {{ $user->name }}"
+                                                onclick="return confirm('Are you sure you want to unsuspend {{ $user->name }}?')">
+                                                <x-mary-icon name="o-play" class="w-5 h-5" wire:loading.remove
+                                                    wire:target="unsuspendUser({{ $user->id }})" />
+                                                <x-mary-loading wire:loading
+                                                    wire:target="unsuspendUser({{ $user->id }})"
+                                                    class="w-5 h-5 text-success" />
+                                            </button>
+                                        @else
+                                            <button wire:click="suspendUser({{ $user->id }})"
+                                                wire:loading.attr="disabled"
+                                                class="text-warning hover:text-warning/80 transition-colors"
+                                                title="Suspend {{ $user->name }}"
+                                                onclick="return confirm('Are you sure you want to suspend {{ $user->name }}?')">
+                                                <x-mary-icon name="o-pause" class="w-5 h-5" wire:loading.remove
+                                                    wire:target="suspendUser({{ $user->id }})" />
+                                                <x-mary-loading wire:loading
+                                                    wire:target="suspendUser({{ $user->id }})"
+                                                    class="w-5 h-5 text-warning" />
+                                            </button>
+                                        @endif
+
+                                        {{-- Login As Button (disabled for suspended users) --}}
+                                        @if (!$user->isSuspended())
+                                            <button wire:click="impersonate({{ $user->id }})"
+                                                wire:loading.attr="disabled"
+                                                class="text-success hover:text-success/80 transition-colors"
+                                                title="Login as {{ $user->name }}"
+                                                onclick="return confirm('Are you sure you want to login as {{ $user->name }}?')">
+                                                <x-mary-icon name="o-arrow-right-on-rectangle" class="w-5 h-5"
+                                                    wire:loading.remove
+                                                    wire:target="impersonate({{ $user->id }})" />
+                                                <x-mary-loading wire:loading
+                                                    wire:target="impersonate({{ $user->id }})"
+                                                    class="w-5 h-5 text-success" />
+                                            </button>
+                                        @endif
                                     @endif
 
                                     {{-- Edit Icon --}}
@@ -101,7 +147,8 @@
 
                                     {{-- Delete Icon --}}
                                     <button wire:click="delete({{ $user->id }})" wire:loading.attr="disabled"
-                                        class="relative text-error hover:text-error/80 transition-colors" title="Delete"
+                                        class="relative text-error hover:text-error/80 transition-colors"
+                                        title="Delete"
                                         onclick="return confirm('Are you sure you want to delete {{ $user->name }}?')">
                                         {{-- Trash icon (visible when not deleting) --}}
                                         <x-mary-icon name="o-trash" class="w-5 h-5" wire:loading.remove
@@ -116,7 +163,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-4 py-10 text-center text-base-content/70">
+                            <td colspan="8" class="px-4 py-10 text-center text-base-content/70">
                                 @if (auth()->user()->hasRole('superadmin'))
                                     No admin users found.
                                 @else

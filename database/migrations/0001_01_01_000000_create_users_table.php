@@ -28,6 +28,11 @@ return new class extends Migration
             $table->timestamp('last_login_at')->nullable();
             $table->boolean('is_phone_verified')->default(false);
             $table->date('expiration_date')->nullable();
+            $table->timestamp('suspended_at')->nullable();
+            $table->text('suspension_reason')->nullable();
+            $table->boolean('email_notifications')->default(true);
+            $table->boolean('login_alerts')->default(false);
+            $table->string('preferred_language', 10)->default('en');
             $table->string('password');
             $table->rememberToken();
             $table->timestamps();

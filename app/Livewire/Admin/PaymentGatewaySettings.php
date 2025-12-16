@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Models\PaymentGateway;
 use Illuminate\Contracts\View\View;
+use Livewire\Attributes\Validate;
 use Livewire\Component;
 use Mary\Traits\Toast;
 
@@ -15,8 +16,8 @@ class PaymentGatewaySettings extends Component
 
     public function mount(): void
     {
-        // Check if user is admin/superadmin
-        abort_unless(auth()->user()?->isSuperAdmin() || auth()->user()?->isAdmin(), 403);
+        // Check if user is superadmin only
+        abort_unless(auth()->user()?->isSuperAdmin(), 403);
 
         $this->loadGateways();
     }
@@ -41,21 +42,53 @@ class PaymentGatewaySettings extends Component
 
     public function toggleActive(int $gatewayId): void
     {
-        $gateway = PaymentGateway::findOrFail($gatewayId);
-        $gateway->is_active = ! $gateway->is_active;
-        $gateway->save();
+        try {
+            $gateway = PaymentGateway::findOrFail($gatewayId);
+            $gateway->is_active = ! $gateway->is_active;
+            $gateway->save();
 
-        $this->loadGateways();
-        $this->success($gateway->name.' '.($gateway->is_active ? 'activated' : 'deactivated').' successfully.');
+            $this->loadGateways();
+            $this->success($gateway->name . ' ' . ($gateway->is_active ? 'activated' : 'deactivated') . ' successfully.');
+        } catch (\Exception $e) {
+            $this->error('Failed to update gateway status: ' . $e->getMessage());
+        }
     }
 
-    public function saveCredentials(int $gatewayId, array $data): void
+    public function saveCredentials(int $gatewayId): void
     {
-        $gateway = PaymentGateway::findOrFail($gatewayId);
-        $gateway->data = $data;
-        $gateway->save();
+        try {
+            $gateway = PaymentGateway::findOrFail($gatewayId);
 
-        $this->loadGateways();
-        $this->success($gateway->name.' credentials updated successfully.');
+            // Find the gateway in the local array to get updated data
+            $gatewayData = collect($this->gateways)->firstWhere('id', $gatewayId);
+
+            if (!$gatewayData) {
+                $this->error('Gateway not found.');
+                return;
+            }
+
+            // Validate that required fields are not empty for the gateway
+            $data = $gatewayData['data'] ?? [];
+            $isEmpty = true;
+            foreach ($data as $value) {
+                if (!empty($value)) {
+                    $isEmpty = false;
+                    break;
+                }
+            }
+
+            if ($isEmpty) {
+                $this->warning('Please fill in at least one credential field before saving.');
+                return;
+            }
+
+            $gateway->data = $data;
+            $gateway->save();
+
+            $this->loadGateways();
+            $this->success($gateway->name . ' credentials updated successfully.');
+        } catch (\Exception $e) {
+            $this->error('Failed to save credentials: ' . $e->getMessage());
+        }
     }
 }

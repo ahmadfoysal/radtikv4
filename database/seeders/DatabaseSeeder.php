@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             RouterSeeder::class,
             VoucherSeeder::class,
             PaymentGatewaySeeder::class,
+            EmailSettingSeeder::class,
             KnowledgebaseArticleSeeder::class,
             DocumentationArticleSeeder::class,
         ]);
