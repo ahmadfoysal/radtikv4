@@ -67,6 +67,7 @@ Route::middleware(['auth', 'check.suspended'])->group(function () {
     Route::get('/superadmin/email-settings', App\Livewire\Admin\EmailSettings::class)->name('superadmin.email-settings')->middleware('superadmin');
 
     /* Admin Routes */
+    Route::get('/admin/general-settings', App\Livewire\Admin\GeneralSettings::class)->name('admin.general-settings');
     Route::get('/admin/theme-settings', App\Livewire\Admin\ThemeSettings::class)->name('admin.theme-settings');
 
     /* Knowledgebase Routes */
