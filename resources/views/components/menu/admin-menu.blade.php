@@ -59,7 +59,7 @@
 
         {{-- ADMIN SETTINGS --}}
         <x-mary-menu-sub title="Admin Settings" icon="o-cog-6-tooth">
-            <x-mary-menu-item title="General Settings" icon="o-adjustments-horizontal" link="/settings/general" />
+            <x-mary-menu-item title="General Settings" icon="o-adjustments-horizontal" link="/admin/general-settings" wire:navigate />
             <x-mary-menu-item title="Theme Settings" icon="o-paint-brush" link="/admin/theme-settings" wire:navigate />
             <x-mary-menu-item title="Notification & Email" icon="o-envelope-open" link="/settings/email" />
             <x-mary-menu-item title="Profile & Security" icon="o-shield-check" link="/settings/profile" wire:navigate />
