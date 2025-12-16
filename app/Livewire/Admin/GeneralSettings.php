@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Models\GeneralSetting;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -163,32 +164,40 @@ class GeneralSettings extends Component
         $this->validate();
 
         try {
-            // Handle logo upload
+            // Handle logo upload with additional validation
             $logoPath = $this->current_logo;
             if ($this->company_logo) {
+                // Validate file type and size
+                $this->validate([
+                    'company_logo' => 'required|image|mimes:png,jpg,jpeg|max:2048'
+                ]);
+                
                 $logoPath = $this->company_logo->store('logos', 'public');
             }
 
-            $settings = [
-                'company_name' => $this->company_name,
-                'company_logo' => $logoPath,
-                'company_address' => $this->company_address,
-                'company_phone' => $this->company_phone,
-                'company_email' => $this->company_email,
-                'company_website' => $this->company_website,
-                'timezone' => $this->timezone,
-                'date_format' => $this->date_format,
-                'time_format' => $this->time_format,
-                'currency' => $this->currency,
-                'currency_symbol' => $this->currency_symbol,
-                'items_per_page' => $this->items_per_page,
-                'maintenance_mode' => $this->maintenance_mode,
-                'maintenance_message' => $this->maintenance_message,
-            ];
+            // Use database transaction for atomic updates
+            \DB::transaction(function () use ($logoPath) {
+                $settings = [
+                    'company_name' => $this->company_name,
+                    'company_logo' => $logoPath,
+                    'company_address' => $this->company_address,
+                    'company_phone' => $this->company_phone,
+                    'company_email' => $this->company_email,
+                    'company_website' => $this->company_website,
+                    'timezone' => $this->timezone,
+                    'date_format' => $this->date_format,
+                    'time_format' => $this->time_format,
+                    'currency' => $this->currency,
+                    'currency_symbol' => $this->currency_symbol,
+                    'items_per_page' => $this->items_per_page,
+                    'maintenance_mode' => $this->maintenance_mode,
+                    'maintenance_message' => $this->maintenance_message,
+                ];
 
-            foreach ($settings as $key => $value) {
-                GeneralSetting::setValue($key, $value);
-            }
+                foreach ($settings as $key => $value) {
+                    GeneralSetting::setValue($key, $value);
+                }
+            });
 
             // Apply settings to Laravel config
             GeneralSetting::applyToConfig();
