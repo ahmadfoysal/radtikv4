@@ -156,11 +156,11 @@ return [
     */
     'tyro' => [
         // Whether to assign a default role to new users
-        'assign_default_role' => env('TYRO_LOGIN_ASSIGN_DEFAULT_ROLE', false),
+        'assign_default_role' => env('TYRO_LOGIN_ASSIGN_DEFAULT_ROLE', true),
 
         // The default role slug to assign to new users
         // Note: We use Spatie Permission, so this will be handled via event listeners
-        'default_role_slug' => env('TYRO_LOGIN_DEFAULT_ROLE_SLUG', 'reseller'),
+        'default_role_slug' => env('TYRO_LOGIN_DEFAULT_ROLE_SLUG', 'admin'),
     ],
 
     /*

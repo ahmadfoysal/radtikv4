@@ -4,7 +4,6 @@ namespace App\Livewire\Billing;
 
 use App\Models\Invoice;
 use App\Models\User;
-use App\Services\BillingService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Component;
@@ -29,11 +28,22 @@ class ManualAdjustment extends Component
 
     public ?float $currentBalance = null;
 
-    protected BillingService $billingService;
+    public ?float $commissionPercentage = null;
 
-    public function boot(BillingService $billingService): void
+    public function getCommissionAmountProperty(): float
     {
-        $this->billingService = $billingService;
+        if (!$this->amount || !$this->commissionPercentage || $this->action !== 'credit') {
+            return 0;
+        }
+        return round(($this->amount * $this->commissionPercentage) / 100, 2);
+    }
+
+    public function getTotalCreditProperty(): float
+    {
+        if ($this->action !== 'credit' || !$this->amount) {
+            return 0;
+        }
+        return $this->amount + $this->commissionAmount;
     }
 
     public function mount(): void
@@ -51,17 +61,19 @@ class ManualAdjustment extends Component
     public function updatedAdminId($value): void
     {
         $this->currentBalance = null;
+        $this->commissionPercentage = null;
 
         if (empty($value)) {
             return;
         }
 
         $user = User::role('admin')
-            ->select('id', 'balance')
+            ->select('id', 'balance', 'commission')
             ->find($value);
 
         if ($user) {
             $this->currentBalance = (float) $user->balance;
+            $this->commissionPercentage = (float) $user->commission;
         }
     }
 
@@ -73,19 +85,17 @@ class ManualAdjustment extends Component
 
         try {
             $invoice = match ($validated['action']) {
-                'credit' => $this->billingService->credit(
-                    $user,
-                    (float) $validated['amount'],
-                    $validated['category'],
-                    $this->description,
-                    $this->buildMetaPayload('credit')
+                'credit' => $user->credit(
+                    amount: (float) $validated['amount'],
+                    category: $validated['category'],
+                    description: $this->description,
+                    meta: $this->buildMetaPayload('credit')
                 ),
-                'debit' => $this->billingService->debit(
-                    $user,
-                    (float) $validated['amount'],
-                    $validated['category'],
-                    $this->description,
-                    $this->buildMetaPayload('debit')
+                'debit' => $user->debit(
+                    amount: (float) $validated['amount'],
+                    category: $validated['category'],
+                    description: $this->description,
+                    meta: $this->buildMetaPayload('debit')
                 ),
                 'adjust' => $this->performAdjustment(
                     $user,
@@ -132,7 +142,7 @@ class ManualAdjustment extends Component
             ->orderBy('name')
             ->limit(20)
             ->get()
-            ->map(fn (User $admin) => $this->formatAdminOption($admin))
+            ->map(fn(User $admin) => $this->formatAdminOption($admin))
             ->toArray();
 
         $this->ensureSelectedAdminIncluded();
@@ -144,8 +154,8 @@ class ManualAdjustment extends Component
             ->select('id', 'name', 'email')
             ->when(
                 $term !== null && trim($term) !== '',
-                fn (Builder $query) => $query->where(function (Builder $inner) use ($term) {
-                    $value = '%'.trim($term).'%';
+                fn(Builder $query) => $query->where(function (Builder $inner) use ($term) {
+                    $value = '%' . trim($term) . '%';
                     $inner->where('name', 'like', $value)
                         ->orWhere('email', 'like', $value);
                 })
@@ -158,7 +168,7 @@ class ManualAdjustment extends Component
             return;
         }
 
-        if (collect($this->adminOptions)->contains(fn ($option) => (int) $option['id'] === $this->adminId)) {
+        if (collect($this->adminOptions)->contains(fn($option) => (int) $option['id'] === $this->adminId)) {
             return;
         }
 
@@ -219,21 +229,19 @@ class ManualAdjustment extends Component
         }
 
         if ($difference > 0) {
-            return $this->billingService->credit(
-                $user,
-                $difference,
-                $category,
-                $description,
-                $this->buildMetaPayload('adjust_credit', $targetBalance)
+            return $user->credit(
+                amount: $difference,
+                category: $category,
+                description: $description,
+                meta: $this->buildMetaPayload('adjust_credit', $targetBalance)
             );
         }
 
-        return $this->billingService->debit(
-            $user,
-            abs($difference),
-            $category,
-            $description,
-            $this->buildMetaPayload('adjust_debit', $targetBalance)
+        return $user->debit(
+            amount: abs($difference),
+            category: $category,
+            description: $description,
+            meta: $this->buildMetaPayload('adjust_debit', $targetBalance)
         );
     }
 }

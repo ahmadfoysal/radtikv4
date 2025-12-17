@@ -14,6 +14,18 @@ class PackageSeeder extends Seeder
     {
         $packages = [
             [
+                'name' => 'Free Trial',
+                'price_monthly' => 0.00,
+                'price_yearly' => 0.00,
+                'user_limit' => 10,
+                'billing_cycle' => 'monthly',
+                'early_pay_days' => null,
+                'early_pay_discount_percent' => null,
+                'auto_renew_allowed' => false,
+                'description' => 'Try our service free for 30 days. Limited to 10 users. Perfect for testing before committing to a paid plan.',
+                'is_active' => true,
+            ],
+            [
                 'name' => 'Starter Bronze',
                 'price_monthly' => 19.99,
                 'price_yearly' => 215.88,

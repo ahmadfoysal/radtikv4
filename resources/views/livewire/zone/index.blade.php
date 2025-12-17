@@ -50,7 +50,8 @@
                             ['id' => 10, 'name' => '10'],
                             ['id' => 25, 'name' => '25'],
                             ['id' => 50, 'name' => '50'],
-                        ]" option-value="id" option-label="name" wire:model.live="perPage" class="w-32" />
+                        ]" option-value="id" option-label="name"
+                            wire:model.live="perPage" class="w-32" />
                         <x-mary-button label="Clear" class="btn-ghost" icon="o-x-mark"
                             wire:click="$set('search','')" />
                     </div>
@@ -59,7 +60,8 @@
                 <div class="overflow-x-auto">
                     <table class="min-w-full text-sm">
                         <thead>
-                            <tr class="bg-base-200 text-left text-xs font-semibold uppercase tracking-wide text-base-content/70">
+                            <tr
+                                class="bg-base-200 text-left text-xs font-semibold uppercase tracking-wide text-base-content/70">
                                 <th class="px-4 py-3">Zone</th>
                                 <th class="px-4 py-3">Description</th>
                                 <th class="px-4 py-3 text-center">Routers</th>
@@ -97,7 +99,7 @@
                                         @endif
                                     </td>
                                     <td class="px-4 py-3 text-right text-base-content/70">
-                                        {{ $zone->created_at?->format('M d, Y') }}
+                                        @userDate($zone->created_at)
                                     </td>
                                     <td class="px-4 py-3">
                                         <div class="flex justify-end gap-2">

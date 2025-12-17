@@ -2,15 +2,24 @@
     {{-- Page Header --}}
     <x-mary-card title="{{ auth()->user()->isSuperAdmin() ? 'Platform Settings' : 'General Settings' }}" separator
         class="bg-base-100">
-        <p class="text-sm text-base-content/70 mb-6">
+        <p class="text-sm text-base-content/70 mb-2">
             @if (auth()->user()->isSuperAdmin())
-                <span class="font-semibold text-primary">SuperAdmin Access:</span> Configure platform-wide settings and
-                your company information.
+                <span class="font-semibold text-primary">SuperAdmin Access:</span> These settings apply as platform-wide
+                defaults for all users.
+            @elseif (auth()->user()->isAdmin())
+                <span class="font-semibold text-primary">Your Personal Settings:</span> Configure your company
+                information and preferences. These settings only affect your account.
             @else
-                <span class="font-semibold text-primary">Admin Settings:</span> Configure your personal company
-                information and preferences.
+                <span class="font-semibold text-primary">Your Personal Settings:</span> Your timezone, currency, and
+                date/time formats. If not set, you'll inherit from your parent admin.
             @endif
         </p>
+        @if (!auth()->user()->isSuperAdmin())
+            <p class="text-xs text-base-content/50">
+                <span class="badge badge-sm badge-info">Info:</span> Your settings override platform defaults and are
+                isolated from other users.
+            </p>
+        @endif
     </x-mary-card>
 
     <div class="grid gap-6 lg:grid-cols-3">

@@ -81,7 +81,9 @@ class GeneralSetting extends Model
 
     /**
      * Get setting value by key with user context and caching
-     * Falls back to global setting if user-specific setting not found
+     * Falls back to parent admin (for resellers) or global setting
+     * 
+     * Priority: User's setting > Parent admin's setting (for resellers) > Global setting > Default
      */
     public static function getValue(string $key, mixed $default = null, ?int $userId = null): mixed
     {
@@ -103,9 +105,22 @@ class GeneralSetting extends Model
                 if ($userSetting) {
                     return $userSetting->typed_value;
                 }
+
+                // If user is a reseller, try to get parent admin's setting
+                $user = User::find($userId);
+                if ($user && $user->isReseller() && $user->admin_id) {
+                    $parentSetting = self::where('key', $key)
+                        ->where('user_id', $user->admin_id)
+                        ->where('is_active', true)
+                        ->first();
+
+                    if ($parentSetting) {
+                        return $parentSetting->typed_value;
+                    }
+                }
             }
 
-            // If no user-specific setting found, get global setting
+            // If no user-specific or parent setting found, get global setting
             $globalSetting = self::where('key', $key)
                 ->whereNull('user_id')
                 ->where('is_active', true)
@@ -117,16 +132,21 @@ class GeneralSetting extends Model
 
     /**
      * Set setting value by key with user context
+     * 
+     * - SuperAdmin: Settings are global (user_id = null)
+     * - Admin: Settings are user-specific (user_id = admin's id)
+     * - Reseller: Settings are user-specific (user_id = reseller's id)
      */
     public static function setValue(string $key, mixed $value, string $type = 'string', ?int $userId = null): bool
     {
         try {
-            // If no user ID provided, try to get from auth (for user-specific settings)
-            // For global settings, explicitly pass null
+            // If userId is explicitly provided, use it
+            // Otherwise determine based on authenticated user's role
             if ($userId === null && auth()->check()) {
                 $user = auth()->user();
-                // Only set user_id for admin users, superadmin settings are global
-                $userId = $user->isAdmin() ? $user->id : null;
+                // SuperAdmin settings are global (user_id = null)
+                // Admin and Reseller settings are user-specific
+                $userId = $user->isSuperAdmin() ? null : $user->id;
             }
 
             $processedValue = match ($type) {
@@ -161,16 +181,22 @@ class GeneralSetting extends Model
     }
 
     /**
-     * Apply general settings to Laravel config
+     * Apply global platform settings to Laravel config
+     * Only applies settings set by superadmin (user_id = null)
+     * User-specific settings should be applied per-user, not globally
      */
     public static function applyToConfig(): void
     {
-        $settings = static::where('is_active', true)->get()->keyBy('key');
+        // Only get global settings (where user_id is null)
+        $settings = static::where('is_active', true)
+            ->whereNull('user_id')
+            ->get()
+            ->keyBy('key');
 
         if ($settings->isNotEmpty()) {
             Config::set([
-                'app.name' => $settings->get('company_name')?->typed_value ?? config('app.name'),
-                'app.timezone' => $settings->get('timezone')?->typed_value ?? config('app.timezone'),
+                'app.name' => $settings->get('platform_name')?->typed_value ?? config('app.name'),
+                'app.timezone' => $settings->get('default_timezone')?->typed_value ?? config('app.timezone'),
             ]);
         }
     }
@@ -257,5 +283,72 @@ class GeneralSetting extends Model
                 return [$setting->key => $setting->typed_value];
             })
             ->toArray();
+    }
+
+    /**
+     * Apply user-specific settings to config for the current request
+     * This should be called in middleware for each authenticated user
+     */
+    public static function applyUserConfig(?int $userId = null): void
+    {
+        if ($userId === null && auth()->check()) {
+            $userId = auth()->id();
+        }
+
+        if (!$userId) {
+            return;
+        }
+
+        // Get user's timezone (with fallback to parent admin or global)
+        $timezone = self::getValue('timezone', config('app.timezone'), $userId);
+        if ($timezone) {
+            Config::set('app.timezone', $timezone);
+            date_default_timezone_set($timezone);
+        }
+    }
+
+    /**
+     * Get formatted date according to user's preference
+     */
+    public static function formatDate($date, ?int $userId = null): string
+    {
+        $format = self::getValue('date_format', 'Y-m-d', $userId);
+        return $date instanceof \DateTime ? $date->format($format) : date($format, strtotime($date));
+    }
+
+    /**
+     * Get formatted time according to user's preference
+     */
+    public static function formatTime($time, ?int $userId = null): string
+    {
+        $format = self::getValue('time_format', 'H:i:s', $userId);
+        return $time instanceof \DateTime ? $time->format($format) : date($format, strtotime($time));
+    }
+
+    /**
+     * Get formatted datetime according to user's preference
+     */
+    public static function formatDateTime($datetime, ?int $userId = null): string
+    {
+        $dateFormat = self::getValue('date_format', 'Y-m-d', $userId);
+        $timeFormat = self::getValue('time_format', 'H:i:s', $userId);
+        $format = $dateFormat . ' ' . $timeFormat;
+        return $datetime instanceof \DateTime ? $datetime->format($format) : date($format, strtotime($datetime));
+    }
+
+    /**
+     * Get currency symbol for user
+     */
+    public static function getCurrencySymbol(?int $userId = null): string
+    {
+        return self::getValue('currency_symbol', '$', $userId);
+    }
+
+    /**
+     * Get currency code for user
+     */
+    public static function getCurrency(?int $userId = null): string
+    {
+        return self::getValue('currency', 'USD', $userId);
     }
 }

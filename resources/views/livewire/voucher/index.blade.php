@@ -85,7 +85,7 @@
                             <span class="opacity-60">Expiry:</span>
                             @if ($v->expires_at)
                                 <span class="font-medium">
-                                    {{ \Illuminate\Support\Carbon::parse($v->expires_at)->toDateString() }}
+                                    @userDate($v->expires_at)
                                 </span>
                             @else
                                 <span class="opacity-50">Not activated</span>

@@ -19,6 +19,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
         ]);
+
+        // Apply user-specific settings (timezone, etc.) for authenticated users
+        $middleware->web(append: [
+            \App\Http\Middleware\ApplyUserSettings::class,
+        ]);
+
         $middleware->redirectGuestsTo('/login');
     })
     ->withExceptions(function (Exceptions $exceptions) {

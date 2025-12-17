@@ -225,7 +225,7 @@
 
             <div>
                 <label class="label-text font-medium">Member Since</label>
-                <p class="text-sm opacity-80">{{ Auth::user()->created_at->format('M d, Y') }}</p>
+                <p class="text-sm opacity-80">@userDate(Auth::user()->created_at)</p>
             </div>
 
             <div>
@@ -237,7 +237,7 @@
 
             <div>
                 <label class="label-text font-medium">Account Balance</label>
-                <p class="text-sm opacity-80 font-mono">${{ number_format(Auth::user()->balance, 2) }}</p>
+                <p class="text-sm opacity-80 font-mono">@userCurrency(Auth::user()->balance)</p>
             </div>
         </div>
     </x-mary-card>

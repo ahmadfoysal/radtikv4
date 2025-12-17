@@ -187,28 +187,26 @@ class MikrotikApiController extends Controller
                 'updated_at' => now(),
             ];
 
-            $activationTimestamp = $voucher->activated_at;
-
-            // 6. Parse Activation Date from Comment if not set in DB
-            if (is_null($activationTimestamp)) {
+            // 6. CRITICAL: Parse and Set Activation Date ONLY if not already set in database
+            // Once activated_at is set, it should NEVER be updated, even if MikroTik sends different data
+            // This ensures accurate historical activation tracking
+            if (is_null($voucher->activated_at)) {
                 $activationTimestamp = $this->parseActivationTimestamp($data['comment'], $voucher->id);
                 if ($activationTimestamp) {
                     $updateData['activated_at'] = $activationTimestamp;
+
+                    // 7. Calculate and Set Expiry Date based on first activation
+                    // This also should only be set once on first activation
+                    if (is_null($voucher->expires_at)) {
+                        $expiresAt = $this->calculateExpiryDate($voucher, $activationTimestamp);
+                        if ($expiresAt) {
+                            $updateData['expires_at'] = $expiresAt;
+                        }
+                    }
                 }
             }
-
-            // 7. Calculate Expires At if not set
-            // Ensure activationTimestamp is a Carbon instance before using it.
-            if ($activationTimestamp && is_string($activationTimestamp)) {
-                $activationTimestamp = Carbon::parse($activationTimestamp);
-            }
-
-            if (is_null($voucher->expires_at) && $activationTimestamp) {
-                $expiresAt = $this->calculateExpiryDate($voucher, $activationTimestamp);
-                if ($expiresAt) {
-                    $updateData['expires_at'] = $expiresAt;
-                }
-            }
+            // If activated_at already exists in database, we completely ignore any activation data from MikroTik
+            // This prevents accidental overwrites and maintains data integrity
 
             $voucher->update($updateData);
             $updatedCount++;

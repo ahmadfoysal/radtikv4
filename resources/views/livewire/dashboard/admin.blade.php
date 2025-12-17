@@ -9,7 +9,7 @@
                         <x-mary-icon name="o-banknotes" class="w-5 h-5 text-primary" />
                         <span class="text-sm font-medium text-base-content/70">Wallet Balance</span>
                     </div>
-                    <p class="text-3xl font-bold text-primary">BDT {{ number_format($balance, 2) }}</p>
+                    <p class="text-3xl font-bold text-primary">@userCurrency($balance)</p>
                     <p class="text-xs text-base-content/60 mt-1">Available for subscriptions</p>
                 </div>
             </div>
@@ -29,7 +29,8 @@
                     </div>
                     <p class="text-3xl font-bold">{{ number_format($routerStats['total']) }}</p>
                     <div class="flex flex-wrap gap-2 mt-2 text-xs">
-                        <span class="text-success">Active: {{ $routerStats['total'] - $routerStats['expiringToday'] - $routerStats['expiringWeek'] }}</span>
+                        <span class="text-success">Active:
+                            {{ $routerStats['total'] - $routerStats['expiringToday'] - $routerStats['expiringWeek'] }}</span>
                         <span class="text-warning">Expiring: {{ $routerStats['expiringWeek'] }}</span>
                     </div>
                 </div>
@@ -95,9 +96,9 @@
                         <x-mary-icon name="o-currency-dollar" class="w-5 h-5 text-success" />
                         <span class="text-sm font-medium text-base-content/70">Monthly Revenue</span>
                     </div>
-                    <p class="text-3xl font-bold text-success">BDT {{ number_format($invoiceStats['thisMonthRevenue'], 2) }}</p>
+                    <p class="text-3xl font-bold text-success">@userCurrency($invoiceStats['thisMonthRevenue'])</p>
                     <div class="flex flex-wrap gap-2 mt-2 text-xs">
-                        <span class="text-base-content/60">Outstanding: BDT {{ number_format($invoiceStats['outstanding'], 2) }}</span>
+                        <span class="text-base-content/60">Outstanding: @userCurrency($invoiceStats['outstanding'])</span>
                     </div>
                 </div>
             </div>
@@ -114,8 +115,8 @@
                 href="{{ route('routers.create') }}" wire:navigate />
             <x-mary-button icon="o-document-plus" label="Create Invoice" class="btn-sm btn-warning"
                 href="{{ route('billing.invoices') }}" wire:navigate />
-            <x-mary-button icon="o-chart-bar" label="View Reports" class="btn-sm btn-ghost"
-                href="#" wire:navigate />
+            <x-mary-button icon="o-chart-bar" label="View Reports" class="btn-sm btn-ghost" href="#"
+                wire:navigate />
         </div>
     </x-mary-card>
 
@@ -158,8 +159,8 @@
                         <x-mary-icon name="o-server-stack" class="w-5 h-5 text-info" />
                         <span>Router Health</span>
                     </div>
-                    <x-mary-button icon="o-arrow-right" class="btn-ghost btn-xs"
-                        href="{{ route('routers.index') }}" wire:navigate />
+                    <x-mary-button icon="o-arrow-right" class="btn-ghost btn-xs" href="{{ route('routers.index') }}"
+                        wire:navigate />
                 </div>
             </x-slot>
             <div class="grid grid-cols-2 gap-4">
@@ -181,7 +182,8 @@
                 </div>
             </div>
             <div class="mt-4 pt-4 border-t border-base-300">
-                <p class="text-xs text-base-content/60">Monthly Expense: <strong class="text-base-content">BDT {{ number_format($routerStats['monthlyExpense'], 2) }}</strong></p>
+                <p class="text-xs text-base-content/60">Monthly Expense: <strong
+                        class="text-base-content">@userCurrency($routerStats['monthlyExpense'])</strong></p>
             </div>
         </x-mary-card>
 
@@ -216,7 +218,9 @@
                 </div>
             </div>
             <div class="mt-4 pt-4 border-t border-base-300">
-                <p class="text-xs text-base-content/60">This Week: <strong class="text-base-content">{{ number_format($voucherStats['generatedThisWeek']) }}</strong> vouchers generated</p>
+                <p class="text-xs text-base-content/60">This Week: <strong
+                        class="text-base-content">{{ number_format($voucherStats['generatedThisWeek']) }}</strong>
+                    vouchers generated</p>
             </div>
         </x-mary-card>
     </div>
@@ -251,11 +255,11 @@
                 <div class="pt-3 border-t border-base-300">
                     <div class="flex items-center justify-between mb-2">
                         <span class="text-xs text-base-content/60">This Month Revenue</span>
-                        <span class="text-lg font-bold text-primary">BDT {{ number_format($invoiceStats['thisMonthRevenue'], 2) }}</span>
+                        <span class="text-lg font-bold text-primary">@userCurrency($invoiceStats['thisMonthRevenue'])</span>
                     </div>
                     <div class="flex items-center justify-between">
                         <span class="text-xs text-base-content/60">Outstanding</span>
-                        <span class="text-sm font-semibold text-error">BDT {{ number_format($invoiceStats['outstanding'], 2) }}</span>
+                        <span class="text-sm font-semibold text-error">@userCurrency($invoiceStats['outstanding'])</span>
                     </div>
                 </div>
             </div>
@@ -271,7 +275,8 @@
             </x-slot>
             <div class="space-y-2">
                 @forelse ($routerUsage as $package => $count)
-                    <div class="flex items-center justify-between text-sm" wire:key="admin-package-{{ \Illuminate\Support\Str::slug($package) }}">
+                    <div class="flex items-center justify-between text-sm"
+                        wire:key="admin-package-{{ \Illuminate\Support\Str::slug($package) }}">
                         <span class="truncate flex-1">{{ $package }}</span>
                         <x-mary-badge value="{{ number_format($count) }}" class="badge-primary badge-sm" />
                     </div>
@@ -291,7 +296,8 @@
             </x-slot>
             <div class="space-y-3 max-h-64 overflow-y-auto">
                 @forelse ($routerAlerts as $router)
-                    <div class="flex items-start justify-between gap-2 p-2 bg-warning/5 border border-warning/20" wire:key="alert-{{ $router->id }}">
+                    <div class="flex items-start justify-between gap-2 p-2 bg-warning/5 border border-warning/20"
+                        wire:key="alert-{{ $router->id }}">
                         <div class="flex-1 min-w-0">
                             <p class="font-semibold text-sm truncate">{{ $router->name }}</p>
                             @php
@@ -304,7 +310,8 @@
                         <x-mary-badge value="Attention" class="badge-warning badge-sm" />
                     </div>
                 @empty
-                    <p class="text-sm text-base-content/70 text-center py-4">No upcoming renewals in the next 10 days.</p>
+                    <p class="text-sm text-base-content/70 text-center py-4">No upcoming renewals in the next 10 days.
+                    </p>
                 @endforelse
             </div>
         </x-mary-card>
@@ -320,13 +327,14 @@
                         <x-mary-icon name="o-server-stack" class="w-5 h-5 text-info" />
                         <span>Recent Routers</span>
                     </div>
-                    <x-mary-button icon="o-arrow-right" class="btn-ghost btn-xs"
-                        href="{{ route('routers.index') }}" wire:navigate />
+                    <x-mary-button icon="o-arrow-right" class="btn-ghost btn-xs" href="{{ route('routers.index') }}"
+                        wire:navigate />
                 </div>
             </x-slot>
             <div class="space-y-3">
                 @forelse ($recentRouters as $router)
-                    <div class="p-3 border border-base-300 bg-base-200/50" wire:key="recent-router-{{ $router->id }}">
+                    <div class="p-3 border border-base-300 bg-base-200/50"
+                        wire:key="recent-router-{{ $router->id }}">
                         <div class="flex items-start justify-between gap-2">
                             <div class="flex-1 min-w-0">
                                 <p class="font-semibold text-sm truncate">{{ $router->name }}</p>
@@ -334,12 +342,15 @@
                                 <div class="flex items-center gap-3 mt-2 text-xs text-base-content/60">
                                     <span>Zone: {{ $router->zone->name ?? 'N/A' }}</span>
                                     <span>•</span>
-                                    <span class="text-success">Active: {{ $router->active_vouchers_count ?? 0 }}</span>
+                                    <span class="text-success">Active:
+                                        {{ $router->active_vouchers_count ?? 0 }}</span>
                                     <span>•</span>
-                                    <span class="text-warning">Expired: {{ $router->expired_vouchers_count ?? 0 }}</span>
+                                    <span class="text-warning">Expired:
+                                        {{ $router->expired_vouchers_count ?? 0 }}</span>
                                 </div>
                             </div>
-                            <span class="text-xs text-base-content/50 whitespace-nowrap">{{ $router->created_at->diffForHumans() }}</span>
+                            <span
+                                class="text-xs text-base-content/50 whitespace-nowrap">{{ $router->created_at->diffForHumans() }}</span>
                         </div>
                     </div>
                 @empty
@@ -362,16 +373,17 @@
             </x-slot>
             <div class="space-y-3">
                 @forelse ($recentVouchers as $voucher)
-                    <div class="flex items-center justify-between p-2 border border-base-300 bg-base-200/50" wire:key="recent-voucher-{{ $voucher->id }}">
+                    <div class="flex items-center justify-between p-2 border border-base-300 bg-base-200/50"
+                        wire:key="recent-voucher-{{ $voucher->id }}">
                         <div class="flex-1 min-w-0">
                             <p class="font-semibold text-sm truncate">{{ $voucher->username }}</p>
                             <p class="text-xs text-base-content/60 mt-1">{{ $voucher->router->name ?? 'N/A' }}</p>
                         </div>
                         <div class="flex flex-col items-end gap-1">
-                            <x-mary-badge 
-                                value="{{ ucfirst($voucher->status) }}" 
+                            <x-mary-badge value="{{ ucfirst($voucher->status) }}"
                                 class="badge-sm {{ $voucher->status === 'active' ? 'badge-success' : ($voucher->status === 'expired' ? 'badge-warning' : 'badge-ghost') }}" />
-                            <span class="text-xs text-base-content/50">{{ $voucher->created_at->diffForHumans() }}</span>
+                            <span
+                                class="text-xs text-base-content/50">{{ $voucher->created_at->diffForHumans() }}</span>
                         </div>
                     </div>
                 @empty
@@ -394,15 +406,15 @@
             </x-slot>
             <div class="space-y-3">
                 @forelse ($recentInvoices as $invoice)
-                    <div class="flex items-center justify-between p-3 border border-base-300 bg-base-200/50" wire:key="invoice-{{ $invoice->id }}">
+                    <div class="flex items-center justify-between p-3 border border-base-300 bg-base-200/50"
+                        wire:key="invoice-{{ $invoice->id }}">
                         <div class="flex-1 min-w-0">
                             <p class="font-semibold text-sm">#{{ $invoice->id }}</p>
                             <p class="text-xs text-base-content/60 mt-1">{{ ucfirst($invoice->category) }}</p>
                         </div>
                         <div class="text-right">
                             <p class="font-bold text-sm">BDT {{ number_format($invoice->amount, 2) }}</p>
-                            <x-mary-badge 
-                                value="{{ ucfirst($invoice->status) }}" 
+                            <x-mary-badge value="{{ ucfirst($invoice->status) }}"
                                 class="badge-sm mt-1 {{ $invoice->status === 'completed' ? 'badge-success' : ($invoice->status === 'pending' ? 'badge-warning' : 'badge-error') }}" />
                         </div>
                     </div>

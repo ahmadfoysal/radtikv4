@@ -5,16 +5,12 @@ namespace App\Services\Subscriptions;
 use App\Models\Package;
 use App\Models\Router;
 use App\Models\User;
-use App\Services\BillingService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 class RouterSubscriptionService
 {
-    public function __construct(
-        protected BillingService $billingService
-    ) {}
 
     /**
      * Check if a user has enough balance for a given package.
@@ -61,13 +57,12 @@ class RouterSubscriptionService
             ]));
 
             // Debit the user's balance with router reference
-            $this->billingService->debit(
-                $user,
-                $price,
-                'router_subscription',
-                "Router subscription: {$package->name}",
-                ['package_id' => $package->id],
-                $router
+            $user->debit(
+                amount: $price,
+                category: 'router_subscription',
+                description: "Router subscription: {$package->name}",
+                meta: ['package_id' => $package->id],
+                router: $router
             );
 
             return $router;
@@ -110,13 +105,12 @@ class RouterSubscriptionService
             }
 
             // Debit the user's balance
-            $this->billingService->debit(
-                $user,
-                $price,
-                'router_renewal',
-                "Router renewal: {$package->name}",
-                ['package_id' => $package->id],
-                $router
+            $user->debit(
+                amount: $price,
+                category: 'router_renewal',
+                description: "Router renewal: {$package->name}",
+                meta: ['package_id' => $package->id],
+                router: $router
             );
 
             // Calculate new subscription dates

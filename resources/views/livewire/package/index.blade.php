@@ -74,11 +74,18 @@
                     @forelse ($packages as $package)
                         <tr class="hover:bg-base-200/40 border-t border-base-200 text-center">
                             <td class="px-4 py-3 text-left font-medium">{{ $package->name }}</td>
-                            <td class="px-4 py-3 text-left">{{ number_format($package->price_monthly, 2) }}</td>
-                            <td class="px-4 py-3 text-left">{{ $package->price_yearly ? number_format($package->price_yearly, 2) : '—' }}</td>
+                            <td class="px-4 py-3 text-left">@userCurrency($package->price_monthly)</td>
+                            <td class="px-4 py-3 text-left">
+                                @if ($package->price_yearly)
+                                    @userCurrency($package->price_yearly)
+                                @else
+                                    —
+                                @endif
+                            </td>
                             <td class="px-4 py-3">{{ $package->user_limit }}</td>
                             <td class="px-4 py-3">
-                                <span class="badge {{ $package->billing_cycle === 'monthly' ? 'badge-info' : 'badge-warning' }}">
+                                <span
+                                    class="badge {{ $package->billing_cycle === 'monthly' ? 'badge-info' : 'badge-warning' }}">
                                     {{ ucfirst($package->billing_cycle) }}
                                 </span>
                             </td>

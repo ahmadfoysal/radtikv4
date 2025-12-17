@@ -43,34 +43,34 @@ class Create extends Component
                 'country' => $this->country,
             ];
 
-            // Set admin_id when admin creates a reseller
-            if (auth()->user()->hasRole('admin')) {
-                $userData['admin_id'] = auth()->id();
+            // Determine role based on creator
+            $currentUser = auth()->user();
+            $roleToAssign = null;
+
+            if ($currentUser->hasRole('superadmin')) {
+                // Superadmin can only create another superadmin
+                $roleToAssign = 'superadmin';
+            } elseif ($currentUser->hasRole('admin')) {
+                // Admin can only create reseller
+                $roleToAssign = 'reseller';
+                // Set admin_id to link reseller to admin
+                $userData['admin_id'] = $currentUser->id;
+            } else {
+                // Resellers cannot create users
+                abort(403, 'You are not authorized to create users.');
             }
 
             $user = \App\Models\User::create($userData);
 
-            // Decide which role to give the new user
-            $roleToAssign = null;
-
-            if (auth()->user()->hasRole('superadmin')) {
-                $roleToAssign = 'admin';
-            } elseif (auth()->user()->hasRole('admin')) {
-                $roleToAssign = 'reseller';
-            }
-
-            // Optional: block creation if the current user isn't allowed to assign any role
-            if (is_null($roleToAssign)) {
-                abort(403, 'You are not allowed to assign a role to this user.');
-            }
-
-            // Assign the role (or use syncRoles([$roleToAssign]) if you want to replace any existing roles)
+            // Assign the determined role
             $user->assignRole($roleToAssign);
         });
 
+        $roleCreated = auth()->user()->hasRole('superadmin') ? 'Superadmin' : 'Reseller';
+
         $this->success(
             title: 'Success!',
-            description: 'User created successfully.'
+            description: "{$roleCreated} user created successfully."
         );
 
         $this->redirect(route('users.index'), navigate: true);

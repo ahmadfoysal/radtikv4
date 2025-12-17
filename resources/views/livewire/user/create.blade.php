@@ -1,4 +1,15 @@
 <x-mary-card title="Add User" separator class="max-w-4xl mx-auto bg-base-100">
+    @if (auth()->user()->hasRole('superadmin'))
+        <x-mary-alert icon="o-information-circle" class="alert-info mb-4">
+            You are creating a <strong>Superadmin</strong> user with full platform access.
+        </x-mary-alert>
+    @elseif(auth()->user()->hasRole('admin'))
+        <x-mary-alert icon="o-information-circle" class="alert-info mb-4">
+            You are creating a <strong>Reseller</strong> user. Admin users can only be created through public
+            registration.
+        </x-mary-alert>
+    @endif
+
     <x-mary-form wire:submit="save">
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div class="col-span-1">

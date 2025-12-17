@@ -56,6 +56,7 @@ Route::middleware(['auth', 'check.suspended'])->group(function () {
     /* Billing Routes */
     Route::get('/billing/invoices', App\Livewire\Billing\Invoices::class)->name('billing.invoices');
     Route::get('/billing/manual-adjustment', App\Livewire\Billing\ManualAdjustment::class)->name('billing.manual-adjustment');
+    Route::get('/billing/revenue-analytics', App\Livewire\Admin\RevenueAnalytics::class)->name('billing.revenue-analytics')->middleware('superadmin');
 
     /* Ticket Routes */
     Route::get('/support/contact', App\Livewire\Tickets\Index::class)->name('tickets.index');

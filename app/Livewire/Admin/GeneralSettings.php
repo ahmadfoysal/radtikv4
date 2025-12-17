@@ -68,9 +68,9 @@ class GeneralSettings extends Component
 
     public function mount(): void
     {
-        // Check if user is admin or superadmin
+        // Check if user is admin, superadmin, or reseller
         $user = auth()->user();
-        abort_unless($user && ($user->isAdmin() || $user->isSuperAdmin()), 403);
+        abort_unless($user && ($user->isAdmin() || $user->isSuperAdmin() || $user->isReseller()), 403);
 
         $this->loadSettings();
         $this->loadOptions();
@@ -111,41 +111,41 @@ class GeneralSettings extends Component
     public function loadOptions(): void
     {
         $this->availableTimezones = [
-            'UTC' => 'UTC',
-            'America/New_York' => 'Eastern Time (ET)',
-            'America/Chicago' => 'Central Time (CT)',
-            'America/Denver' => 'Mountain Time (MT)',
-            'America/Los_Angeles' => 'Pacific Time (PT)',
-            'Europe/London' => 'London (GMT)',
-            'Europe/Berlin' => 'Berlin (CET)',
-            'Asia/Tokyo' => 'Tokyo (JST)',
-            'Asia/Shanghai' => 'Shanghai (CST)',
-            'Asia/Dhaka' => 'Dhaka (BST)',
-            'Asia/Kolkata' => 'Mumbai (IST)',
+            ['id' => 'UTC', 'name' => 'UTC'],
+            ['id' => 'America/New_York', 'name' => 'Eastern Time (ET)'],
+            ['id' => 'America/Chicago', 'name' => 'Central Time (CT)'],
+            ['id' => 'America/Denver', 'name' => 'Mountain Time (MT)'],
+            ['id' => 'America/Los_Angeles', 'name' => 'Pacific Time (PT)'],
+            ['id' => 'Europe/London', 'name' => 'London (GMT)'],
+            ['id' => 'Europe/Berlin', 'name' => 'Berlin (CET)'],
+            ['id' => 'Asia/Tokyo', 'name' => 'Tokyo (JST)'],
+            ['id' => 'Asia/Shanghai', 'name' => 'Shanghai (CST)'],
+            ['id' => 'Asia/Dhaka', 'name' => 'Dhaka (BST)'],
+            ['id' => 'Asia/Kolkata', 'name' => 'Mumbai (IST)'],
         ];
 
         $this->availableCurrencies = [
-            'USD' => 'US Dollar ($)',
-            'EUR' => 'Euro (€)',
-            'GBP' => 'British Pound (£)',
-            'BDT' => 'Bangladeshi Taka (৳)',
-            'JPY' => 'Japanese Yen (¥)',
-            'INR' => 'Indian Rupee (₹)',
+            ['id' => 'USD', 'name' => 'US Dollar ($)'],
+            ['id' => 'EUR', 'name' => 'Euro (€)'],
+            ['id' => 'GBP', 'name' => 'British Pound (£)'],
+            ['id' => 'BDT', 'name' => 'Bangladeshi Taka (৳)'],
+            ['id' => 'JPY', 'name' => 'Japanese Yen (¥)'],
+            ['id' => 'INR', 'name' => 'Indian Rupee (₹)'],
         ];
 
         $this->availableDateFormats = [
-            'Y-m-d' => 'YYYY-MM-DD (2024-12-16)',
-            'd/m/Y' => 'DD/MM/YYYY (16/12/2024)',
-            'm/d/Y' => 'MM/DD/YYYY (12/16/2024)',
-            'd-M-Y' => 'DD-MMM-YYYY (16-Dec-2024)',
-            'F j, Y' => 'Month DD, YYYY (December 16, 2024)',
+            ['id' => 'Y-m-d', 'name' => 'YYYY-MM-DD (2024-12-16)'],
+            ['id' => 'd/m/Y', 'name' => 'DD/MM/YYYY (16/12/2024)'],
+            ['id' => 'm/d/Y', 'name' => 'MM/DD/YYYY (12/16/2024)'],
+            ['id' => 'd-M-Y', 'name' => 'DD-MMM-YYYY (16-Dec-2024)'],
+            ['id' => 'F j, Y', 'name' => 'Month DD, YYYY (December 16, 2024)'],
         ];
 
         $this->availableTimeFormats = [
-            'H:i:s' => '24-hour format (14:30:45)',
-            'H:i' => '24-hour format without seconds (14:30)',
-            'h:i:s A' => '12-hour format (02:30:45 PM)',
-            'h:i A' => '12-hour format without seconds (02:30 PM)',
+            ['id' => 'H:i:s', 'name' => '24-hour format (14:30:45)'],
+            ['id' => 'H:i', 'name' => '24-hour format without seconds (14:30)'],
+            ['id' => 'h:i:s A', 'name' => '12-hour format (02:30:45 PM)'],
+            ['id' => 'h:i A', 'name' => '12-hour format without seconds (02:30 PM)'],
         ];
     }
 
@@ -154,7 +154,10 @@ class GeneralSettings extends Component
         $this->validate();
 
         try {
-            $userId = auth()->id();
+            $user = auth()->user();
+
+            // SuperAdmin saves as global (null), Admin/Reseller saves as user-specific
+            $userId = $user->isSuperAdmin() ? null : $user->id;
 
             // Handle file upload for company logo
             if ($this->company_logo) {
@@ -163,7 +166,7 @@ class GeneralSettings extends Component
                 $this->current_logo = $logoPath;
             }
 
-            // Save user-specific settings
+            // Save settings (global for superadmin, user-specific for admin/reseller)
             GeneralSetting::setValue('company_name', $this->company_name, 'string', $userId);
             GeneralSetting::setValue('company_address', $this->company_address, 'string', $userId);
             GeneralSetting::setValue('company_phone', $this->company_phone, 'string', $userId);
@@ -176,10 +179,10 @@ class GeneralSettings extends Component
             GeneralSetting::setValue('currency_symbol', $this->currency_symbol, 'string', $userId);
             GeneralSetting::setValue('items_per_page', $this->items_per_page, 'integer', $userId);
 
-            // Save maintenance mode for superadmin only
-            if (auth()->user()->isSuperAdmin()) {
-                GeneralSetting::setValue('maintenance_mode', $this->maintenance_mode, 'boolean', $userId);
-                GeneralSetting::setValue('maintenance_message', $this->maintenance_message, 'string', $userId);
+            // Save maintenance mode for superadmin only (always global)
+            if ($user->isSuperAdmin()) {
+                GeneralSetting::setValue('maintenance_mode', $this->maintenance_mode, 'boolean', null);
+                GeneralSetting::setValue('maintenance_message', $this->maintenance_message, 'string', null);
             }
 
             $this->success('Settings saved successfully!', position: 'toast-top');

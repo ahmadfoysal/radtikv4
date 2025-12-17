@@ -91,7 +91,7 @@
                                 @endif
                             </td>
                             <td class="px-4 py-3 text-left">{{ $user->address }}</td>
-                            <td class="px-4 py-3">{{ $user->created_at?->format('d-m-Y') }}</td>
+                            <td class="px-4 py-3">@userDate($user->created_at)</td>
                             <td class="px-4 py-3">
                                 <div class="flex justify-end gap-3">
                                     @if (auth()->user()->hasRole('superadmin'))
