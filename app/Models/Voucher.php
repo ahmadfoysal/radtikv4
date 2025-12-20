@@ -3,11 +3,13 @@
 namespace App\Models;
 
 use App\Models\Traits\LogsActivity;
+use App\Services\VoucherLogger;
 use Illuminate\Database\Eloquent\Model;
 
 class Voucher extends Model
 {
     use LogsActivity;
+
     protected $fillable = [
         'name',
         'username',
@@ -27,6 +29,23 @@ class Voucher extends Model
         'activated_at' => 'datetime',
         'expires_at' => 'datetime',
     ];
+
+    protected static function booted()
+    {
+        // Log voucher deletion
+        static::deleted(function ($voucher) {
+            VoucherLogger::log(
+                $voucher,
+                $voucher->router,
+                'deleted',
+                [
+                    'deleted_by' => auth()->id(),
+                    'batch' => $voucher->batch,
+                    'status' => $voucher->status,
+                ]
+            );
+        });
+    }
 
     public function user()
     {
@@ -51,5 +70,10 @@ class Voucher extends Model
     public function profile()
     {
         return $this->belongsTo(UserProfile::class, 'user_profile_id');
+    }
+
+    public function logs()
+    {
+        return $this->hasMany(VoucherLog::class);
     }
 }

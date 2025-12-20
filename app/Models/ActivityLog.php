@@ -45,12 +45,12 @@ class ActivityLog extends Model
         $modelName = $this->getReadableModelName();
         $action = $this->getReadableAction();
         $identifier = $this->getModelIdentifier();
-        
+
         // Include identifier for more context
         if ($identifier) {
             return "{$userName} {$action} {$modelName}: {$identifier}";
         }
-        
+
         return "{$userName} {$action} {$modelName}";
     }
 
@@ -97,7 +97,7 @@ class ActivityLog extends Model
      */
     public function getReadableAction(): string
     {
-        return match($this->action) {
+        return match ($this->action) {
             'created' => 'created',
             'updated' => 'updated',
             'deleted' => 'deleted',
@@ -139,7 +139,7 @@ class ActivityLog extends Model
         }
 
         $important = $this->getImportantFields($this->new_values);
-        
+
         if (empty($important)) {
             return null;
         }
@@ -147,7 +147,8 @@ class ActivityLog extends Model
         $parts = [];
         foreach ($important as $key => $value) {
             $label = $this->humanizeFieldName($key);
-            $parts[] = "{$label}: {$value}";
+            $formatted = $this->formatValue($value);
+            $parts[] = "{$label}: {$formatted}";
         }
 
         return implode(', ', $parts);
@@ -159,18 +160,23 @@ class ActivityLog extends Model
     protected function formatUpdateChanges(): string
     {
         $changes = [];
-        
+
         foreach ($this->new_values as $key => $newValue) {
             if (isset($this->old_values[$key])) {
                 $oldValue = $this->old_values[$key];
-                
+
                 // Skip if values are the same
                 if ($oldValue === $newValue) {
                     continue;
                 }
 
                 $label = $this->humanizeFieldName($key);
-                $changes[] = "{$label} changed from '{$oldValue}' to '{$newValue}'";
+
+                // Format datetime values to be more readable
+                $oldFormatted = $this->formatValue($oldValue);
+                $newFormatted = $this->formatValue($newValue);
+
+                $changes[] = "{$label} changed from '{$oldFormatted}' to '{$newFormatted}'";
             }
         }
 
@@ -183,7 +189,7 @@ class ActivityLog extends Model
     protected function formatDeletedChanges(): ?string
     {
         $important = $this->getImportantFields($this->old_values);
-        
+
         if (empty($important)) {
             return null;
         }
@@ -191,7 +197,8 @@ class ActivityLog extends Model
         $parts = [];
         foreach ($important as $key => $value) {
             $label = $this->humanizeFieldName($key);
-            $parts[] = "{$label}: {$value}";
+            $formatted = $this->formatValue($value);
+            $parts[] = "{$label}: {$formatted}";
         }
 
         return 'Deleted: ' . implode(', ', $parts);
@@ -204,16 +211,23 @@ class ActivityLog extends Model
     {
         // Fields to always skip
         $skipFields = [
-            'id', 'created_at', 'updated_at', 'deleted_at', 
-            'password', 'remember_token', 'two_factor_secret',
-            'two_factor_recovery_codes', 'user_agent', 'ip_address'
+            'id',
+            'created_at',
+            'updated_at',
+            'deleted_at',
+            'password',
+            'remember_token',
+            'two_factor_secret',
+            'two_factor_recovery_codes',
+            'user_agent',
+            'ip_address'
         ];
 
         // Priority fields to show
         $priorityFields = ['name', 'username', 'email', 'title', 'subject', 'status'];
 
         $important = [];
-        
+
         // First, add priority fields if they exist
         foreach ($priorityFields as $field) {
             if (isset($values[$field]) && !in_array($field, $skipFields)) {
@@ -243,6 +257,39 @@ class ActivityLog extends Model
     protected function humanizeFieldName(string $field): string
     {
         return \App\Support\ActivityLogHelper::humanizeFieldName($field);
+    }
+
+    /**
+     * Format value for display
+     */
+    protected function formatValue($value): string
+    {
+        // Handle null
+        if ($value === null) {
+            return 'null';
+        }
+
+        // Handle boolean
+        if (is_bool($value)) {
+            return $value ? 'true' : 'false';
+        }
+
+        // Handle datetime strings (ISO 8601 format)
+        if (is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}/', $value)) {
+            try {
+                $date = \Carbon\Carbon::parse($value);
+                return $date->format('M d, Y h:i A');
+            } catch (\Exception $e) {
+                return $value;
+            }
+        }
+
+        // Handle arrays/objects
+        if (is_array($value) || is_object($value)) {
+            return json_encode($value);
+        }
+
+        return (string) $value;
     }
 
     /**

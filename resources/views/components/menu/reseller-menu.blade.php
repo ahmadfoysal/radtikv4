@@ -30,6 +30,9 @@
                 @can('generate_vouchers')
                     <x-mary-menu-item title="Generate Voucher" icon="o-plus" link="/vouchers/generate" />
                 @endcan
+                @can('view_vouchers')
+                    <x-mary-menu-item title="Voucher Logs" icon="o-clipboard-document-list" link="/vouchers/logs" />
+                @endcan
                 @can('print_vouchers')
                     <x-mary-menu-item title="Print Vouchers" icon="o-printer" link="/vouchers/bulk-manager" />
                 @endcan
@@ -61,15 +64,11 @@
             </x-mary-menu-sub>
         @endif
 
-        {{-- REPORTS --}}
-        @if (auth()->user()->can('view_reports') || auth()->user()->can('view_voucher_logs'))
-            <x-mary-menu-sub title="Reports" icon="o-document-chart-bar">
-                @can('view_reports')
-                    <x-mary-menu-item title="Sales Summary" icon="o-banknotes" link="/reports/sales" />
-                @endcan
-                @can('view_voucher_logs')
-                    <x-mary-menu-item title="Voucher Logs" icon="o-chart-bar" link="/reports/vouchers" />
-                @endcan
+        {{-- BILLING & REPORTS --}}
+        @if (auth()->user()->can('view_voucher_logs'))
+            <x-mary-menu-sub title="Billing & Reports" icon="o-document-chart-bar">
+                <x-mary-menu-item title="Sales Summary" icon="o-chart-bar" link="/billing/sales-summary" />
+                <x-mary-menu-item title="Voucher Logs" icon="o-clipboard-document-list" link="/vouchers/logs" />
             </x-mary-menu-sub>
         @endif
 

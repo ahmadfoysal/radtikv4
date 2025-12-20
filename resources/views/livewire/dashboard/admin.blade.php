@@ -1,25 +1,85 @@
 <div class="space-y-6">
-    {{-- Top Stats Cards --}}
-    <div class="grid gap-4 grid-cols-1 md:grid-cols-3">
+    {{-- Top Financial Stats Cards --}}
+    <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        {{-- Today's Income --}}
+        <x-mary-card class="border border-base-300 bg-gradient-to-br from-success/10 to-base-100">
+            <div class="flex items-start justify-between">
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-2">
+                        <x-mary-icon name="o-banknotes" class="w-5 h-5 text-success" />
+                        <span class="text-sm font-medium text-base-content/70">Today's Income</span>
+                    </div>
+                    <p class="text-3xl font-bold text-success">@userCurrency($billingStats['todayIncome'])</p>
+                    <p class="text-xs text-base-content/60 mt-1">{{ $billingStats['todayActivations'] }} activations
+                        today</p>
+                </div>
+            </div>
+        </x-mary-card>
+
+        {{-- Monthly Income --}}
+        <x-mary-card class="border border-base-300 bg-gradient-to-br from-primary/10 to-base-100">
+            <div class="flex items-start justify-between">
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-2">
+                        <x-mary-icon name="o-currency-dollar" class="w-5 h-5 text-primary" />
+                        <span class="text-sm font-medium text-base-content/70">Monthly Income</span>
+                    </div>
+                    <p class="text-3xl font-bold text-primary">@userCurrency($billingStats['monthIncome'])</p>
+                    <p class="text-xs text-base-content/60 mt-1">From voucher activations</p>
+                </div>
+            </div>
+        </x-mary-card>
+
+        {{-- Monthly Expense --}}
+        <x-mary-card class="border border-base-300 bg-gradient-to-br from-warning/10 to-base-100">
+            <div class="flex items-start justify-between">
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-2">
+                        <x-mary-icon name="o-arrow-trending-down" class="w-5 h-5 text-warning" />
+                        <span class="text-sm font-medium text-base-content/70">Monthly Expense</span>
+                    </div>
+                    <p class="text-3xl font-bold text-warning">@userCurrency($billingStats['monthlyExpense'])</p>
+                    <p class="text-xs text-base-content/60 mt-1">Router operational costs</p>
+                </div>
+            </div>
+        </x-mary-card>
+
+        {{-- Net Profit --}}
+        <x-mary-card
+            class="border border-base-300 bg-gradient-to-br {{ $billingStats['netProfit'] >= 0 ? 'from-success/10' : 'from-error/10' }} to-base-100">
+            <div class="flex items-start justify-between">
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-2">
+                        <x-mary-icon name="o-chart-bar"
+                            class="w-5 h-5 {{ $billingStats['netProfit'] >= 0 ? 'text-success' : 'text-error' }}" />
+                        <span class="text-sm font-medium text-base-content/70">Net Profit</span>
+                    </div>
+                    <p class="text-3xl font-bold {{ $billingStats['netProfit'] >= 0 ? 'text-success' : 'text-error' }}">
+                        @userCurrency($billingStats['netProfit'])</p>
+                    <p class="text-xs text-base-content/60 mt-1">Income - Expenses</p>
+                </div>
+            </div>
+        </x-mary-card>
+    </div>
+
+    {{-- Secondary Stats --}}
+    <div class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
         {{-- Wallet Balance --}}
         <x-mary-card class="border border-base-300 bg-base-100">
             <div class="flex items-start justify-between">
                 <div class="flex-1">
                     <div class="flex items-center gap-2 mb-2">
-                        <x-mary-icon name="o-banknotes" class="w-5 h-5 text-primary" />
+                        <x-mary-icon name="o-wallet" class="w-5 h-5 text-info" />
                         <span class="text-sm font-medium text-base-content/70">Wallet Balance</span>
                     </div>
-                    <p class="text-3xl font-bold text-primary">@userCurrency($balance)</p>
-                    <p class="text-xs text-base-content/60 mt-1">Available for subscriptions</p>
+                    <p class="text-2xl font-bold">@userCurrency($balance)</p>
                 </div>
-            </div>
-            <div class="mt-4">
-                <x-mary-button icon="o-plus" label="Add Balance" class="btn-sm btn-primary btn-block"
+                <x-mary-button icon="o-plus" class="btn-sm btn-circle btn-primary"
                     href="{{ route('billing.add-balance') }}" wire:navigate />
             </div>
         </x-mary-card>
 
-        {{-- Routers Overview --}}
+        {{-- Routers --}}
         <x-mary-card class="border border-base-300 bg-base-100">
             <div class="flex items-start justify-between">
                 <div class="flex-1">
@@ -27,17 +87,13 @@
                         <x-mary-icon name="o-server-stack" class="w-5 h-5 text-info" />
                         <span class="text-sm font-medium text-base-content/70">Routers</span>
                     </div>
-                    <p class="text-3xl font-bold">{{ number_format($routerStats['total']) }}</p>
-                    <div class="flex flex-wrap gap-2 mt-2 text-xs">
-                        <span class="text-success">Active:
-                            {{ $routerStats['total'] - $routerStats['expiringToday'] - $routerStats['expiringWeek'] }}</span>
-                        <span class="text-warning">Expiring: {{ $routerStats['expiringWeek'] }}</span>
-                    </div>
+                    <p class="text-2xl font-bold">{{ number_format($routerStats['total']) }}</p>
+                    <p class="text-xs text-warning mt-1">{{ $routerStats['expiringWeek'] }} expiring soon</p>
                 </div>
             </div>
         </x-mary-card>
 
-        {{-- Vouchers Overview --}}
+        {{-- Vouchers --}}
         <x-mary-card class="border border-base-300 bg-base-100">
             <div class="flex items-start justify-between">
                 <div class="flex-1">
@@ -45,28 +101,8 @@
                         <x-mary-icon name="o-ticket" class="w-5 h-5 text-success" />
                         <span class="text-sm font-medium text-base-content/70">Vouchers</span>
                     </div>
-                    <p class="text-3xl font-bold">{{ number_format($voucherStats['total']) }}</p>
-                    <div class="flex flex-wrap gap-2 mt-2 text-xs">
-                        <span class="text-success">Active: {{ $voucherStats['active'] }}</span>
-                        <span class="text-warning">Expired: {{ $voucherStats['expired'] }}</span>
-                    </div>
-                </div>
-            </div>
-        </x-mary-card>
-
-        {{-- Invoices Overview --}}
-        <x-mary-card class="border border-base-300 bg-base-100">
-            <div class="flex items-start justify-between">
-                <div class="flex-1">
-                    <div class="flex items-center gap-2 mb-2">
-                        <x-mary-icon name="o-document-text" class="w-5 h-5 text-warning" />
-                        <span class="text-sm font-medium text-base-content/70">Invoices</span>
-                    </div>
-                    <p class="text-3xl font-bold">{{ number_format($invoiceStats['total']) }}</p>
-                    <div class="flex flex-wrap gap-2 mt-2 text-xs">
-                        <span class="text-success">Paid: {{ $invoiceStats['paid'] }}</span>
-                        <span class="text-warning">Pending: {{ $invoiceStats['pending'] }}</span>
-                    </div>
+                    <p class="text-2xl font-bold">{{ number_format($voucherStats['total']) }}</p>
+                    <p class="text-xs text-success mt-1">{{ $voucherStats['active'] }} active</p>
                 </div>
             </div>
         </x-mary-card>
@@ -79,27 +115,8 @@
                         <x-mary-icon name="o-users" class="w-5 h-5 text-accent" />
                         <span class="text-sm font-medium text-base-content/70">Resellers</span>
                     </div>
-                    <p class="text-3xl font-bold">{{ number_format($resellerStats['total']) }}</p>
-                    <div class="flex flex-wrap gap-2 mt-2 text-xs">
-                        <span class="text-success">Active: {{ $resellerStats['active'] }}</span>
-                        <span class="text-base-content/60">With Routers: {{ $resellerStats['withRouters'] }}</span>
-                    </div>
-                </div>
-            </div>
-        </x-mary-card>
-
-        {{-- Monthly Revenue --}}
-        <x-mary-card class="border border-base-300 bg-base-100">
-            <div class="flex items-start justify-between">
-                <div class="flex-1">
-                    <div class="flex items-center gap-2 mb-2">
-                        <x-mary-icon name="o-currency-dollar" class="w-5 h-5 text-success" />
-                        <span class="text-sm font-medium text-base-content/70">Monthly Revenue</span>
-                    </div>
-                    <p class="text-3xl font-bold text-success">@userCurrency($invoiceStats['thisMonthRevenue'])</p>
-                    <div class="flex flex-wrap gap-2 mt-2 text-xs">
-                        <span class="text-base-content/60">Outstanding: @userCurrency($invoiceStats['outstanding'])</span>
-                    </div>
+                    <p class="text-2xl font-bold">{{ number_format($resellerStats['total']) }}</p>
+                    <p class="text-xs text-success mt-1">{{ $resellerStats['active'] }} active</p>
                 </div>
             </div>
         </x-mary-card>
@@ -111,40 +128,172 @@
             <span class="text-sm font-semibold text-base-content/70">Quick Actions:</span>
             <x-mary-button icon="o-plus-circle" label="Generate Vouchers" class="btn-sm btn-primary"
                 href="{{ route('vouchers.generate') }}" wire:navigate />
-            <x-mary-button icon="o-server" label="Add Router" class="btn-sm btn-info"
+            <x-mary-button icon="o-chart-bar" label="Sales Summary" class="btn-sm btn-success"
+                href="{{ route('billing.sales-summary') }}" wire:navigate />
+            <x-mary-button icon="o-clipboard-document-list" label="Voucher Logs" class="btn-sm btn-info"
+                href="{{ route('vouchers.logs') }}" wire:navigate />
+            <x-mary-button icon="o-server" label="Add Router" class="btn-sm btn-ghost"
                 href="{{ route('routers.create') }}" wire:navigate />
-            <x-mary-button icon="o-document-plus" label="Create Invoice" class="btn-sm btn-warning"
-                href="{{ route('billing.invoices') }}" wire:navigate />
-            <x-mary-button icon="o-chart-bar" label="View Reports" class="btn-sm btn-ghost" href="#"
-                wire:navigate />
         </div>
     </x-mary-card>
 
     {{-- Charts Section --}}
     <div class="grid gap-4 lg:grid-cols-2">
-        {{-- Revenue Trend Chart --}}
+        {{-- Income Trend Chart --}}
         <x-mary-card class="border border-base-300 bg-base-100">
             <x-slot name="title">
                 <div class="flex items-center gap-2">
-                    <x-mary-icon name="o-banknotes" class="w-5 h-5 text-primary" />
-                    <span>Revenue Trend (Last 7 Days)</span>
+                    <x-mary-icon name="o-arrow-trending-up" class="w-5 h-5 text-success" />
+                    <span>Income Trend (Last 7 Days)</span>
                 </div>
             </x-slot>
             <div class="h-64">
-                <canvas id="revenueChart" style="height: 250px;"></canvas>
+                <x-mary-chart wire:model="incomeChart" />
             </div>
         </x-mary-card>
 
-        {{-- Voucher Status Chart --}}
+        {{-- Activation Trend Chart --}}
         <x-mary-card class="border border-base-300 bg-base-100">
             <x-slot name="title">
                 <div class="flex items-center gap-2">
-                    <x-mary-icon name="o-ticket" class="w-5 h-5 text-success" />
-                    <span>Voucher Status Distribution</span>
+                    <x-mary-icon name="o-ticket" class="w-5 h-5 text-info" />
+                    <span>Voucher Activations (Last 7 Days)</span>
                 </div>
             </x-slot>
             <div class="h-64">
-                <canvas id="voucherStatusChart" style="height: 250px;"></canvas>
+                <x-mary-chart wire:model="activationChart" />
+            </div>
+        </x-mary-card>
+
+        {{-- Income by Profile Chart --}}
+        <x-mary-card class="border border-base-300 bg-base-100 lg:col-span-2">
+            <x-slot name="title">
+                <div class="flex items-center gap-2">
+                    <x-mary-icon name="o-chart-pie" class="w-5 h-5 text-primary" />
+                    <span>Income by Profile</span>
+                </div>
+            </x-slot>
+            <div class="h-64">
+                @if (!empty($profileIncomeChart))
+                    <x-mary-chart wire:model="profileIncomeChart" />
+                @else
+                    <div class="flex items-center justify-center h-full">
+                        <p class="text-base-content/60 text-sm">No activation data yet</p>
+                    </div>
+                @endif
+            </div>
+        </x-mary-card>
+    </div>
+
+    {{-- Tables Section --}}
+    <div class="grid gap-4 lg:grid-cols-2">
+        {{-- Income by Profile Table --}}
+        <x-mary-card class="border border-base-300 bg-base-100">
+            <x-slot name="title">
+                <div class="flex items-center gap-2">
+                    <x-mary-icon name="o-banknotes" class="w-5 h-5 text-success" />
+                    <span>Top Selling Profiles</span>
+                </div>
+            </x-slot>
+            <div class="overflow-x-auto">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Profile</th>
+                            <th class="text-right">Activations</th>
+                            <th class="text-right">Income</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($incomeByProfile as $item)
+                            <tr>
+                                <td class="font-medium">{{ $item->profile }}</td>
+                                <td class="text-right">{{ number_format($item->activations) }}</td>
+                                <td class="text-right font-semibold text-success">@userCurrency($item->total_income)</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="3" class="text-center text-base-content/60">No activations yet</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </x-mary-card>
+
+        {{-- Top Routers by Income --}}
+        <x-mary-card class="border border-base-300 bg-base-100">
+            <x-slot name="title">
+                <div class="flex items-center gap-2">
+                    <x-mary-icon name="o-server-stack" class="w-5 h-5 text-info" />
+                    <span>Top Routers by Income</span>
+                </div>
+            </x-slot>
+            <div class="overflow-x-auto">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Router</th>
+                            <th class="text-right">Income</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($topRouters as $router)
+                            <tr>
+                                <td class="font-medium">{{ $router->name }}</td>
+                                <td class="text-right font-semibold text-success">@userCurrency($router->total_income)</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="2" class="text-center text-base-content/60">No data available</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </x-mary-card>
+
+        {{-- Recent Activations --}}
+        <x-mary-card class="border border-base-300 bg-base-100 lg:col-span-2">
+            <x-slot name="title">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <x-mary-icon name="o-clock" class="w-5 h-5 text-primary" />
+                        <span>Recent Activations</span>
+                    </div>
+                    <x-mary-button label="View All" icon="o-arrow-right" class="btn-xs btn-ghost"
+                        href="{{ route('vouchers.logs') }}" wire:navigate />
+                </div>
+            </x-slot>
+            <div class="overflow-x-auto">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Profile</th>
+                            <th>Router</th>
+                            <th class="text-right">Price</th>
+                            <th class="text-right">Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($recentActivations as $activation)
+                            <tr>
+                                <td class="font-medium">{{ $activation->username }}</td>
+                                <td><span class="badge badge-sm badge-info">{{ $activation->profile }}</span></td>
+                                <td class="text-sm">{{ $activation->router_name }}</td>
+                                <td class="text-right font-semibold text-success">@userCurrency($activation->price)</td>
+                                <td class="text-right text-xs text-base-content/60">
+                                    {{ \Carbon\Carbon::parse($activation->created_at)->diffForHumans() }}
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="text-center text-base-content/60">No recent activations</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
         </x-mary-card>
     </div>
@@ -227,39 +376,32 @@
 
     {{-- Invoice Management & Package Distribution --}}
     <div class="grid gap-4 lg:grid-cols-3">
-        {{-- Invoice Statistics --}}
+        {{-- Voucher Statistics --}}
         <x-mary-card class="border border-base-300 bg-base-100">
             <x-slot name="title">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <x-mary-icon name="o-document-text" class="w-5 h-5 text-warning" />
-                        <span>Invoice Overview</span>
-                    </div>
-                    <x-mary-button icon="o-arrow-right" class="btn-ghost btn-xs"
-                        href="{{ route('billing.invoices') }}" wire:navigate />
+                <div class="flex items-center gap-2">
+                    <x-mary-icon name="o-ticket" class="w-5 h-5 text-success" />
+                    <span>Voucher Overview</span>
                 </div>
             </x-slot>
             <div class="space-y-3">
                 <div class="flex items-center justify-between">
-                    <span class="text-sm text-base-content/70">Total Invoices</span>
-                    <span class="font-bold">{{ number_format($invoiceStats['total']) }}</span>
+                    <span class="text-sm text-base-content/70">Total Vouchers</span>
+                    <span class="font-bold">{{ number_format($voucherStats['total']) }}</span>
                 </div>
                 <div class="flex items-center justify-between">
-                    <span class="text-sm text-base-content/70">Paid</span>
-                    <span class="font-bold text-success">{{ number_format($invoiceStats['paid']) }}</span>
+                    <span class="text-sm text-base-content/70">Active</span>
+                    <span class="font-bold text-success">{{ number_format($voucherStats['active']) }}</span>
                 </div>
                 <div class="flex items-center justify-between">
-                    <span class="text-sm text-base-content/70">Pending</span>
-                    <span class="font-bold text-warning">{{ number_format($invoiceStats['pending']) }}</span>
+                    <span class="text-sm text-base-content/70">Expired</span>
+                    <span class="font-bold text-warning">{{ number_format($voucherStats['expired']) }}</span>
                 </div>
                 <div class="pt-3 border-t border-base-300">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs text-base-content/60">This Month Revenue</span>
-                        <span class="text-lg font-bold text-primary">@userCurrency($invoiceStats['thisMonthRevenue'])</span>
-                    </div>
                     <div class="flex items-center justify-between">
-                        <span class="text-xs text-base-content/60">Outstanding</span>
-                        <span class="text-sm font-semibold text-error">@userCurrency($invoiceStats['outstanding'])</span>
+                        <span class="text-xs text-base-content/60">Generated Today</span>
+                        <span
+                            class="text-sm font-semibold text-primary">{{ number_format($voucherStats['generatedToday']) }}</span>
                     </div>
                 </div>
             </div>
@@ -425,51 +567,3 @@
         </x-mary-card>
     </div>
 </div>
-
-<script>
-    document.addEventListener('livewire:init', function() {
-        // Initialize charts after Livewire loads
-        setTimeout(function() {
-            // Revenue Trend Chart
-            const revenueCtx = document.getElementById('revenueChart');
-            if (revenueCtx && typeof Chart !== 'undefined') {
-                const revenueChartData = @json($revenueChart);
-                new Chart(revenueCtx, revenueChartData);
-            }
-
-            // Voucher Status Chart
-            const voucherCtx = document.getElementById('voucherStatusChart');
-            if (voucherCtx && typeof Chart !== 'undefined') {
-                const voucherChartData = @json($voucherStatusChart);
-                new Chart(voucherCtx, voucherChartData);
-            }
-        }, 100);
-    });
-
-    // Also initialize on page load if Livewire is already loaded
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(initCharts, 100);
-        });
-    } else {
-        setTimeout(initCharts, 100);
-    }
-
-    function initCharts() {
-        if (typeof Chart === 'undefined') return;
-
-        // Revenue Trend Chart
-        const revenueCtx = document.getElementById('revenueChart');
-        if (revenueCtx && !revenueCtx.chart) {
-            const revenueChartData = @json($revenueChart);
-            revenueCtx.chart = new Chart(revenueCtx, revenueChartData);
-        }
-
-        // Voucher Status Chart
-        const voucherCtx = document.getElementById('voucherStatusChart');
-        if (voucherCtx && !voucherCtx.chart) {
-            const voucherChartData = @json($voucherStatusChart);
-            voucherCtx.chart = new Chart(voucherCtx, voucherChartData);
-        }
-    }
-</script>

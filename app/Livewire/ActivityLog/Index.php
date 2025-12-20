@@ -25,8 +25,20 @@ class Index extends Component
 
     public function render()
     {
+        $user = auth()->user();
+
         $query = ActivityLog::with('user')
             ->orderBy('created_at', 'desc');
+
+        // Scope logs based on user role
+        if ($user->isAdmin()) {
+            // Admin can only see their own logs and their resellers' logs
+            $resellerIds = $user->reseller()->pluck('id')->toArray();
+            $allowedUserIds = array_merge([$user->id], $resellerIds);
+
+            $query->whereIn('user_id', $allowedUserIds);
+        }
+        // Super admin can see all logs (no restriction)
 
         // Filter by action type
         if ($this->filter !== 'all') {
@@ -35,11 +47,11 @@ class Index extends Component
 
         // Search in description or user name
         if (!empty($this->search)) {
-            $query->where(function($q) {
+            $query->where(function ($q) {
                 $q->where('description', 'like', "%{$this->search}%")
-                  ->orWhereHas('user', function($userQuery) {
-                      $userQuery->where('name', 'like', "%{$this->search}%");
-                  });
+                    ->orWhereHas('user', function ($userQuery) {
+                        $userQuery->where('name', 'like', "%{$this->search}%");
+                    });
             });
         }
 

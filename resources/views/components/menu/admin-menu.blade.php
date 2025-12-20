@@ -52,19 +52,22 @@
 
         {{-- REPORTS --}}
         <x-mary-menu-sub title="Reports" icon="o-document-chart-bar">
-            <x-mary-menu-item title="Sales Summary" icon="o-banknotes" link="/reports/sales" />
-            <x-mary-menu-item title="System Logs" icon="o-document-text" link="/reports/logs" />
-            <x-mary-menu-item title="Voucher Logs" icon="o-chart-bar" link="/reports/vouchers" />
+            <x-mary-menu-item title="Voucher Logs" icon="o-clipboard-document-list" link="/vouchers/logs" />
+            <x-mary-menu-item title="Sales Summary" icon="o-chart-bar" link="/billing/sales-summary" />
         </x-mary-menu-sub>
 
         {{-- ADMIN SETTINGS --}}
         <x-mary-menu-sub title="Admin Settings" icon="o-cog-6-tooth">
-            <x-mary-menu-item title="General Settings" icon="o-adjustments-horizontal" link="/admin/general-settings" wire:navigate />
-            <x-mary-menu-item title="Theme Settings" icon="o-paint-brush" link="/admin/theme-settings" wire:navigate />
-            <x-mary-menu-item title="Notification & Email" icon="o-envelope-open" link="/settings/email" />
+            <x-mary-menu-item title="General Settings" icon="o-adjustments-horizontal" link="/admin/general-settings"
+                wire:navigate />
+            {{-- <x-mary-menu-item title="Theme Settings" icon="o-paint-brush" link="/admin/theme-settings" wire:navigate />
+            <x-mary-menu-item title="Notification & Email" icon="o-envelope-open" link="/settings/email" /> --}}
             <x-mary-menu-item title="Profile & Security" icon="o-shield-check" link="/settings/profile" wire:navigate />
             <x-mary-menu-item title="Zone Management" icon="o-globe-alt" link="/zones" />
         </x-mary-menu-sub>
+        {{-- SYSTEM LOGS --}}
+        <x-mary-menu-item title="System Logs" icon="o-document-text" link="/reports/logs" />
+
 
         {{-- SUPPORT --}}
         <x-mary-menu-sub title="Help & Support" icon="o-lifebuoy">

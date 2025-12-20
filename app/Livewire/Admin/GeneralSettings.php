@@ -110,27 +110,37 @@ class GeneralSettings extends Component
 
     public function loadOptions(): void
     {
-        $this->availableTimezones = [
-            ['id' => 'UTC', 'name' => 'UTC'],
-            ['id' => 'America/New_York', 'name' => 'Eastern Time (ET)'],
-            ['id' => 'America/Chicago', 'name' => 'Central Time (CT)'],
-            ['id' => 'America/Denver', 'name' => 'Mountain Time (MT)'],
-            ['id' => 'America/Los_Angeles', 'name' => 'Pacific Time (PT)'],
-            ['id' => 'Europe/London', 'name' => 'London (GMT)'],
-            ['id' => 'Europe/Berlin', 'name' => 'Berlin (CET)'],
-            ['id' => 'Asia/Tokyo', 'name' => 'Tokyo (JST)'],
-            ['id' => 'Asia/Shanghai', 'name' => 'Shanghai (CST)'],
-            ['id' => 'Asia/Dhaka', 'name' => 'Dhaka (BST)'],
-            ['id' => 'Asia/Kolkata', 'name' => 'Mumbai (IST)'],
-        ];
+        $this->availableTimezones = collect(timezone_identifiers_list())
+            ->map(function ($timezone) {
+                $offset = now()->setTimezone($timezone)->format('P');
+                return [
+                    'id' => $timezone,
+                    'name' => $timezone . ' (' . $offset . ')',
+                    'offset' => $offset
+                ];
+            })
+            ->sortBy('offset')
+            ->values()
+            ->toArray();
 
         $this->availableCurrencies = [
+            ['id' => 'BDT', 'name' => 'Bangladeshi Taka (৳)'],
+            ['id' => 'SAR', 'name' => 'Saudi Riyal (ر.س)'],
+            ['id' => 'AED', 'name' => 'UAE Dirham (د.إ)'],
+            ['id' => 'PKR', 'name' => 'Pakistani Rupee (₨)'],
+            ['id' => 'INR', 'name' => 'Indian Rupee (₹)'],
+            ['id' => 'UGX', 'name' => 'Ugandan Shilling (USh)'],
+            ['id' => 'IDR', 'name' => 'Indonesian Rupiah (Rp)'],
             ['id' => 'USD', 'name' => 'US Dollar ($)'],
             ['id' => 'EUR', 'name' => 'Euro (€)'],
-            ['id' => 'GBP', 'name' => 'British Pound (£)'],
-            ['id' => 'BDT', 'name' => 'Bangladeshi Taka (৳)'],
-            ['id' => 'JPY', 'name' => 'Japanese Yen (¥)'],
-            ['id' => 'INR', 'name' => 'Indian Rupee (₹)'],
+            ['id' => 'PHP', 'name' => 'Philippine Peso (₱)'],
+            ['id' => 'THB', 'name' => 'Thai Baht (฿)'],
+            ['id' => 'MYR', 'name' => 'Malaysian Ringgit (RM)'],
+            ['id' => 'VND', 'name' => 'Vietnamese Dong (₫)'],
+            ['id' => 'NGN', 'name' => 'Nigerian Naira (₦)'],
+            ['id' => 'KES', 'name' => 'Kenyan Shilling (KSh)'],
+            ['id' => 'ZAR', 'name' => 'South African Rand (R)'],
+            ['id' => 'GHS', 'name' => 'Ghanaian Cedi (₵)'],
         ];
 
         $this->availableDateFormats = [

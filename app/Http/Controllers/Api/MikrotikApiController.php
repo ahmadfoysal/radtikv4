@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Router;
 use App\Models\Voucher;
+use App\Services\VoucherLogger;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -203,6 +204,18 @@ class MikrotikApiController extends Controller
                             $updateData['expires_at'] = $expiresAt;
                         }
                     }
+
+                    // Log voucher activation
+                    VoucherLogger::log(
+                        $voucher,
+                        $voucher->router,
+                        'activated',
+                        [
+                            'activated_at' => $activationTimestamp,
+                            'expires_at' => $updateData['expires_at'] ?? null,
+                            'mac_address' => $updateData['mac_address'],
+                        ]
+                    );
                 }
             }
             // If activated_at already exists in database, we completely ignore any activation data from MikroTik

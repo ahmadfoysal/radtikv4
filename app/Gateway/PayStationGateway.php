@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redirect;
 use RuntimeException;
 
 class PayStationGateway implements PaymentGatewayContract
@@ -27,21 +28,21 @@ class PayStationGateway implements PaymentGatewayContract
      */
     public function createPayment(User $user, float $amount, array $meta = []): RedirectResponse|string
     {
-        $merchantId = $this->gateway->data['merchant_id'] ?? null;
-        $password = $this->gateway->data['password'] ?? null;
-        $baseUrl = $this->gateway->data['base_url'] ?? 'https://www.paystation.com.bd';
+        $merchantId = trim($this->gateway->data['merchant_id'] ?? '');
+        $password = trim($this->gateway->data['password'] ?? '');
+        $baseUrl = $this->gateway->data['base_url'] ?? 'https://api.paystation.com.bd';
 
         if (! $merchantId || ! $password) {
             throw new RuntimeException('PayStation gateway credentials not configured');
         }
 
-        // Generate unique order ID
-        $orderId = 'PAY-'.uniqid().'-'.time();
+        // Generate unique invoice number
+        $invoiceNumber = 'INV-' . uniqid() . '-' . time();
         $callbackUrl = route('payment.paystation.callback');
 
         // Store payment data in session (to be used after successful payment)
         session()->put('pending_payment', [
-            'order_id' => $orderId,
+            'invoice_number' => $invoiceNumber,
             'user_id' => $user->id,
             'gateway_id' => $this->gateway->id,
             'gateway_name' => 'paystation',
@@ -51,34 +52,73 @@ class PayStationGateway implements PaymentGatewayContract
             'created_at' => now()->toIso8601String(),
         ]);
 
-        // Build payment URL with parameters
-        $params = [
-            'merchant_id' => $merchantId,
-            'order_id' => $orderId,
-            'amount' => $amount,
+        // Format phone number for Bangladesh (remove + and other characters, ensure starts with 01)
+        $phone = $user->phone ?? '01000000000';
+        $phone = preg_replace('/[^0-9]/', '', $phone); // Remove non-digits
+        if (!str_starts_with($phone, '01')) {
+            $phone = '01000000000'; // Default if invalid format
+        }
+
+        // Prepare API request data according to PayStation docs
+        $requestData = [
+            'merchantId' => $merchantId,
+            'password' => $password,
+            'invoice_number' => $invoiceNumber,
+            'payment_amount' => (int) $amount,
             'currency' => 'BDT',
-            'success_url' => url('/billing/add-balance?status=success'),
-            'fail_url' => url('/billing/add-balance?status=failed'),
-            'cancel_url' => url('/billing/add-balance?status=cancelled'),
+            'cust_name' => $user->name,
+            'cust_email' => $user->email,
+            'cust_phone' => $phone,
             'callback_url' => $callbackUrl,
-            'customer_name' => $user->name,
-            'customer_email' => $user->email,
-            'customer_phone' => $user->phone ?? '',
+            'reference' => 'Balance Top-up',
         ];
 
-        // Generate signature (hash)
-        $signatureString = $merchantId.$orderId.$amount.$password;
-        $params['signature'] = hash('sha256', $signatureString);
+        // Call PayStation API to initiate payment
+        try {
+            $response = Http::asForm()->post($baseUrl . '/initiate-payment', $requestData);
 
-        // Build payment URL
-        $paymentUrl = $baseUrl.'/payment?'.http_build_query($params);
+            $result = $response->json();
 
-        Log::info('PayStation payment initiated', [
-            'order_id' => $orderId,
-            'user_id' => $user->id,
-        ]);
+            Log::info('PayStation API response', [
+                'status_code' => $response->status(),
+                'response_body' => $result,
+                'request_data' => array_merge($requestData, ['password' => '***']), // Hide password in logs
+            ]);
 
-        return redirect($paymentUrl);
+            if (!$response->successful() || ($result['status'] ?? '') !== 'success') {
+                $errorMessage = $result['message'] ?? 'Failed to initiate payment';
+
+                Log::error('PayStation payment initiation failed', [
+                    'invoice_number' => $invoiceNumber,
+                    'status_code' => $response->status(),
+                    'response' => $result,
+                    'error_message' => $errorMessage,
+                ]);
+
+                throw new RuntimeException($errorMessage);
+            }
+
+            $paymentUrl = $result['payment_url'] ?? null;
+
+            if (!$paymentUrl) {
+                throw new RuntimeException('No payment URL received from PayStation');
+            }
+
+            Log::info('PayStation payment initiated', [
+                'invoice_number' => $invoiceNumber,
+                'user_id' => $user->id,
+                'payment_url' => $paymentUrl,
+            ]);
+
+            return $paymentUrl;
+        } catch (\Exception $e) {
+            Log::error('PayStation API error', [
+                'invoice_number' => $invoiceNumber,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            throw new RuntimeException('Failed to create payment: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -86,62 +126,55 @@ class PayStationGateway implements PaymentGatewayContract
      */
     public function handleCallback(Request $request): void
     {
-        $orderId = $request->input('order_id');
-        $status = $request->input('status');
-        $transactionId = $request->input('transaction_id');
-        $amount = $request->input('amount');
-        $signature = $request->input('signature');
+        // PayStation sends: status, invoice_number, trx_id (via URL parameters)
+        $status = $request->input('status'); // Successful/Failed/Canceled
+        $invoiceNumber = $request->input('invoice_number');
+        $trxId = $request->input('trx_id'); // Only available for successful payments
 
-        if (! $orderId) {
-            Log::warning('No order_id in PayStation callback', ['data' => $request->all()]);
+        if (! $invoiceNumber) {
+            Log::warning('No invoice_number in PayStation callback', ['data' => $request->all()]);
             return;
         }
 
-        // Verify signature
-        $password = $this->gateway->data['password'] ?? null;
-        $merchantId = $this->gateway->data['merchant_id'] ?? null;
-        
-        $expectedSignature = hash('sha256', $merchantId.$orderId.$amount.$password);
-        
-        if (! hash_equals($expectedSignature, $signature)) {
-            Log::warning('Invalid PayStation callback signature', [
-                'order_id' => $orderId,
-                'received_signature' => $signature,
-            ]);
-            return;
-        }
+        Log::info('PayStation callback received', [
+            'invoice_number' => $invoiceNumber,
+            'status' => $status,
+            'trx_id' => $trxId,
+        ]);
 
         // Check if invoice already exists for this transaction
-        $existingInvoice = Invoice::where('transaction_id', $transactionId)->first();
-        
-        if ($existingInvoice) {
-            Log::info('Invoice already exists for transaction', ['transaction_id' => $transactionId]);
-            return;
+        if ($trxId) {
+            $existingInvoice = Invoice::where('transaction_id', $trxId)->first();
+
+            if ($existingInvoice) {
+                Log::info('Invoice already exists for transaction', ['trx_id' => $trxId]);
+                return;
+            }
         }
 
         // Get payment data from session
         $paymentData = session()->get('pending_payment');
-        
-        if (! $paymentData || $paymentData['order_id'] !== $orderId) {
+
+        if (! $paymentData || $paymentData['invoice_number'] !== $invoiceNumber) {
             Log::warning('No matching pending payment in session', [
-                'order_id' => $orderId,
-                'session_order_id' => $paymentData['order_id'] ?? null,
+                'invoice_number' => $invoiceNumber,
+                'session_invoice' => $paymentData['invoice_number'] ?? null,
             ]);
             return;
         }
 
         // Process based on status
-        if ($status === 'success' || $status === 'paid') {
+        if ($status === 'Successful') {
             // Get user
             $user = User::find($paymentData['user_id']);
-            
+
             if (! $user) {
                 Log::error('User not found for payment', ['user_id' => $paymentData['user_id']]);
                 return;
             }
 
             // Create invoice and credit balance in a transaction
-            DB::transaction(function () use ($user, $paymentData, $transactionId, $request) {
+            DB::transaction(function () use ($user, $paymentData, $trxId, $request) {
                 // Credit user's balance
                 $invoice = $user->credit(
                     (float) $paymentData['amount'],
@@ -149,7 +182,7 @@ class PayStationGateway implements PaymentGatewayContract
                     'Payment received via PayStation',
                     array_merge($paymentData['meta'] ?? [], [
                         'gateway' => 'paystation',
-                        'transaction_id' => $transactionId,
+                        'transaction_id' => $trxId,
                         'callback_data' => $request->all(),
                         'completed_at' => now()->toIso8601String(),
                     ])
@@ -157,26 +190,26 @@ class PayStationGateway implements PaymentGatewayContract
 
                 // Update invoice with payment gateway details
                 $invoice->update([
-                    'transaction_id' => $transactionId,
+                    'transaction_id' => $trxId,
                     'payment_gateway_id' => $paymentData['gateway_id'],
                     'currency' => $paymentData['currency'],
                 ]);
 
                 Log::info('PayStation payment completed', [
                     'invoice_id' => $invoice->id,
-                    'transaction_id' => $transactionId,
+                    'transaction_id' => $trxId,
                     'user_id' => $user->id,
                 ]);
             });
 
             // Remove payment data from session
             session()->forget('pending_payment');
-        } elseif ($status === 'failed' || $status === 'cancelled') {
+        } elseif (in_array($status, ['Failed', 'Canceled'])) {
             Log::info('PayStation payment failed/cancelled', [
-                'order_id' => $orderId,
+                'invoice_number' => $invoiceNumber,
                 'status' => $status,
             ]);
-            
+
             // Remove payment data from session
             session()->forget('pending_payment');
         }

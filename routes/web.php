@@ -37,6 +37,7 @@ Route::middleware(['auth', 'check.suspended'])->group(function () {
     Route::get('/voucher/{voucher}/edit', App\Livewire\Voucher\Edit::class)->name('vouchers.edit');
     Route::get('/vouchers/generate', App\Livewire\Voucher\Generate::class)->name('vouchers.generate');
     Route::get('/vouchers/bulk-manager', App\Livewire\Voucher\BulkManager::class)->name('vouchers.bulk-manager');
+    Route::get('/vouchers/logs', App\Livewire\VoucherLogs\Index::class)->name('vouchers.logs');
     Route::get('/vouchers/print', VoucherPrintController::class)->name('vouchers.print');
     Route::get('/vouchers/{voucher}/print-single', SingleVoucherPrintController::class)->name('vouchers.print.single');
 
@@ -57,6 +58,7 @@ Route::middleware(['auth', 'check.suspended'])->group(function () {
     Route::get('/billing/invoices', App\Livewire\Billing\Invoices::class)->name('billing.invoices');
     Route::get('/billing/manual-adjustment', App\Livewire\Billing\ManualAdjustment::class)->name('billing.manual-adjustment');
     Route::get('/billing/revenue-analytics', App\Livewire\Admin\RevenueAnalytics::class)->name('billing.revenue-analytics')->middleware('superadmin');
+    Route::get('/billing/sales-summary', App\Livewire\Admin\SalesSummary::class)->name('billing.sales-summary');
 
     /* Ticket Routes */
     Route::get('/support/contact', App\Livewire\Tickets\Index::class)->name('tickets.index');
@@ -114,7 +116,7 @@ Route::get('/mikrotik/api/pull-updated-profiles', [MikrotikApiController::class,
 /* Payment Gateway Callbacks (without CSRF) */
 Route::post('/payment/cryptomus/callback', [App\Http\Controllers\PaymentCallbackController::class, 'cryptomus'])
     ->withoutMiddleware([VerifyCsrfToken::class])->name('payment.cryptomus.callback');
-Route::post('/payment/paystation/callback', [App\Http\Controllers\PaymentCallbackController::class, 'paystation'])
+Route::get('/payment/paystation/callback', [App\Http\Controllers\PaymentCallbackController::class, 'paystation'])
     ->withoutMiddleware([VerifyCsrfToken::class])->name('payment.paystation.callback');
 
 /* Deploy route */

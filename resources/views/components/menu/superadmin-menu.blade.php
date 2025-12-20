@@ -5,7 +5,6 @@
         {{-- DASHBOARD --}}
         <x-mary-menu-item title="Dashboard" icon="o-home" link="/dashboard" />
 
-
         {{-- USER MANAGEMENT --}}
         <x-mary-menu-sub title="User Management" icon="o-users">
             <x-mary-menu-item title="All Users" icon="o-user-group" link="/users" wire:navigate />

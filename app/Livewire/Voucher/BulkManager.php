@@ -105,7 +105,10 @@ class BulkManager extends Component
         $this->authorize('bulk_delete_vouchers');
         if ($id) {
             // Single Delete
-            Voucher::where('id', $id)->delete();
+            $voucher = Voucher::find($id);
+            if ($voucher) {
+                $voucher->delete(); // Will trigger model's deleted event for logging
+            }
             $this->success('Voucher deleted successfully.');
         } else {
             // Bulk Delete
@@ -123,8 +126,11 @@ class BulkManager extends Component
                 return;
             }
 
+            // Fetch vouchers before deletion for logging
             $query->chunkById(1000, function ($vouchers) {
-                Voucher::whereIn('id', $vouchers->pluck('id'))->delete();
+                foreach ($vouchers as $voucher) {
+                    $voucher->delete(); // Will trigger model's deleted event for logging
+                }
             });
 
             // Log bulk voucher deletion
