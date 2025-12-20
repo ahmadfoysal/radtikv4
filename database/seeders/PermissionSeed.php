@@ -29,6 +29,7 @@ class PermissionSeed extends Seeder
             'import_router_configs',
             'sync_router_data',
             'view_router_logs',
+            'view_sales_summary',
 
             // Hotspot User Management
             'view_hotspot_users',
@@ -39,8 +40,6 @@ class PermissionSeed extends Seeder
             'delete_active_session',
             'view_session_cookies',
             'delete_session_cookie',
-            'view_hotspot_logs',
-            'disconnect_users',
 
             // Voucher Management
             'view_vouchers',
@@ -52,10 +51,6 @@ class PermissionSeed extends Seeder
             'print_single_voucher',
             'bulk_delete_vouchers',
             'reset_voucher',
-
-            // Bandwidth & Monitoring
-            'view_live_bandwidth',
-            'view_router_health',
 
             // Reports
             'view_reports',

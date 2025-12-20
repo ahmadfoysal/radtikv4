@@ -25,7 +25,7 @@ class SalesSummary extends Component
 
     public function mount(): void
     {
-        $this->authorize('view_router');
+        $this->authorize('view_sales_summary');
         $this->updateDateRange();
     }
 

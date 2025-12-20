@@ -282,6 +282,7 @@ class ResellerPermissions extends Component
             'view_active_sessions' => 'View currently active hotspot sessions',
             'view_session_cookies' => 'View session cookies for hotspot users',
             'view_hotspot_logs' => 'View hotspot activity logs',
+            'view_sales_summary' => 'View sales summary reports',
 
             default => 'Router management permission',
         };

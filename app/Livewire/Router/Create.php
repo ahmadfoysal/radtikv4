@@ -3,6 +3,7 @@
 namespace App\Livewire\Router;
 
 use App\Models\Package;
+use App\Models\ResellerRouter;
 use App\Models\Router;
 use App\Models\VoucherTemplate;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -108,7 +109,7 @@ class Create extends Component
 
         try {
             // Use the subscription service - billing user gets billed, router owner gets the router
-            $billingUser->subscribeRouterWithPackage([
+            $router = $billingUser->subscribeRouterWithPackage([
                 'name' => $this->name,
                 'address' => $this->address,
                 'login_address' => $this->login_address,
@@ -121,6 +122,15 @@ class Create extends Component
                 'monthly_expense' => $this->monthly_expense,
                 'logo' => $logoPath,
             ], $package);
+
+            // If reseller created the router, automatically assign it to them
+            if ($user->isReseller() && $router) {
+                ResellerRouter::create([
+                    'router_id' => $router->id,
+                    'reseller_id' => $user->id,
+                    'assigned_by' => $routerOwner->id, // Admin who owns the router
+                ]);
+            }
         } catch (\RuntimeException $e) {
             // Delete uploaded logo if router creation fails
             if ($logoPath) {
