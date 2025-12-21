@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class UserSeed extends Seeder
 {
@@ -12,53 +13,68 @@ class UserSeed extends Seeder
      */
     public function run(): void
     {
+        // Create Superadmin
         $superadmin = User::create([
-            'name' => 'Super Admin',
-            'email' => 'superadmin@example.com',
-            'password' => bcrypt('password'),
+            'name' => 'System Administrator',
+            'email' => 'superadmin@radtik.local',
+            'password' => Hash::make('password'),
             'is_active' => true,
             'is_phone_verified' => true,
-            'subscription' => null,
-            'balance' => 0,
-            'country' => 'USA',
-            'address' => '123 Admin St, Admin City, Admin State, 12345',
-            'phone' => '+1234567890',
+            'email_verified_at' => now(),
+            'balance' => 50000,
+            'commission' => 0,
+            'country' => 'Bangladesh',
+            'address' => 'Gulshan, Dhaka-1212',
+            'phone' => '+8801711000001',
+            'last_login_at' => now(),
         ]);
-
-        // assingn role
         $superadmin->assignRole('superadmin');
 
+        // Create Admin
         $admin = User::create([
-            'name' => 'Admin User',
-            'email' => 'admin@example.com',
-            'password' => bcrypt('password'),
+            'name' => 'Admin Manager',
+            'email' => 'admin@radtik.local',
+            'password' => Hash::make('password'),
             'is_active' => true,
             'is_phone_verified' => true,
-            'subscription' => null,
-            'balance' => 0,
-            'country' => 'USA',
-            'address' => '456 Admin Rd, Admin Town, Admin State, 67890',
-            'phone' => '+1987654321',
+            'email_verified_at' => now(),
+            'balance' => 25000,
+            'commission' => 10,
+            'country' => 'Bangladesh',
+            'address' => 'Banani, Dhaka-1213',
+            'phone' => '+8801711000002',
+            'last_login_at' => now(),
         ]);
-
-        // assign role
         $admin->assignRole('admin');
 
+        // Create Reseller
         $reseller = User::create([
-            'name' => 'Reseller User',
-            'email' => 'relesser@example.com',
-            'password' => bcrypt('password'),
+            'name' => 'Reseller Partner',
+            'email' => 'reseller@radtik.local',
+            'password' => Hash::make('password'),
             'is_active' => true,
             'is_phone_verified' => true,
-            'subscription' => null,
-            'balance' => 0,
+            'email_verified_at' => now(),
+            'balance' => 5000,
+            'commission' => 0,
             'admin_id' => $admin->id,
-            'country' => 'USA',
-            'address' => '789 Reseller Ave, Reseller City, Reseller State',
-            'phone' => '+1123456789',
+            'country' => 'Bangladesh',
+            'address' => 'Uttara, Dhaka-1230',
+            'phone' => '+8801711000003',
+            'last_login_at' => now(),
         ]);
-
-        // assign role
         $reseller->assignRole('reseller');
+
+        // Assign permissions to reseller
+        $reseller->givePermissionTo([
+            'view_router',
+            'view_vouchers',
+            'generate_vouchers',
+            'print_vouchers',
+            'view_hotspot_users',
+            'create_single_user',
+            'view_active_sessions',
+            'view_voucher_logs',
+        ]);
     }
 }
