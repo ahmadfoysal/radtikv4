@@ -1,6 +1,6 @@
 <div class="space-y-6">
     {{-- Top Stats Cards --}}
-    <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {{-- Assigned Routers --}}
         <x-mary-card class="border border-base-300 bg-gradient-to-br from-primary/10 to-base-100">
             <div class="flex items-start justify-between">
@@ -83,7 +83,7 @@
     </x-mary-card>
 
     {{-- Main Content Grid --}}
-    <div class="grid gap-4 lg:grid-cols-3">
+    <div class="grid gap-4 grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
         {{-- Assigned Routers List --}}
         <x-mary-card class="lg:col-span-2 border border-base-300 bg-base-100">
             <x-slot name="title">

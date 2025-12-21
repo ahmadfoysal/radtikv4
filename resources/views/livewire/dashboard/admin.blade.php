@@ -1,6 +1,6 @@
 <div class="space-y-6">
     {{-- Top Financial Stats Cards --}}
-    <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {{-- Today's Income --}}
         <x-mary-card class="border border-base-300 bg-gradient-to-br from-success/10 to-base-100">
             <div class="flex items-start justify-between">
@@ -63,7 +63,7 @@
     </div>
 
     {{-- Secondary Stats --}}
-    <div class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+    <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {{-- Wallet Balance --}}
         <x-mary-card class="border border-base-300 bg-base-100">
             <div class="flex items-start justify-between">
@@ -138,7 +138,7 @@
     </x-mary-card>
 
     {{-- Charts Section --}}
-    <div class="grid gap-4 lg:grid-cols-2">
+    <div class="grid gap-4 grid-cols-1 xl:grid-cols-2">
         {{-- Income Trend Chart --}}
         <x-mary-card class="border border-base-300 bg-base-100">
             <x-slot name="title">
@@ -186,7 +186,7 @@
     </div>
 
     {{-- Tables Section --}}
-    <div class="grid gap-4 lg:grid-cols-2">
+    <div class="grid gap-4 grid-cols-1 xl:grid-cols-2">
         {{-- Income by Profile Table --}}
         <x-mary-card class="border border-base-300 bg-base-100">
             <x-slot name="title">
@@ -299,7 +299,7 @@
     </div>
 
     {{-- Router & Voucher Management --}}
-    <div class="grid gap-4 lg:grid-cols-2">
+    <div class="grid gap-4 grid-cols-1 xl:grid-cols-2">
         {{-- Router Health --}}
         <x-mary-card class="border border-base-300 bg-base-100">
             <x-slot name="title">
@@ -375,7 +375,7 @@
     </div>
 
     {{-- Invoice Management & Package Distribution --}}
-    <div class="grid gap-4 lg:grid-cols-3">
+    <div class="grid gap-4 grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
         {{-- Voucher Statistics --}}
         <x-mary-card class="border border-base-300 bg-base-100">
             <x-slot name="title">
@@ -460,7 +460,7 @@
     </div>
 
     {{-- Recent Activity Section --}}
-    <div class="grid gap-4 lg:grid-cols-3">
+    <div class="grid gap-4 grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
         {{-- Recent Routers --}}
         <x-mary-card class="border border-base-300 bg-base-100">
             <x-slot name="title">

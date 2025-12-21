@@ -1,5 +1,5 @@
 <div class="space-y-6">
-    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <x-mary-card class="bg-base-100 border border-base-300">
             <x-slot name="title">Admin Overview</x-slot>
             <div class="space-y-2">
@@ -45,20 +45,23 @@
                     <div class="text-xs text-base-content/70">Month to date</div>
                     <p class="text-xl font-semibold text-primary">{{ number_format($salesSummary['month'], 2) }}</p>
                 </div>
-                <div class="text-xs text-warning">Pending invoices: {{ number_format($salesSummary['pending'], 2) }}</div>
+                <div class="text-xs text-warning">Pending invoices: {{ number_format($salesSummary['pending'], 2) }}
+                </div>
             </div>
         </x-mary-card>
     </div>
 
-    <div class="grid gap-4 lg:grid-cols-3">
+    <div class="grid gap-4 grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
         <x-mary-card class="lg:col-span-2 border border-base-300">
             <x-slot name="title">Routers by Package</x-slot>
             <div class="divide-y divide-base-300">
                 @forelse ($packageBreakdown as $package => $meta)
-                    <div class="flex items-center justify-between py-3" wire:key="package-{{ \Illuminate\Support\Str::slug($package) }}">
+                    <div class="flex items-center justify-between py-3"
+                        wire:key="package-{{ \Illuminate\Support\Str::slug($package) }}">
                         <div>
                             <p class="font-semibold">{{ $package }}</p>
-                            <p class="text-xs text-base-content/60">{{ $meta['billing'] ? ucfirst($meta['billing']) . ' cycle' : 'No subscription' }}</p>
+                            <p class="text-xs text-base-content/60">
+                                {{ $meta['billing'] ? ucfirst($meta['billing']) . ' cycle' : 'No subscription' }}</p>
                         </div>
                         <div class="text-2xl font-semibold">{{ number_format($meta['count']) }}</div>
                     </div>
@@ -92,7 +95,7 @@
         </x-mary-card>
     </div>
 
-    <div class="grid gap-4 lg:grid-cols-2">
+    <div class="grid gap-4 grid-cols-1 xl:grid-cols-2">
         <x-mary-card class=" border border-base-300">
             <x-slot name="title">Sales by Category</x-slot>
             <div class="overflow-x-auto">
@@ -113,7 +116,8 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="3" class="text-center text-sm text-base-content/60">No invoices yet.</td>
+                                <td colspan="3" class="text-center text-sm text-base-content/60">No invoices yet.
+                                </td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -128,11 +132,13 @@
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="font-semibold">#{{ $invoice->id }}</p>
-                            <p class="text-xs text-base-content/70">{{ $invoice->user?->name ?? 'Unknown user' }} · {{ ucfirst($invoice->category) }}</p>
+                            <p class="text-xs text-base-content/70">{{ $invoice->user?->name ?? 'Unknown user' }} ·
+                                {{ ucfirst($invoice->category) }}</p>
                         </div>
                         <div class="text-right">
                             <p class="font-semibold">{{ number_format($invoice->amount, 2) }}</p>
-                            <p class="text-xs {{ $invoice->status === 'completed' ? 'text-success' : ($invoice->status === 'pending' ? 'text-warning' : 'text-error') }}">
+                            <p
+                                class="text-xs {{ $invoice->status === 'completed' ? 'text-success' : ($invoice->status === 'pending' ? 'text-warning' : 'text-error') }}">
                                 {{ ucfirst($invoice->status) }}
                             </p>
                         </div>
@@ -146,7 +152,7 @@
 
     <x-mary-card class=" border border-base-300">
         <x-slot name="title">Recently Added Admins</x-slot>
-        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             @forelse ($recentAdmins as $admin)
                 <div class=" border border-base-300 bg-base-100/80 p-4">
                     <p class="font-semibold">{{ $admin->name }}</p>
@@ -157,7 +163,8 @@
                         </span>
                         <span>Joined {{ $admin->created_at->diffForHumans() }}</span>
                     </div>
-                    <div class="text-xs text-base-content/70">Balance: {{ number_format($admin->balance ?? 0, 2) }}</div>
+                    <div class="text-xs text-base-content/70">Balance: {{ number_format($admin->balance ?? 0, 2) }}
+                    </div>
                 </div>
             @empty
                 <p class="text-sm text-base-content/70">No admin records found.</p>

@@ -20,7 +20,7 @@
     </div>
 
     {{-- Income & Expense Overview Cards --}}
-    <div class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+    <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <x-mary-card class="border border-base-300 bg-base-100">
             <div class="flex items-start justify-between">
                 <div class="flex-1">
@@ -91,7 +91,7 @@
     </div>
 
     {{-- Additional Metrics --}}
-    <div class="grid gap-4 grid-cols-1 md:grid-cols-3">
+    <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         <x-mary-card class="border border-base-300 bg-base-100">
             <div class="flex items-center gap-2 mb-2">
                 <x-mary-icon name="o-check-circle" class="w-5 h-5 text-success" />
@@ -123,7 +123,7 @@
     </div>
 
     {{-- Charts Section --}}
-    <div class="grid gap-4 grid-cols-1 lg:grid-cols-2">
+    <div class="grid gap-4 grid-cols-1 xl:grid-cols-2">
         {{-- Income by Profile Chart --}}
         <x-mary-card class="border border-base-300 bg-base-100">
             <x-slot name="title">
