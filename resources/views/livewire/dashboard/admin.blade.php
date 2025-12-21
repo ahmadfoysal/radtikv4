@@ -138,7 +138,7 @@
     </x-mary-card>
 
     {{-- Charts Section --}}
-    <div class="grid gap-4 grid-cols-1 xl:grid-cols-2">
+    <div class="grid gap-4 grid-cols-1 lg:grid-cols-2">
         {{-- Income Trend Chart --}}
         <x-mary-card class="border border-base-300 bg-base-100">
             <x-slot name="title">
@@ -186,7 +186,7 @@
     </div>
 
     {{-- Tables Section --}}
-    <div class="grid gap-4 grid-cols-1 xl:grid-cols-2">
+    <div class="grid gap-4 grid-cols-1 lg:grid-cols-2">
         {{-- Income by Profile Table --}}
         <x-mary-card class="border border-base-300 bg-base-100">
             <x-slot name="title">
@@ -299,7 +299,7 @@
     </div>
 
     {{-- Router & Voucher Management --}}
-    <div class="grid gap-4 grid-cols-1 xl:grid-cols-2">
+    <div class="grid gap-4 grid-cols-1 lg:grid-cols-2">
         {{-- Router Health --}}
         <x-mary-card class="border border-base-300 bg-base-100">
             <x-slot name="title">
