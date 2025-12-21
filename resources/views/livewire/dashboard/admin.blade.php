@@ -299,7 +299,7 @@
     </div>
 
     {{-- Router & Voucher Management --}}
-    <div class="grid gap-4 grid-cols-1 lg:grid-cols-2">
+    <div class="grid gap-4 grid-cols-1 xl:grid-cols-2">
         {{-- Router Health --}}
         <x-mary-card class="border border-base-300 bg-base-100">
             <x-slot name="title">
@@ -375,7 +375,7 @@
     </div>
 
     {{-- Invoice Management & Package Distribution --}}
-    <div class="grid gap-4 grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
+    <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
         {{-- Voucher Statistics --}}
         <x-mary-card class="border border-base-300 bg-base-100">
             <x-slot name="title">
@@ -460,7 +460,7 @@
     </div>
 
     {{-- Recent Activity Section --}}
-    <div class="grid gap-4 grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
+    <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
         {{-- Recent Routers --}}
         <x-mary-card class="border border-base-300 bg-base-100">
             <x-slot name="title">
