@@ -24,10 +24,9 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->foreignId('zone_id')->nullable()->constrained()->nullOnDelete();
             $table->string('app_key')->nullable();
-            $table->decimal('monthly_expense', 8, 2)->default(0);
+            $table->decimal('monthly_isp_cost', 10, 2)->default(0)->comment('ISP/provider monthly cost');
             $table->string('logo')->nullable();
             $table->foreignId('voucher_template_id')->nullable()->constrained('voucher_templates')->nullOnDelete();
-            $table->json('package')->nullable();
             $table->timestamps();
         });
     }

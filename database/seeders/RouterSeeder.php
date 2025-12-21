@@ -37,7 +37,7 @@ class RouterSeeder extends Seeder
                 'ssh_port' => 2222,
                 'username' => 'metro-admin',
                 'password' => 'Metro#2401!',
-                'monthly_expense' => 85.50,
+                'monthly_isp_cost' => 85.50,
                 'note' => 'Primary POP for the downtown mesh.',
                 'logo' => 'routers/metro-core.svg',
             ],
@@ -49,7 +49,7 @@ class RouterSeeder extends Seeder
                 'ssh_port' => 2223,
                 'username' => 'summit-admin',
                 'password' => 'Summit#2402!',
-                'monthly_expense' => 92.75,
+                'monthly_isp_cost' => 92.75,
                 'note' => 'Handles suburban and mountain subscribers.',
                 'logo' => 'routers/summit-edge.svg',
             ],
@@ -61,7 +61,7 @@ class RouterSeeder extends Seeder
                 'ssh_port' => 2224,
                 'username' => 'harbor-admin',
                 'password' => 'Harbor#2403!',
-                'monthly_expense' => 76.20,
+                'monthly_isp_cost' => 76.20,
                 'note' => 'Feeds marina Wi-Fi and event halls.',
                 'logo' => 'routers/harbor-gateway.svg',
             ],
@@ -73,7 +73,7 @@ class RouterSeeder extends Seeder
                 'ssh_port' => 2225,
                 'username' => 'west-admin',
                 'password' => 'West#2404!',
-                'monthly_expense' => 66.00,
+                'monthly_isp_cost' => 66.00,
                 'note' => 'Community park deployments and CCTV offload.',
                 'logo' => 'routers/west-park.svg',
             ],
@@ -85,7 +85,7 @@ class RouterSeeder extends Seeder
                 'ssh_port' => 2226,
                 'username' => 'campus-admin',
                 'password' => 'Campus#2405!',
-                'monthly_expense' => 104.30,
+                'monthly_isp_cost' => 104.30,
                 'note' => 'Edu roaming, labs, and dormitories.',
                 'logo' => 'routers/east-campus.svg',
             ],
@@ -97,7 +97,7 @@ class RouterSeeder extends Seeder
                 'ssh_port' => 2227,
                 'username' => 'canyon-admin',
                 'password' => 'Canyon#2406!',
-                'monthly_expense' => 58.40,
+                'monthly_isp_cost' => 58.40,
                 'note' => 'Bridges remote canyon subscribers.',
                 'logo' => 'routers/canyon-relay.svg',
             ],
@@ -109,7 +109,7 @@ class RouterSeeder extends Seeder
                 'ssh_port' => 2228,
                 'username' => 'airport-admin',
                 'password' => 'Airport#2407!',
-                'monthly_expense' => 149.80,
+                'monthly_isp_cost' => 149.80,
                 'note' => 'Handles captive portal and lounge traffic.',
                 'logo' => 'routers/airport-hub.svg',
             ],
@@ -121,7 +121,7 @@ class RouterSeeder extends Seeder
                 'ssh_port' => 2229,
                 'username' => 'lakeside-admin',
                 'password' => 'Lake#2408!',
-                'monthly_expense' => 71.10,
+                'monthly_isp_cost' => 71.10,
                 'note' => 'Covers resorts and floating venues.',
                 'logo' => 'routers/lakeside.svg',
             ],
@@ -133,7 +133,7 @@ class RouterSeeder extends Seeder
                 'ssh_port' => 2230,
                 'username' => 'spine-admin',
                 'password' => 'Spine#2409!',
-                'monthly_expense' => 134.25,
+                'monthly_isp_cost' => 134.25,
                 'note' => 'High-availability core for factories.',
                 'logo' => 'routers/industrial-spine.svg',
             ],
@@ -145,36 +145,13 @@ class RouterSeeder extends Seeder
                 'ssh_port' => 2232,
                 'username' => 'valley-admin',
                 'password' => 'Valley#2411!',
-                'monthly_expense' => 63.90,
+                'monthly_isp_cost' => 63.90,
                 'note' => 'Focuses on HOA and gated communities.',
                 'logo' => 'routers/valley-hub.svg',
             ],
         ];
 
         foreach ($routers as $index => $routerData) {
-            $package = $packages[$index % $packages->count()];
-            $startDate = Carbon::now()->subDays(5 + $index)->startOfDay();
-            $duration = $package->billing_cycle === 'yearly' ? 365 : 30;
-            $endDate = (clone $startDate)->addDays($duration);
-            $packageSnapshot = [
-                'id' => $package->id,
-                'name' => $package->name,
-                'price_monthly' => $package->price_monthly,
-                'price_yearly' => $package->price_yearly,
-                'user_limit' => $package->user_limit,
-                'billing_cycle' => $package->billing_cycle,
-                'early_pay_days' => $package->early_pay_days,
-                'early_pay_discount_percent' => $package->early_pay_discount_percent,
-                'auto_renew_allowed' => $package->auto_renew_allowed,
-                'description' => $package->description,
-                'start_date' => $startDate->toDateString(),
-                'end_date' => $endDate->toDateString(),
-                'auto_renew' => $package->auto_renew_allowed,
-                'price' => $package->billing_cycle === 'yearly'
-                    ? (float) $package->price_yearly
-                    : (float) $package->price_monthly,
-            ];
-
             $templateId = $voucherTemplates[$index % $voucherTemplates->count()]->id;
             $zoneId = $zones[$index % $zones->count()]->id;
             $router = Router::firstOrNew(['address' => $routerData['address']]);
@@ -188,10 +165,9 @@ class RouterSeeder extends Seeder
                 'note' => $routerData['note'],
                 'user_id' => $user->id,
                 'zone_id' => $zoneId,
-                'monthly_expense' => $routerData['monthly_expense'],
+                'monthly_isp_cost' => $routerData['monthly_isp_cost'],
                 'logo' => $routerData['logo'],
                 'voucher_template_id' => $templateId,
-                'package' => $packageSnapshot,
             ]);
             $router->password = Crypt::encryptString($routerData['password']);
             if (! $router->app_key) {

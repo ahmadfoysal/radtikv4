@@ -34,7 +34,6 @@ class User extends Authenticatable
         'balance',
         'commission',
         'admin_id',
-        'subscription',
         'is_active',
         'last_login_at',
         'is_phone_verified',
@@ -70,7 +69,6 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'subscription' => 'array',
             'is_active' => 'boolean',
             'last_login_at' => 'datetime',
             'is_phone_verified' => 'boolean',
@@ -310,5 +308,112 @@ class User extends Authenticatable
     public function ticketMessages()
     {
         return $this->hasMany(TicketMessage::class);
+    }
+
+    // Subscriptions relation
+    public function subscriptions()
+    {
+        return $this->hasMany(Subscription::class)->latest();
+    }
+
+    public function activeSubscription(): ?Subscription
+    {
+        return $this->subscriptions()
+            ->where('status', 'active')
+            ->first();
+    }
+
+    // Subscription Management Methods
+
+    public function subscribeToPackage(
+        Package $package,
+        string $cycle = 'monthly',
+        ?string $promoCode = null
+    ): Subscription {
+        $amount = $cycle === 'yearly'
+            ? ($package->price_yearly ?? $package->price_monthly * 12)
+            : $package->price_monthly;
+
+        $startDate = now();
+        $endDate = $cycle === 'yearly'
+            ? $startDate->copy()->addYear()
+            : $startDate->copy()->addMonth();
+
+        $subscription = $this->subscriptions()->create([
+            'package_id' => $package->id,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'billing_cycle' => $cycle,
+            'amount' => $amount,
+            'original_price' => $amount,
+            'next_billing_date' => $endDate,
+            'status' => 'active',
+            'promo_code' => $promoCode,
+        ]);
+
+        return $subscription;
+    }
+
+    public function hasActiveSubscription(): bool
+    {
+        return $this->activeSubscription() !== null;
+    }
+
+    public function canAddRouter(): bool
+    {
+        $subscription = $this->activeSubscription();
+
+        if (!$subscription) {
+            return false;
+        }
+
+        $package = $subscription->package;
+        $routerCount = $this->routers()->count();
+
+        return $routerCount < $package->max_routers;
+    }
+
+    public function getCurrentSubscriptionCost(): float
+    {
+        $subscription = $this->activeSubscription();
+        return $subscription?->amount ?? 0;
+    }
+
+    public function getCurrentPackage(): ?Package
+    {
+        $subscription = $this->activeSubscription();
+        return $subscription?->package;
+    }
+
+    public function getRemainingRouterSlots(): int
+    {
+        $subscription = $this->activeSubscription();
+
+        if (!$subscription) {
+            return 0;
+        }
+
+        $package = $subscription->package;
+        $routerCount = $this->routers()->count();
+
+        return max(0, $package->max_routers - $routerCount);
+    }
+
+    public function getTotalRouterCosts(): float
+    {
+        return $this->routers()->sum('monthly_isp_cost');
+    }
+
+    public function upgradePackage(Package $newPackage, string $cycle = 'monthly'): Subscription
+    {
+        $currentSub = $this->activeSubscription();
+
+        if ($currentSub) {
+            // Cancel current subscription
+            $currentSub->cancel('Upgraded to ' . $newPackage->name);
+        }
+
+        // Create new subscription
+        return $this->subscribeToPackage($newPackage, $cycle);
     }
 }

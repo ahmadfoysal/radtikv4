@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('category'); // 'topup', 'subscription', 'renewal', 'adjustment', 'payment_gateway'
             $table->string('status')->default('pending'); // pending, completed, failed, cancelled
             $table->string('transaction_id')->nullable(); // External payment reference
-            $table->foreignId('payment_gateway_id')->nullable()->constrained('payment_gateways')->onDelete('set null');
+            $table->unsignedBigInteger('payment_gateway_id')->nullable(); // Payment gateway reference (no FK for now)
             $table->decimal('amount', 12, 2);
             $table->string('currency', 10)->default('BDT');
             $table->decimal('balance_after', 12, 2);

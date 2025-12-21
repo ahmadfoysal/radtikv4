@@ -24,14 +24,13 @@ class Router extends Model
         'user_id',
         'zone_id',
         'app_key',
-        'monthly_expense',
+        'monthly_isp_cost',
         'logo',
         'voucher_template_id',
-        'package',
     ];
 
     protected $casts = [
-        'package' => 'array',
+        'monthly_isp_cost' => 'decimal:2',
     ];
 
     public function decryptedPassword(): string

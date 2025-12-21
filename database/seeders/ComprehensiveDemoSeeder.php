@@ -91,31 +91,34 @@ class ComprehensiveDemoSeeder extends Seeder
             // 3. Create packages
             $packages = $this->createPackages();
 
-            // 4. Create zones
+            // 4. Create subscriptions for admins
+            $this->createSubscriptions($admins, $packages);
+
+            // 5. Create zones
             $zones = $this->createZones($admins);
 
-            // 5. Create voucher templates
+            // 6. Create voucher templates
             $templates = $this->createVoucherTemplates($admins);
 
-            // 6. Create routers
+            // 7. Create routers
             $routers = $this->createRouters($admins, $zones, $templates, $packages);
 
-            // 7. Assign routers to resellers
+            // 8. Assign routers to resellers
             $this->assignRoutersToResellers($resellers, $routers, $admins);
 
-            // 8. Create user profiles for routers
+            // 9. Create user profiles for routers
             $this->createUserProfiles($routers);
 
-            // 9. Create vouchers
+            // 10. Create vouchers
             $this->createVouchers($routers);
 
-            // 10. Create voucher logs (activations)
+            // 11. Create voucher logs (activations)
             $this->createVoucherLogs($routers);
 
-            // 11. Create invoices
+            // 12. Create invoices
             $this->createInvoices(array_merge($admins, $resellers), $superadmin);
 
-            // 12. Create tickets
+            // 13. Create tickets
             $this->createTickets(array_merge($admins, $resellers));
 
             DB::commit();
@@ -287,14 +290,96 @@ class ComprehensiveDemoSeeder extends Seeder
         $this->command->info('📦 Creating subscription packages...');
 
         $packages = [
-            ['name' => 'Starter Pack', 'price' => 500, 'billing_cycle' => 'monthly', 'duration_days' => 30, 'max_routers' => 3],
-            ['name' => 'Basic Monthly', 'price' => 1000, 'billing_cycle' => 'monthly', 'duration_days' => 30, 'max_routers' => 10],
-            ['name' => 'Professional', 'price' => 2500, 'billing_cycle' => 'monthly', 'duration_days' => 30, 'max_routers' => 25],
-            ['name' => 'Business Plus', 'price' => 5000, 'billing_cycle' => 'monthly', 'duration_days' => 30, 'max_routers' => 50],
-            ['name' => 'Enterprise', 'price' => 10000, 'billing_cycle' => 'monthly', 'duration_days' => 30, 'max_routers' => 100],
-            ['name' => 'Annual Basic', 'price' => 10000, 'billing_cycle' => 'yearly', 'duration_days' => 365, 'max_routers' => 15],
-            ['name' => 'Annual Pro', 'price' => 25000, 'billing_cycle' => 'yearly', 'duration_days' => 365, 'max_routers' => 50],
-            ['name' => 'Annual Enterprise', 'price' => 100000, 'billing_cycle' => 'yearly', 'duration_days' => 365, 'max_routers' => 200],
+            [
+                'name' => 'Free',
+                'description' => 'Free plan with 1 router and 100 users - Perfect for testing',
+                'price_monthly' => 0,
+                'price_yearly' => 0,
+                'max_routers' => 1,
+                'max_users' => 100,
+                'max_zones' => 1,
+                'max_vouchers_per_router' => 100,
+                'grace_period_days' => 0,
+                'early_pay_days' => null,
+                'early_pay_discount_percent' => null,
+                'auto_renew_allowed' => false,
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Starter',
+                'description' => 'Perfect for small businesses with 3 routers',
+                'price_monthly' => 500,
+                'price_yearly' => 5500,
+                'max_routers' => 3,
+                'max_users' => 100,
+                'max_zones' => 3,
+                'max_vouchers_per_router' => 500,
+                'grace_period_days' => 3,
+                'early_pay_days' => 7,
+                'early_pay_discount_percent' => 5,
+                'auto_renew_allowed' => true,
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Business',
+                'description' => 'Growing businesses with 10 routers and extended features',
+                'price_monthly' => 1500,
+                'price_yearly' => 16000,
+                'max_routers' => 10,
+                'max_users' => 200,
+                'max_zones' => 10,
+                'max_vouchers_per_router' => 1000,
+                'grace_period_days' => 5,
+                'early_pay_days' => 10,
+                'early_pay_discount_percent' => 8,
+                'auto_renew_allowed' => true,
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Professional',
+                'description' => 'Professional package with 25 routers for medium enterprises',
+                'price_monthly' => 3500,
+                'price_yearly' => 38000,
+                'max_routers' => 25,
+                'max_users' => 300,
+                'max_zones' => 25,
+                'max_vouchers_per_router' => 2000,
+                'grace_period_days' => 7,
+                'early_pay_days' => 15,
+                'early_pay_discount_percent' => 10,
+                'auto_renew_allowed' => true,
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Enterprise',
+                'description' => 'Large scale operations with 50 routers',
+                'price_monthly' => 6500,
+                'price_yearly' => 70000,
+                'max_routers' => 50,
+                'max_users' => 500,
+                'max_zones' => 50,
+                'max_vouchers_per_router' => null,
+                'grace_period_days' => 10,
+                'early_pay_days' => 30,
+                'early_pay_discount_percent' => 12,
+                'auto_renew_allowed' => true,
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Corporate',
+                'description' => 'Premium package for large corporations with 100+ routers',
+                'price_monthly' => 12000,
+                'price_yearly' => 130000,
+                'max_routers' => 100,
+                'max_users' => 1000,
+                'max_zones' => 100,
+                'max_vouchers_per_router' => null,
+                'grace_period_days' => 15,
+                'early_pay_days' => 45,
+                'early_pay_discount_percent' => 15,
+                'auto_renew_allowed' => true,
+                'is_active' => true,
+            ],
         ];
 
         $created = [];
@@ -306,6 +391,23 @@ class ComprehensiveDemoSeeder extends Seeder
         }
 
         return $created;
+    }
+
+    private function createSubscriptions(array $admins, array $packages): void
+    {
+        $this->command->info('💳 Creating subscriptions for admins...');
+
+        foreach ($admins as $index => $admin) {
+            // Distribute packages among admins (some get free, some paid)
+            $packageIndex = $index % count($packages);
+            $package = $packages[$packageIndex];
+
+            // Random billing cycle
+            $billingCycle = rand(0, 1) === 0 ? 'monthly' : 'yearly';
+            
+            // Create subscription using the model method
+            $admin->subscribeToPackage($package, $billingCycle);
+        }
     }
 
     private function createZones(array $admins): array
@@ -338,11 +440,17 @@ class ComprehensiveDemoSeeder extends Seeder
 
         $templates = [];
 
-        foreach ($admins as $index => $admin) {
+        $templateData = [
+            ['name' => 'Classic Blue', 'component' => 'template-1'],
+            ['name' => 'Thermal 80mm', 'component' => 'template-2'],
+            ['name' => 'Modern Green', 'component' => 'template-3'],
+        ];
+
+        foreach ($templateData as $data) {
             $template = VoucherTemplate::firstOrCreate(
-                ['name' => 'Template ' . ($index + 1), 'user_id' => $admin->id],
+                ['name' => $data['name']],
                 [
-                    'template' => 'Standard WiFi Voucher Template',
+                    'component' => $data['component'],
                     'is_active' => true,
                 ]
             );
@@ -366,14 +474,11 @@ class ComprehensiveDemoSeeder extends Seeder
             $routerCount = rand(5, 10);
 
             for ($i = 0; $i < $routerCount; $i++) {
-                $package = $packages[array_rand($packages)];
-                $startDate = Carbon::now()->subDays(rand(0, 60));
-                $endDate = $startDate->copy()->addDays($package->duration_days);
-
                 $prefix = $routerPrefix[array_rand($routerPrefix)];
                 $area = $this->bangladeshAreas[array_rand($this->bangladeshAreas)];
 
                 $baseIp = rand(10, 192) . '.' . rand(0, 255) . '.' . rand(0, 255);
+                $createdAt = Carbon::now()->subDays(rand(0, 60));
 
                 $router = Router::create([
                     'name' => $prefix . ' ' . $area . ' Router-' . ($i + 1),
@@ -387,17 +492,10 @@ class ComprehensiveDemoSeeder extends Seeder
                     'user_id' => $admin->id,
                     'zone_id' => !empty($adminZones) ? $adminZones[array_rand($adminZones)]->id : null,
                     'voucher_template_id' => $template->id,
-                    'monthly_expense' => rand(800, 3000),
+                    'monthly_isp_cost' => rand(800, 3000),
                     'note' => 'Demo router for ' . $area . ' area coverage',
-                    'package' => [
-                        'name' => $package->name,
-                        'billing_cycle' => $package->billing_cycle,
-                        'price' => $package->price,
-                        'start_date' => $startDate->format('Y-m-d'),
-                        'end_date' => $endDate->format('Y-m-d'),
-                    ],
-                    'created_at' => $startDate,
-                    'updated_at' => $startDate,
+                    'created_at' => $createdAt,
+                    'updated_at' => $createdAt,
                 ]);
 
                 $routers[] = $router;
@@ -427,7 +525,6 @@ class ComprehensiveDemoSeeder extends Seeder
                     ['router_id' => $router->id, 'reseller_id' => $reseller->id],
                     [
                         'assigned_by' => $reseller->admin_id,
-                        'can_view_login' => rand(0, 1) === 1,
                         'created_at' => Carbon::now()->subDays(rand(1, 30)),
                     ]
                 );
