@@ -404,7 +404,7 @@ class ComprehensiveDemoSeeder extends Seeder
 
             // Random billing cycle
             $billingCycle = rand(0, 1) === 0 ? 'monthly' : 'yearly';
-            
+
             // Create subscription using the model method
             $admin->subscribeToPackage($package, $billingCycle);
         }
