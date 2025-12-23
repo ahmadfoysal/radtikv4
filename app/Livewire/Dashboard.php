@@ -76,22 +76,23 @@ class Dashboard extends Component
             'active' => (clone $resellerQuery)->where('is_active', true)->count(),
         ];
 
-        $routers = Router::select('id', 'name', 'package', 'user_id', 'monthly_expense', 'created_at')
+        $routers = Router::select('id', 'name', 'user_id', 'monthly_isp_cost', 'created_at')
             ->with('user:id,name')
             ->get();
 
         $routerOverview = [
             'total' => $routers->count(),
-            'withPackage' => $routers->filter(fn($router) => ! empty($router->package))->count(),
-            'expiringToday' => $routers->filter(fn($router) => $this->endsOn($router, $today))->count(),
-            'expiringWeek' => $routers->filter(fn($router) => $this->endsWithinDays($router, 7))->count(),
+            'withSubscription' => $routers->filter(fn($router) => $router->user?->hasActiveSubscription())->count(),
+            'totalIspCost' => $routers->sum('monthly_isp_cost'),
         ];
 
+        // Group routers by their owner's subscription package
         $packageBreakdown = $routers
-            ->groupBy(fn($router) => $router->package['name'] ?? 'Unassigned')
+            ->filter(fn($router) => $router->user?->activeSubscription())
+            ->groupBy(fn($router) => $router->user->activeSubscription()->package->name ?? 'No Subscription')
             ->map(fn(Collection $group) => [
                 'count' => $group->count(),
-                'billing' => $group->first()->package['billing_cycle'] ?? null,
+                'package' => $group->first()->user->activeSubscription()->package->name ?? 'N/A',
             ])
             ->sortByDesc('count')
             ->take(8);
@@ -169,8 +170,7 @@ class Dashboard extends Component
                 'routers.id',
                 'routers.name',
                 'routers.address',
-                'routers.package',
-                'routers.monthly_expense',
+                'routers.monthly_isp_cost',
                 'routers.created_at',
                 'routers.login_address',
                 'routers.zone_id',
@@ -180,10 +180,10 @@ class Dashboard extends Component
 
         $routerStats = [
             'total' => $routers->count(),
-            'expiringToday' => $routers->filter(fn($router) => $this->endsOn($router, $today))->count(),
-            'expiringWeek' => $routers->filter(fn($router) => $this->endsWithinDays($router, 7))->count(),
-            'withoutPackage' => $routers->filter(fn($router) => empty($router->package))->count(),
-            'monthlyExpense' => $routers->sum('monthly_expense'),
+            'expiringWeek' => 0, // No longer tracking router expiry
+            'expiringToday' => 0, // No longer tracking router expiry
+            'withoutPackage' => 0, // No longer tracking router packages
+            'monthlyExpense' => $routers->sum('monthly_isp_cost'),
         ];
 
         // Billing & Accounting Metrics from VoucherLog
@@ -206,7 +206,7 @@ class Dashboard extends Component
             ->whereDate('created_at', $today)
             ->count();
 
-        // Monthly expense
+        // Monthly expense (ISP costs)
         $monthlyExpense = $routerStats['monthlyExpense'];
 
         // Net profit (monthly)
@@ -273,8 +273,9 @@ class Dashboard extends Component
             ->limit(5)
             ->get();
 
+        // Group routers by zone
         $routerUsage = $routers
-            ->groupBy(fn($router) => $router->package['name'] ?? 'Unassigned')
+            ->groupBy(fn($router) => $router->zone?->name ?? 'No Zone')
             ->map(fn(Collection $group) => $group->count())
             ->sortByDesc(fn($count) => $count)
             ->take(6);
@@ -300,10 +301,8 @@ class Dashboard extends Component
             ->take(5)
             ->get(['id', 'amount', 'status', 'category', 'created_at']);
 
-        $routerAlerts = $routers
-            ->filter(fn($router) => $this->endsWithinDays($router, 10))
-            ->sortBy(fn($router) => $this->packageEndDate($router->package ?? []))
-            ->take(6);
+        // No router-specific alerts - subscriptions are now at user level
+        $routerAlerts = collect([]);
 
         $balance = $user->balance ?? 0;
 
@@ -567,36 +566,6 @@ class Dashboard extends Component
         );
     }
 
-    protected function endsOn($router, Carbon $day): bool
-    {
-        $end = $this->packageEndDate($router->package ?? null);
-
-        return $end?->isSameDay($day) ?? false;
-    }
-
-    protected function endsWithinDays($router, int $days): bool
-    {
-        $end = $this->packageEndDate($router->package ?? null);
-
-        if (! $end) {
-            return false;
-        }
-
-        $now = Carbon::today();
-
-        return $end->isBetween($now, $now->copy()->addDays($days));
-    }
-
-    protected function packageEndDate(?array $package): ?Carbon
-    {
-        if (! is_array($package) || empty($package['end_date'])) {
-            return null;
-        }
-
-        try {
-            return Carbon::parse($package['end_date'])->startOfDay();
-        } catch (\Throwable $e) {
-            return null;
-        }
-    }
+    // Router package methods removed - now using admin subscription system
+    // Subscription expiry is tracked at the user level, not router level
 }

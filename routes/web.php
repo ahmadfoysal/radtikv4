@@ -80,6 +80,9 @@ Route::middleware(['auth', 'check.suspended'])->group(function () {
         // Zone Management
         Route::get('/zones', App\Livewire\Zone\Index::class)->name('zones.index');
 
+        // Subscription Management
+        Route::get('/subscription', App\Livewire\Subscription\Index::class)->name('subscription.index');
+
         // Billing
         Route::get('/billing/add-balance', App\Livewire\Billing\AddBalance::class)->name('billing.add-balance');
     });

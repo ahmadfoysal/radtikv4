@@ -38,23 +38,11 @@
                         'text-warning',
                     ];
                     $iconColor = $colors[$loop->index % count($colors)];
-                    // Ensure package is always an array, handle JSON string case
-                    $packageRaw = $router->package;
-                    if (is_string($packageRaw)) {
-                        $package = json_decode($packageRaw, true) ?? [];
-                    } else {
-                        $package = is_array($packageRaw) ? $packageRaw : [];
-                    }
-                    $packageName = $package['name'] ?? 'No package assigned';
-                    $expiryDate = isset($package['end_date'])
-                        ? \Illuminate\Support\Carbon::parse($package['end_date'])->format('M d, Y')
-                        : '—';
-                    $userLimit = $package['user_limit'] ?? null;
+
                     $totalUsers = $router->total_vouchers_count ?? 0;
                     $activeUsers = $router->active_vouchers_count ?? 0;
                     $expiredUsers = $router->expired_vouchers_count ?? 0;
                     $inactiveUsers = max($totalUsers - $activeUsers, 0);
-                    $usagePercent = $userLimit ? min(100, (int) (($totalUsers / $userLimit) * 100)) : null;
                 @endphp
 
                 <div
@@ -91,54 +79,12 @@
                         </div>
                     </div>
 
-                    {{-- Package Information --}}
-                    @if (!empty($package) && is_array($package) && isset($package['name']))
-                        <div class="bg-base-200/50 p-3 space-y-2">
-                            <div class="flex items-center justify-between text-xs">
-                                <span class="font-medium text-base-content/70">Package</span>
-                                <span class="font-semibold text-primary">{{ $packageName }}</span>
-                            </div>
-                            <div class="flex flex-wrap gap-2 px-3">
-                                <x-mary-badge value="{{ ucfirst($package['billing_cycle'] ?? 'N/A') }}"
-                                    class="badge-primary">
-                                    <x-slot:icon>
-                                        <x-mary-icon name="o-arrow-path" class="w-3.5 h-3.5" />
-                                    </x-slot:icon>
-                                </x-mary-badge>
-                                <x-mary-badge value="{{ $expiryDate }}" class="badge-warning">
-                                    <x-slot:icon>
-                                        <x-mary-icon name="o-calendar-days" class="w-3.5 h-3.5" />
-                                    </x-slot:icon>
-                                </x-mary-badge>
-                                @if (isset($package['auto_renew_allowed']) && $package['auto_renew_allowed'])
-                                    <x-mary-badge value="Auto Renew" class="badge-success">
-                                        <x-slot:icon>
-                                            <x-mary-icon name="o-bolt" class="w-3.5 h-3.5" />
-                                        </x-slot:icon>
-                                    </x-mary-badge>
-                                @endif
-                            </div>
-                        </div>
-                    @endif
-
                     {{-- User Statistics Section --}}
                     <div class="space-y-2.5">
                         <div class="flex items-center justify-between text-xs">
-                            <span class="font-semibold text-base-content/70">User Usage</span>
-                            <span class="font-bold text-primary">
-                                {{ $totalUsers }}{{ $userLimit ? ' / ' . $userLimit : '' }}
-                            </span>
+                            <span class="font-semibold text-base-content/70">Voucher Statistics</span>
+                            <span class="font-bold text-primary">{{ $totalUsers }}</span>
                         </div>
-                        @if ($usagePercent !== null)
-                            <div class="space-y-1.5">
-                                <progress class="progress progress-primary h-2 w-full" value="{{ $usagePercent }}"
-                                    max="100"></progress>
-                                <div class="text-[10px] text-base-content/50 text-right">{{ $usagePercent }}% used
-                                </div>
-                            </div>
-                        @else
-                            <div class="h-2 bg-base-300"></div>
-                        @endif
                         <div class="flex flex-wrap gap-1.5 pt-1">
                             <x-mary-badge value="{{ $activeUsers }}" class="badge-success badge-sm">
                                 <x-slot:icon>
@@ -160,10 +106,6 @@
 
                     {{-- Technical Details --}}
                     <div class="flex flex-wrap gap-3 pt-2 border-t border-base-300 text-[11px] text-base-content/60">
-                        <div class="flex items-center gap-1.5">
-                            <x-mary-icon name="o-user-group" class="w-3.5 h-3.5" />
-                            <span>Limit: <strong class="text-base-content">{{ $userLimit ?? '∞' }}</strong></span>
-                        </div>
                         <div class="flex items-center gap-1.5">
                             <x-mary-icon name="o-cpu-chip" class="w-3.5 h-3.5" />
                             <span>API: <strong class="text-base-content">{{ $router->port }}</strong></span>

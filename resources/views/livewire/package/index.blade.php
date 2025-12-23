@@ -48,16 +48,22 @@
                                 <x-mary-icon :name="$this->getSortIcon('price_yearly')" class="w-4 h-4" />
                             </div>
                         </th>
-                        <th class="px-4 py-3 cursor-pointer text-left" wire:click="sortBy('user_limit')">
+                        <th class="px-4 py-3 cursor-pointer text-left" wire:click="sortBy('max_routers')">
                             <div class="flex items-center gap-2">
-                                User Limit
-                                <x-mary-icon :name="$this->getSortIcon('user_limit')" class="w-4 h-4" />
+                                Max Routers
+                                <x-mary-icon :name="$this->getSortIcon('max_routers')" class="w-4 h-4" />
                             </div>
                         </th>
-                        <th class="px-4 py-3 cursor-pointer text-left" wire:click="sortBy('billing_cycle')">
+                        <th class="px-4 py-3 cursor-pointer text-left" wire:click="sortBy('max_users')">
                             <div class="flex items-center gap-2">
-                                Billing Cycle
-                                <x-mary-icon :name="$this->getSortIcon('billing_cycle')" class="w-4 h-4" />
+                                Max Users
+                                <x-mary-icon :name="$this->getSortIcon('max_users')" class="w-4 h-4" />
+                            </div>
+                        </th>
+                        <th class="px-4 py-3 cursor-pointer text-left" wire:click="sortBy('grace_period_days')">
+                            <div class="flex items-center gap-2">
+                                Grace Period
+                                <x-mary-icon :name="$this->getSortIcon('grace_period_days')" class="w-4 h-4" />
                             </div>
                         </th>
                         <th class="px-4 py-3 cursor-pointer text-left" wire:click="sortBy('is_active')">
@@ -82,13 +88,9 @@
                                     —
                                 @endif
                             </td>
-                            <td class="px-4 py-3">{{ $package->user_limit }}</td>
-                            <td class="px-4 py-3">
-                                <span
-                                    class="badge {{ $package->billing_cycle === 'monthly' ? 'badge-info' : 'badge-warning' }}">
-                                    {{ ucfirst($package->billing_cycle) }}
-                                </span>
-                            </td>
+                            <td class="px-4 py-3">{{ $package->max_routers }}</td>
+                            <td class="px-4 py-3">{{ $package->max_users }}</td>
+                            <td class="px-4 py-3">{{ $package->grace_period_days }} days</td>
                             <td class="px-4 py-3">
                                 @if ($package->is_active)
                                     <span class="badge badge-success">Active</span>

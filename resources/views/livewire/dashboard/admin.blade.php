@@ -39,7 +39,7 @@
                         <span class="text-sm font-medium text-base-content/70">Monthly Expense</span>
                     </div>
                     <p class="text-3xl font-bold text-warning">@userCurrency($billingStats['monthlyExpense'])</p>
-                    <p class="text-xs text-base-content/60 mt-1">Router operational costs</p>
+                    <p class="text-xs text-base-content/60 mt-1">ISP and operational costs</p>
                 </div>
             </div>
         </x-mary-card>
@@ -88,7 +88,7 @@
                         <span class="text-sm font-medium text-base-content/70">Routers</span>
                     </div>
                     <p class="text-2xl font-bold">{{ number_format($routerStats['total']) }}</p>
-                    <p class="text-xs text-warning mt-1">{{ $routerStats['expiringWeek'] }} expiring soon</p>
+                    <p class="text-xs text-base-content/60 mt-1">Total active routers</p>
                 </div>
             </div>
         </x-mary-card>
@@ -317,21 +317,21 @@
                     <p class="text-xs text-base-content/60 mb-1">Total Routers</p>
                     <p class="text-2xl font-bold">{{ number_format($routerStats['total']) }}</p>
                 </div>
-                <div class="text-center p-3 bg-warning/10">
-                    <p class="text-xs text-base-content/60 mb-1">Expiring (7d)</p>
-                    <p class="text-2xl font-bold text-warning">{{ number_format($routerStats['expiringWeek']) }}</p>
+                <div class="text-center p-3 bg-success/10">
+                    <p class="text-xs text-base-content/60 mb-1">Active Vouchers</p>
+                    <p class="text-2xl font-bold text-success">{{ number_format($voucherStats['active']) }}</p>
                 </div>
-                <div class="text-center p-3 bg-error/10">
-                    <p class="text-xs text-base-content/60 mb-1">Expiring Today</p>
-                    <p class="text-2xl font-bold text-error">{{ number_format($routerStats['expiringToday']) }}</p>
+                <div class="text-center p-3 bg-warning/10">
+                    <p class="text-xs text-base-content/60 mb-1">Expired Vouchers</p>
+                    <p class="text-2xl font-bold text-warning">{{ number_format($voucherStats['expired']) }}</p>
                 </div>
                 <div class="text-center p-3 bg-base-200">
-                    <p class="text-xs text-base-content/60 mb-1">No Package</p>
-                    <p class="text-2xl font-bold">{{ number_format($routerStats['withoutPackage']) }}</p>
+                    <p class="text-xs text-base-content/60 mb-1">Total Vouchers</p>
+                    <p class="text-2xl font-bold">{{ number_format($voucherStats['total']) }}</p>
                 </div>
             </div>
             <div class="mt-4 pt-4 border-t border-base-300">
-                <p class="text-xs text-base-content/60">Monthly Expense: <strong
+                <p class="text-xs text-base-content/60">Monthly ISP Cost: <strong
                         class="text-base-content">@userCurrency($routerStats['monthlyExpense'])</strong></p>
             </div>
         </x-mary-card>
@@ -407,54 +407,52 @@
             </div>
         </x-mary-card>
 
-        {{-- Package Distribution --}}
+        {{-- Router Zones --}}
         <x-mary-card class="border border-base-300 bg-base-100">
             <x-slot name="title">
                 <div class="flex items-center gap-2">
-                    <x-mary-icon name="o-cube" class="w-5 h-5 text-info" />
-                    <span>Packages In Use</span>
+                    <x-mary-icon name="o-map" class="w-5 h-5 text-info" />
+                    <span>Routers by Zone</span>
                 </div>
             </x-slot>
             <div class="space-y-2">
-                @forelse ($routerUsage as $package => $count)
+                @forelse ($routerUsage as $zone => $count)
                     <div class="flex items-center justify-between text-sm"
-                        wire:key="admin-package-{{ \Illuminate\Support\Str::slug($package) }}">
-                        <span class="truncate flex-1">{{ $package }}</span>
+                        wire:key="admin-zone-{{ \Illuminate\Support\Str::slug($zone) }}">
+                        <span class="truncate flex-1">{{ $zone }}</span>
                         <x-mary-badge value="{{ number_format($count) }}" class="badge-primary badge-sm" />
                     </div>
                 @empty
-                    <p class="text-sm text-base-content/70 text-center py-4">No package data yet.</p>
+                    <p class="text-sm text-base-content/70 text-center py-4">No zone data yet.</p>
                 @endforelse
             </div>
         </x-mary-card>
 
-        {{-- Upcoming Renewals --}}
+        {{-- Recent Activity Summary --}}
         <x-mary-card class="border border-base-300 bg-base-100">
             <x-slot name="title">
                 <div class="flex items-center gap-2">
-                    <x-mary-icon name="o-clock" class="w-5 h-5 text-warning" />
-                    <span>Upcoming Renewals</span>
+                    <x-mary-icon name="o-chart-bar" class="w-5 h-5 text-info" />
+                    <span>Quick Stats</span>
                 </div>
             </x-slot>
-            <div class="space-y-3 max-h-64 overflow-y-auto">
-                @forelse ($routerAlerts as $router)
-                    <div class="flex items-start justify-between gap-2 p-2 bg-warning/5 border border-warning/20"
-                        wire:key="alert-{{ $router->id }}">
-                        <div class="flex-1 min-w-0">
-                            <p class="font-semibold text-sm truncate">{{ $router->name }}</p>
-                            @php
-                                $endDate = $router->package['end_date'] ?? null;
-                            @endphp
-                            <p class="text-xs text-base-content/60 mt-1">
-                                {{ $endDate ? 'Ending ' . \Carbon\Carbon::parse($endDate)->diffForHumans() : 'No package date' }}
-                            </p>
-                        </div>
-                        <x-mary-badge value="Attention" class="badge-warning badge-sm" />
-                    </div>
-                @empty
-                    <p class="text-sm text-base-content/70 text-center py-4">No upcoming renewals in the next 10 days.
-                    </p>
-                @endforelse
+            <div class="space-y-3">
+                <div class="flex items-center justify-between p-2 bg-base-200">
+                    <span class="text-sm text-base-content/70">Today's Activations</span>
+                    <span class="font-bold text-success">{{ number_format($billingStats['todayActivations']) }}</span>
+                </div>
+                <div class="flex items-center justify-between p-2 bg-base-200">
+                    <span class="text-sm text-base-content/70">Vouchers Generated Today</span>
+                    <span class="font-bold text-primary">{{ number_format($voucherStats['generatedToday']) }}</span>
+                </div>
+                <div class="flex items-center justify-between p-2 bg-base-200">
+                    <span class="text-sm text-base-content/70">Active Resellers</span>
+                    <span class="font-bold text-info">{{ number_format($resellerStats['active']) }}</span>
+                </div>
+                <div class="flex items-center justify-between p-2 bg-base-200">
+                    <span class="text-sm text-base-content/70">Total Routers</span>
+                    <span class="font-bold">{{ number_format($routerStats['total']) }}</span>
+                </div>
             </div>
         </x-mary-card>
     </div>

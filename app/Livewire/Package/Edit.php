@@ -23,10 +23,19 @@ class Edit extends Component
     public ?string $price_yearly = null;
 
     #[Validate('required|integer|min:1')]
-    public string $user_limit = '';
+    public string $max_routers = '';
 
-    #[Validate('required|string|in:monthly,yearly')]
-    public string $billing_cycle = 'monthly';
+    #[Validate('required|integer|min:1')]
+    public string $max_users = '';
+
+    #[Validate('nullable|integer|min:0')]
+    public ?string $max_zones = null;
+
+    #[Validate('nullable|integer|min:0')]
+    public ?string $max_vouchers_per_router = null;
+
+    #[Validate('required|integer|min:1|max:30')]
+    public string $grace_period_days = '3';
 
     #[Validate('nullable|integer|min:0')]
     public ?string $early_pay_days = null;
@@ -49,8 +58,11 @@ class Edit extends Component
         $this->name = $package->name;
         $this->price_monthly = (string) $package->price_monthly;
         $this->price_yearly = $package->price_yearly ? (string) $package->price_yearly : null;
-        $this->user_limit = (string) $package->user_limit;
-        $this->billing_cycle = $package->billing_cycle;
+        $this->max_routers = (string) $package->max_routers;
+        $this->max_users = (string) $package->max_users;
+        $this->max_zones = $package->max_zones ? (string) $package->max_zones : null;
+        $this->max_vouchers_per_router = $package->max_vouchers_per_router ? (string) $package->max_vouchers_per_router : null;
+        $this->grace_period_days = (string) $package->grace_period_days;
         $this->early_pay_days = $package->early_pay_days ? (string) $package->early_pay_days : null;
         $this->early_pay_discount_percent = $package->early_pay_discount_percent ? (string) $package->early_pay_discount_percent : null;
         $this->auto_renew_allowed = $package->auto_renew_allowed;
@@ -66,8 +78,11 @@ class Edit extends Component
             'name' => $this->name,
             'price_monthly' => $this->price_monthly,
             'price_yearly' => $this->price_yearly ?: null,
-            'user_limit' => $this->user_limit,
-            'billing_cycle' => $this->billing_cycle,
+            'max_routers' => $this->max_routers,
+            'max_users' => $this->max_users,
+            'max_zones' => $this->max_zones ?: null,
+            'max_vouchers_per_router' => $this->max_vouchers_per_router ?: null,
+            'grace_period_days' => $this->grace_period_days,
             'early_pay_days' => $this->early_pay_days ?: null,
             'early_pay_discount_percent' => $this->early_pay_discount_percent ?: null,
             'auto_renew_allowed' => $this->auto_renew_allowed,

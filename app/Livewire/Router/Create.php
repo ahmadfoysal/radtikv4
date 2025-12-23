@@ -41,10 +41,7 @@ class Create extends Component
     public ?int $voucher_template_id = null;
 
     #[Rule(['nullable', 'numeric', 'min:0'])]
-    public float $monthly_expense = 0.0;
-
-    #[Rule(['required', 'integer', 'exists:packages,id'])]
-    public int $package_id;
+    public float $monthly_isp_cost = 0.0;
 
     #[Rule(['nullable', 'image', 'max:2048', 'mimes:jpg,jpeg,png,svg,webp'])]
     public $logo = null;
@@ -90,26 +87,23 @@ class Create extends Component
             $logoPath = $this->logo->store('logos', 'public');
         }
 
-        // All routers require a package - use the subscription service
-        $package = Package::find($this->package_id);
-
-        if (! $package) {
-            $this->error(title: 'Error', description: 'Selected package not found.');
-
+        // Check if billing user (admin) has an active subscription
+        if (!$billingUser->hasActiveSubscription()) {
+            $this->error(title: 'No Active Subscription', description: 'You need an active subscription to add routers.');
             return;
         }
 
-        // Check if billing user (admin) has enough balance
-        if (! $billingUser->hasBalanceForPackage($package)) {
-            $billingUserType = $user->isReseller() ? 'admin' : 'you';
-            $this->error(title: 'Insufficient Balance', description: "Your {$billingUserType} does not have enough balance to subscribe to this package.");
-
+        // Check if the admin can add more routers based on their subscription package
+        if (!$billingUser->canAddRouter()) {
+            $package = $billingUser->getCurrentPackage();
+            $maxRouters = $package ? $package->max_routers : 0;
+            $this->error(title: 'Router Limit Reached', description: "Your current subscription allows a maximum of {$maxRouters} routers. Upgrade your package to add more.");
             return;
         }
 
         try {
-            // Use the subscription service - billing user gets billed, router owner gets the router
-            $router = $billingUser->subscribeRouterWithPackage([
+            // Create router directly - no per-router billing anymore
+            $router = Router::create([
                 'name' => $this->name,
                 'address' => $this->address,
                 'login_address' => $this->login_address,
@@ -119,9 +113,9 @@ class Create extends Component
                 'app_key' => bin2hex(random_bytes(16)),
                 'user_id' => $routerOwner->id,  // Router belongs to admin, not reseller
                 'voucher_template_id' => $voucherTemplateId,
-                'monthly_expense' => $this->monthly_expense,
+                'monthly_isp_cost' => $this->monthly_isp_cost,
                 'logo' => $logoPath,
-            ], $package);
+            ]);
 
             // If reseller created the router, automatically assign it to them
             if ($user->isReseller() && $router) {
@@ -149,16 +143,14 @@ class Create extends Component
             'username',
             'password',
             'voucher_template_id',
-            'monthly_expense',
-            'package_id',
+            'monthly_isp_cost',
             'logo',
         ]);
         $this->port = 8728;
         $this->voucher_template_id = VoucherTemplate::query()
             ->where('is_active', true)
             ->value('id') ?? VoucherTemplate::query()->value('id');
-        $this->monthly_expense = 0.0;
-        $this->package_id = Package::query()->orderBy('name')->value('id');
+        $this->monthly_isp_cost = 0.0;
 
         // Optional: toast/notify
         $this->success(title: 'Success', description: 'Router added successfully.');
@@ -177,7 +169,6 @@ class Create extends Component
             'voucherTemplates' => VoucherTemplate::select('id', 'name')
                 ->orderBy('name')
                 ->get(),
-            'packages' => Package::orderBy('name')->get(['id', 'name', 'billing_cycle']),
         ])
             ->title(__('Add Router'));
     }

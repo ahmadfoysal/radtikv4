@@ -102,9 +102,9 @@ class RevenueAnalytics extends Component
             ->whereBetween('created_at', [$this->dateRange['start'], $this->dateRange['end']])
             ->sum('amount');
 
-        // Total expenses (router subscriptions and renewals)
+        // Total expenses (subscription fees and renewals)
         $totalExpenses = Invoice::where('type', 'debit')
-            ->whereIn('category', ['router_subscription', 'router_renewal'])
+            ->whereIn('category', ['subscription', 'subscription_renewal'])
             ->where('status', 'completed')
             ->whereBetween('created_at', [$this->dateRange['start'], $this->dateRange['end']])
             ->sum('amount');
@@ -152,20 +152,20 @@ class RevenueAnalytics extends Component
     {
         $totalRouters = Router::count();
 
-        // Calculate MRR (Monthly Recurring Revenue)
-        $routers = Router::get();
-        $mrr = $routers->sum(function ($router) {
-            $package = $router->package;
-            if (!$package || !isset($package['price_monthly'])) {
-                return 0;
-            }
-            return $package['price_monthly'];
-        });
+        // Calculate MRR (Monthly Recurring Revenue) from admin subscriptions
+        $mrr = \App\Models\Subscription::where('status', 'active')
+            ->with('package')
+            ->get()
+            ->sum(function ($subscription) {
+                return $subscription->package->price_monthly ?? 0;
+            });
 
-        // Count subscriptions by package (from router's package JSON)
-        $subscriptionsByPackage = $routers
-            ->groupBy(function ($router) {
-                return $router->package['name'] ?? 'Unknown';
+        // Count subscriptions by package (from user subscriptions, not router package)
+        $subscriptionsByPackage = \App\Models\Subscription::where('status', 'active')
+            ->with('package')
+            ->get()
+            ->groupBy(function ($subscription) {
+                return $subscription->package->name ?? 'Unknown';
             })
             ->map(function ($group) {
                 return $group->count();
@@ -220,7 +220,7 @@ class RevenueAnalytics extends Component
     protected function getRevenueByPackage(): array
     {
         return Invoice::where('type', 'debit')
-            ->whereIn('category', ['router_subscription', 'router_renewal'])
+            ->whereIn('category', ['subscription', 'subscription_renewal'])
             ->where('status', 'completed')
             ->whereBetween('created_at', [$this->dateRange['start'], $this->dateRange['end']])
             ->get()
@@ -291,7 +291,7 @@ class RevenueAnalytics extends Component
     protected function getRecentTransactions(): array
     {
         return Invoice::with('user:id,name,email')
-            ->whereIn('category', ['payment_gateway', 'router_subscription', 'router_renewal', 'manual_adjustment'])
+            ->whereIn('category', ['payment_gateway', 'subscription', 'subscription_renewal', 'manual_adjustment'])
             ->orderByDesc('created_at')
             ->limit(10)
             ->get()

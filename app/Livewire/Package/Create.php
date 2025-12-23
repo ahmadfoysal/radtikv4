@@ -21,10 +21,19 @@ class Create extends Component
     public ?string $price_yearly = null;
 
     #[Validate('required|integer|min:1')]
-    public string $user_limit = '';
+    public string $max_routers = '';
 
-    #[Validate('required|string|in:monthly,yearly')]
-    public string $billing_cycle = 'monthly';
+    #[Validate('required|integer|min:1')]
+    public string $max_users = '';
+
+    #[Validate('nullable|integer|min:0')]
+    public ?string $max_zones = null;
+
+    #[Validate('nullable|integer|min:0')]
+    public ?string $max_vouchers_per_router = null;
+
+    #[Validate('required|integer|min:1|max:30')]
+    public string $grace_period_days = '3';
 
     #[Validate('nullable|integer|min:0')]
     public ?string $early_pay_days = null;
@@ -49,8 +58,11 @@ class Create extends Component
             'name' => $this->name,
             'price_monthly' => $this->price_monthly,
             'price_yearly' => $this->price_yearly ?: null,
-            'user_limit' => $this->user_limit,
-            'billing_cycle' => $this->billing_cycle,
+            'max_routers' => $this->max_routers,
+            'max_users' => $this->max_users,
+            'max_zones' => $this->max_zones ?: null,
+            'max_vouchers_per_router' => $this->max_vouchers_per_router ?: null,
+            'grace_period_days' => $this->grace_period_days,
             'early_pay_days' => $this->early_pay_days ?: null,
             'early_pay_discount_percent' => $this->early_pay_discount_percent ?: null,
             'auto_renew_allowed' => $this->auto_renew_allowed,

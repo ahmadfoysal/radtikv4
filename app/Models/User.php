@@ -4,7 +4,6 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Models\Traits\HasBilling;
-use App\Models\Traits\HasRouterBilling;
 use App\Models\Traits\LogsActivity;
 use HasinHayder\TyroLogin\Traits\HasTwoFactorAuth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -16,7 +15,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasBilling, HasFactory, HasRoles, HasRouterBilling, HasTwoFactorAuth, LogsActivity, Notifiable;
+    use HasBilling, HasFactory, HasRoles, HasTwoFactorAuth, LogsActivity, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -80,6 +79,30 @@ class User extends Authenticatable
             'login_alerts' => 'boolean',
             'two_factor_confirmed_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Boot the model.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::created(function ($user) {
+            // Auto-subscribe admin users to free package after registration
+            if ($user->hasRole('admin')) {
+                $freePackage = Package::where('name', 'Free')->where('is_active', true)->first();
+
+                if ($freePackage) {
+                    try {
+                        $user->subscribeToPackage($freePackage, 'monthly');
+                    } catch (\Exception $e) {
+                        // Log error but don't fail registration
+                        \Log::error('Failed to auto-subscribe user to free package: ' . $e->getMessage());
+                    }
+                }
+            }
+        });
     }
 
     /**
@@ -350,6 +373,16 @@ class User extends Authenticatable
             'status' => 'active',
             'promo_code' => $promoCode,
         ]);
+
+        // Create invoice for subscription only if amount is greater than 0 (skip for free packages)
+        if ($amount > 0) {
+            $this->debit(
+                amount: $amount,
+                category: 'subscription',
+                description: "Subscription to {$package->name} ({$cycle})",
+                meta: ['subscription_id' => $subscription->id, 'package_id' => $package->id, 'billing_cycle' => $cycle]
+            );
+        }
 
         return $subscription;
     }

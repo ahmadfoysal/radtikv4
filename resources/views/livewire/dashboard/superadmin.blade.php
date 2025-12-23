@@ -27,9 +27,8 @@
             <div class="space-y-2">
                 <p class="text-3xl font-semibold">{{ number_format($routerOverview['total']) }}</p>
                 <div class="grid grid-cols-2 gap-2 text-xs text-base-content/70">
-                    <span>With package: {{ number_format($routerOverview['withPackage']) }}</span>
-                    <span>Expiring today: {{ number_format($routerOverview['expiringToday']) }}</span>
-                    <span>Expiring 7 days: {{ number_format($routerOverview['expiringWeek']) }}</span>
+                    <span>With subscription: {{ number_format($routerOverview['withSubscription']) }}</span>
+                    <span>Total ISP cost: {{ number_format($routerOverview['totalIspCost'], 2) }}</span>
                 </div>
             </div>
         </x-mary-card>
@@ -53,15 +52,14 @@
 
     <div class="grid gap-4 grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
         <x-mary-card class="lg:col-span-2 border border-base-300">
-            <x-slot name="title">Routers by Package</x-slot>
+            <x-slot name="title">Routers by Admin Subscription</x-slot>
             <div class="divide-y divide-base-300">
                 @forelse ($packageBreakdown as $package => $meta)
                     <div class="flex items-center justify-between py-3"
                         wire:key="package-{{ \Illuminate\Support\Str::slug($package) }}">
                         <div>
-                            <p class="font-semibold">{{ $package }}</p>
-                            <p class="text-xs text-base-content/60">
-                                {{ $meta['billing'] ? ucfirst($meta['billing']) . ' cycle' : 'No subscription' }}</p>
+                            <p class="font-semibold">{{ $meta['package'] }}</p>
+                            <p class="text-xs text-base-content/60">Admin subscription package</p>
                         </div>
                         <div class="text-2xl font-semibold">{{ number_format($meta['count']) }}</div>
                     </div>

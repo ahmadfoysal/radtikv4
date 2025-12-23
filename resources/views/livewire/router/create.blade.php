@@ -34,14 +34,9 @@
             </div>
 
             <div>
-                <x-mary-select label="Subscription Package" wire:model.live="package_id"
-                    :options="$packages->map(fn($p) => ['id' => $p->id, 'name' => $p->name . ' (' . ucfirst($p->billing_cycle) . ')'])->toArray()"
-                    option-label="name" option-value="id" placeholder="Select a package (optional)" />
-            </div>
-
-            <div>
-                <x-mary-input label="Monthly Expense" type="number" min="0" step="0.01"
-                    wire:model.live.debounce.500ms="monthly_expense" placeholder="0.00" />
+                <x-mary-input label="Monthly ISP Cost" type="number" min="0" step="0.01"
+                    wire:model.live.debounce.500ms="monthly_isp_cost" placeholder="0.00"
+                    hint="Enter your ISP monthly cost for this router" />
             </div>
 
             <div>
@@ -51,7 +46,8 @@
                 @enderror
                 @if ($logo)
                     <div class="mt-2">
-                        <img src="{{ $logo->temporaryUrl() }}" alt="Logo preview" class="h-20 w-20 object-contain border border-base-300" />
+                        <img src="{{ $logo->temporaryUrl() }}" alt="Logo preview"
+                            class="h-20 w-20 object-contain border border-base-300" />
                     </div>
                 @endif
             </div>

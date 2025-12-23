@@ -16,17 +16,30 @@
             </div>
 
             <div>
-                <x-mary-input label="User Limit" type="number" min="1"
-                    wire:model.live.debounce.500ms="user_limit" placeholder="10" />
+                <x-mary-input label="Max Routers" type="number" min="1"
+                    wire:model.live.debounce.500ms="max_routers" placeholder="10"
+                    hint="Maximum routers admin can manage" />
             </div>
 
             <div>
-                <x-mary-select label="Billing Cycle" wire:model.live="billing_cycle"
-                    :options="[
-                        ['id' => 'monthly', 'name' => 'Monthly'],
-                        ['id' => 'yearly', 'name' => 'Yearly'],
-                    ]"
-                    option-label="name" option-value="id" />
+                <x-mary-input label="Max Users Per Router" type="number" min="1"
+                    wire:model.live.debounce.500ms="max_users" placeholder="100" hint="Maximum users per router" />
+            </div>
+
+            <div>
+                <x-mary-input label="Max Zones" type="number" min="0" wire:model.live.debounce.500ms="max_zones"
+                    placeholder="0 (optional)" />
+            </div>
+
+            <div>
+                <x-mary-input label="Max Vouchers Per Router" type="number" min="0"
+                    wire:model.live.debounce.500ms="max_vouchers_per_router" placeholder="0 (optional)" />
+            </div>
+
+            <div>
+                <x-mary-input label="Grace Period (Days)" type="number" min="1" max="30"
+                    wire:model.live.debounce.500ms="grace_period_days" placeholder="3"
+                    hint="Days after expiry before suspension" />
             </div>
 
             <div>

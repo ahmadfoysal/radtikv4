@@ -31,18 +31,12 @@ class CheckRouterSubscription
             return response()->json(['error' => 'Invalid token'], 403);
         }
 
-        // Check if the router has a package with an end_date
-        if (!$router->package || !isset($router->package['end_date'])) {
-            // No package or no end_date means no active subscription
-            return response()->json(['error' => 'No active subscription'], 403);
-        }
+        // Check if the router's owner (admin) has an active subscription
+        $user = $router->user;
 
-        // Parse the end_date and check if it's expired
-        $endDate = Carbon::parse($router->package['end_date']);
-        
-        if ($endDate->isPast()) {
-            // Subscription is expired
-            return response()->json(['error' => 'Subscription expired'], 403);
+        if (!$user || !$user->hasActiveSubscription()) {
+            // No active admin subscription
+            return response()->json(['error' => 'No active subscription'], 403);
         }
 
         // Subscription is valid, proceed to the controller

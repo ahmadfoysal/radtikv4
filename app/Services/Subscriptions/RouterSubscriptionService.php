@@ -2,15 +2,23 @@
 
 namespace App\Services\Subscriptions;
 
-use App\Models\Package;
-use App\Models\Router;
-use App\Models\User;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
-use RuntimeException;
-
+/**
+ * @deprecated This service is deprecated as of the admin subscription migration.
+ * Router subscriptions are now managed through User subscriptions to Packages.
+ * See App\Models\Subscription for the new subscription model.
+ * 
+ * This class is kept for backward compatibility but should not be used.
+ */
 class RouterSubscriptionService
 {
+    public function __construct()
+    {
+        throw new \RuntimeException(
+            'RouterSubscriptionService is deprecated. Use User subscription methods instead. ' .
+            'See User::subscribeToPackage(), User::hasActiveSubscription(), and Subscription model.'
+        );
+    }
+}
 
     /**
      * Check if a user has enough balance for a given package.

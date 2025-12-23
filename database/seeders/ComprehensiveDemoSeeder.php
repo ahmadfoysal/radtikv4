@@ -215,7 +215,7 @@ class ComprehensiveDemoSeeder extends Seeder
                     'phone' => '+880171100' . str_pad($index + 10, 4, '0', STR_PAD_LEFT),
                     'address' => $adminData['area'] . ', ' . $adminData['city'],
                     'country' => 'Bangladesh',
-                    'balance' => rand(10000, 50000),
+                    'balance' => rand(150000, 250000),
                     'commission' => rand(5, 15),
                     'is_active' => true,
                     'is_phone_verified' => true,
@@ -536,16 +536,29 @@ class ComprehensiveDemoSeeder extends Seeder
     {
         $this->command->info('👥 Creating user profiles for routers...');
 
+        // Group routers by user_id
+        $routersByUser = [];
         foreach ($routers as $router) {
-            // Each router gets all profile types
+            if (!isset($routersByUser[$router->user_id])) {
+                $routersByUser[$router->user_id] = [];
+            }
+            $routersByUser[$router->user_id][] = $router;
+        }
+
+        // Create profiles for each user (admin)
+        foreach ($routersByUser as $userId => $userRouters) {
             foreach ($this->profileTemplates as $template) {
+                $validity = $template['days'] > 0
+                    ? $template['days'] . 'd'
+                    : $template['hours'] . 'h';
+
                 UserProfile::firstOrCreate(
-                    ['name' => $template['name'], 'router_id' => $router->id],
+                    ['name' => $template['name'], 'user_id' => $userId],
                     [
-                        'validity_days' => $template['days'],
-                        'validity_hours' => $template['hours'],
-                        'speed_limit' => $template['speed'],
+                        'rate_limit' => $template['speed'],
+                        'validity' => $validity,
                         'price' => $template['price'],
+                        'shared_users' => 1,
                         'mac_binding' => false,
                         'description' => 'Internet access for ' . $template['name'],
                     ]
@@ -561,7 +574,7 @@ class ComprehensiveDemoSeeder extends Seeder
         $statuses = ['inactive', 'active', 'expired', 'disabled'];
 
         foreach ($routers as $router) {
-            $profiles = UserProfile::where('router_id', $router->id)->get();
+            $profiles = UserProfile::where('user_id', $router->user_id)->get();
 
             if ($profiles->isEmpty()) continue;
 
@@ -611,7 +624,7 @@ class ComprehensiveDemoSeeder extends Seeder
         $this->command->info('📊 Creating voucher activation logs...');
 
         foreach ($routers as $router) {
-            $profiles = UserProfile::where('router_id', $router->id)->get();
+            $profiles = UserProfile::where('user_id', $router->user_id)->get();
 
             if ($profiles->isEmpty()) continue;
 
@@ -640,7 +653,7 @@ class ComprehensiveDemoSeeder extends Seeder
     {
         $this->command->info('💰 Creating invoices...');
 
-        $categories = ['router_subscription', 'balance_topup', 'router_renewal', 'commission_payment'];
+        $categories = ['subscription', 'subscription_renewal', 'balance_topup', 'commission_payment', 'manual_adjustment'];
         $statuses = ['completed', 'pending', 'failed', 'cancelled'];
 
         // Create invoices for each user
@@ -652,12 +665,31 @@ class ComprehensiveDemoSeeder extends Seeder
                 $category = $categories[array_rand($categories)];
                 $createdAt = Carbon::now()->subDays(rand(0, 90));
 
+                // Determine type based on category
+                $type = in_array($category, ['balance_topup', 'commission_payment']) ? 'credit' : 'debit';
+
+                // Generate metadata based on category
+                $meta = [];
+                if (in_array($category, ['subscription', 'subscription_renewal'])) {
+                    $subscription = $user->subscriptions()->inRandomOrder()->first();
+                    if ($subscription) {
+                        $meta = [
+                            'subscription_id' => $subscription->id,
+                            'package_id' => $subscription->package_id,
+                            'billing_cycle' => $subscription->billing_cycle,
+                        ];
+                    }
+                }
+
                 Invoice::create([
                     'user_id' => $user->id,
+                    'type' => $type,
                     'amount' => rand(100, 10000),
                     'status' => $status,
                     'category' => $category,
                     'description' => ucfirst(str_replace('_', ' ', $category)) . ' - Invoice #' . strtoupper(substr(md5(time() . $i), 0, 8)),
+                    'balance_after' => 0, // Will be calculated by billing system
+                    'meta' => $meta,
                     'created_at' => $createdAt,
                     'updated_at' => $createdAt,
                 ]);
@@ -687,8 +719,8 @@ class ComprehensiveDemoSeeder extends Seeder
             'Bulk voucher deletion error',
         ];
 
-        $statuses = ['open', 'in_progress', 'waiting_reply', 'resolved', 'closed'];
-        $priorities = ['low', 'medium', 'high', 'urgent'];
+        $statuses = ['open', 'in_progress', 'solved', 'closed'];
+        $priorities = ['low', 'normal', 'high'];
 
         foreach ($users as $user) {
             $ticketCount = rand(2, 8);
@@ -698,9 +730,11 @@ class ComprehensiveDemoSeeder extends Seeder
                 $status = $statuses[array_rand($statuses)];
 
                 $ticket = Ticket::create([
-                    'user_id' => $user->id,
+                    'created_by' => $user->id,
+                    'owner_id' => $user->id,
+                    'assigned_to' => null, // Can be assigned later
                     'subject' => $subjects[array_rand($subjects)],
-                    'message' => 'This is a demo support ticket. ' .
+                    'description' => 'This is a demo support ticket. ' .
                         'I am experiencing issues with the system. ' .
                         'Please help me resolve this problem as soon as possible. ' .
                         'The issue started about ' . rand(1, 10) . ' days ago.',
@@ -711,7 +745,7 @@ class ComprehensiveDemoSeeder extends Seeder
                 ]);
 
                 // Add 0-3 replies to each ticket
-                if (in_array($status, ['in_progress', 'waiting_reply', 'resolved', 'closed'])) {
+                if (in_array($status, ['in_progress', 'solved', 'closed'])) {
                     $replyCount = rand(0, 3);
 
                     for ($j = 0; $j < $replyCount; $j++) {
@@ -724,7 +758,6 @@ class ComprehensiveDemoSeeder extends Seeder
                             'message' => $isStaff
                                 ? 'Thank you for contacting support. We are looking into this issue and will get back to you shortly.'
                                 : 'Thank you for the quick response. I appreciate your help with this matter.',
-                            'is_staff_reply' => $isStaff,
                             'created_at' => $replyAt,
                             'updated_at' => $replyAt,
                         ]);
