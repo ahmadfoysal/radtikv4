@@ -30,7 +30,7 @@ class UserProfile extends Model
 
     public function vouchers()
     {
-        return $this->hasMany(Voucher::class, 'user_profile', 'id');
+        return $this->hasMany(Voucher::class, 'user_profile_id', 'id');
     }
 
     public function resellerAssignments()

@@ -57,8 +57,9 @@ class Index extends Component
     {
         return UserProfile::query()
             ->where('user_id', auth()->id())
+            ->withCount('vouchers')
             ->when($this->q, function ($query) {
-                $term = '%'.$this->q.'%';
+                $term = '%' . $this->q . '%';
 
                 $query->where(function ($q) use ($term) {
                     $q->where('name', 'like', $term)

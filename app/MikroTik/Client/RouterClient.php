@@ -21,6 +21,11 @@ class RouterClient
      */
     public function make(Router $router): Client
     {
+        // Check if demo mode is enabled
+        if (env('DEMO_MODE', false)) {
+            throw new \Exception("🚫 Demo Mode: Router interactions are disabled. This is a demonstration environment and all router operations are blocked.");
+        }
+
         // Check if the router's owner is suspended
         if ($router->user && $router->user->isSuspended()) {
             throw new \Exception("Access denied: User account is suspended. Reason: " . ($router->user->suspension_reason ?? 'No reason provided'));

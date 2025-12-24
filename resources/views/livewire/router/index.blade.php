@@ -49,10 +49,18 @@
                         <div class="flex items-start justify-between gap-3">
                             <div class="flex items-start gap-3 flex-1 min-w-0">
                                 <div class="relative">
-                                    <div
-                                        class="p-3 bg-{{ $colorClass }}/10 rounded-lg border border-{{ $colorClass }}/20 group-hover:scale-105 transition-transform duration-300">
-                                        <x-mary-icon name="s-server" class="w-6 h-6 text-{{ $colorClass }}" />
-                                    </div>
+                                    @if ($router->logo_url)
+                                        <div
+                                            class="w-12 h-12 bg-{{ $colorClass }}/10 rounded-lg group-hover:scale-105 transition-transform duration-300 overflow-hidden flex items-center justify-center">
+                                            <img src="{{ $router->logo_url }}" alt="{{ $router->name }}"
+                                                class="w-full h-full object-cover">
+                                        </div>
+                                    @else
+                                        <div
+                                            class="p-3 bg-{{ $colorClass }}/10 rounded-lg border border-{{ $colorClass }}/20 group-hover:scale-105 transition-transform duration-300">
+                                            <x-mary-icon name="s-server" class="w-6 h-6 text-{{ $colorClass }}" />
+                                        </div>
+                                    @endif
                                     {{-- Online Pulse Indicator --}}
                                     @if ($isOnline)
                                         <span class="absolute -top-1 -right-1 flex h-3 w-3">
@@ -75,7 +83,7 @@
                             </div>
 
                             {{-- Status Badge --}}
-                            <div class="flex-shrink-0">
+                            {{-- <div class="flex-shrink-0">
                                 @if ($isOnline)
                                     <div class="px-2.5 py-1 bg-success/10 rounded-full border border-success/20">
                                         <span class="text-xs font-semibold text-success flex items-center gap-1">
@@ -99,7 +107,7 @@
                                         </span>
                                     </div>
                                 @endif
-                            </div>
+                            </div> --}}
                         </div>
                     </div>
 
@@ -137,7 +145,7 @@
                         </div>
 
                         {{-- Technical Information --}}
-                        <div class="flex items-center gap-4 pt-2">
+                        <div class="flex items-center gap-4 pt-2 flex-wrap">
                             <div class="flex items-center gap-2 text-xs">
                                 <div class="p-1.5 bg-{{ $colorClass }}/10 rounded">
                                     <x-mary-icon name="o-cpu-chip" class="w-3.5 h-3.5 text-{{ $colorClass }}" />
@@ -154,6 +162,13 @@
                                     <span class="font-semibold text-base-content">{{ $router->ssh_port }}</span>
                                 </div>
                             @endif
+                            <div class="flex items-center gap-2 text-xs">
+                                <div class="p-1.5 bg-{{ $colorClass }}/10 rounded">
+                                    <x-mary-icon name="o-globe-alt" class="w-3.5 h-3.5 text-{{ $colorClass }}" />
+                                </div>
+                                <span class="text-base-content/60">Login:</span>
+                                <span class="font-semibold text-base-content">{{ $router->address }}</span>
+                            </div>
                         </div>
 
                         {{-- Ping Status Message --}}

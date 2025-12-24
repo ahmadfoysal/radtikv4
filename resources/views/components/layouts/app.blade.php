@@ -135,25 +135,24 @@
         <x-slot:content>
             {{-- Demo Mode Banner --}}
             @if (env('DEMO_MODE', false))
-                <div class="bg-warning text-warning-content px-4 py-3 shadow-lg sticky top-0 z-50">
+                <div
+                    class="bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 text-white px-4 py-3 shadow-xl sticky top-0 z-50">
                     <div class="container mx-auto flex items-center justify-between flex-wrap gap-2">
                         <div class="flex items-center gap-3">
-                            <x-mary-icon name="o-exclamation-triangle" class="w-6 h-6 flex-shrink-0" />
+                            <x-mary-icon name="o-sparkles" class="w-6 h-6 flex-shrink-0 animate-pulse" />
                             <div>
                                 <p class="font-bold text-sm sm:text-base">🎭 Demo Mode Active</p>
-                                <p class="text-xs sm:text-sm">All data resets every hour. Use demo credentials to
+                                <p class="text-xs sm:text-sm opacity-90">All data resets every hour. Use demo
+                                    credentials to
                                     explore features.</p>
                             </div>
                         </div>
                         <div class="flex flex-col sm:flex-row gap-2 text-xs">
-                            <div class="bg-warning-content/20 px-3 py-1 rounded">
-                                <span class="font-semibold">Superadmin:</span> demo-superadmin@radtik.local
+                            <div class="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-lg border border-white/30">
+                                <span class="font-semibold">Admin:</span> admin@example.com
                             </div>
-                            <div class="bg-warning-content/20 px-3 py-1 rounded">
-                                <span class="font-semibold">Admin:</span> demo-admin@radtik.local
-                            </div>
-                            <div class="bg-warning-content/20 px-3 py-1 rounded">
-                                <span class="font-semibold">Reseller:</span> demo-reseller@radtik.local
+                            <div class="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-lg border border-white/30">
+                                <span class="font-semibold">Reseller:</span> reseller@example.com
                             </div>
                         </div>
                     </div>
