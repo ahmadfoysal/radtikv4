@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Models\Traits\HasBilling;
 use App\Models\Traits\LogsActivity;
 use HasinHayder\TyroLogin\Traits\HasTwoFactorAuth;
@@ -12,7 +12,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasBilling, HasFactory, HasRoles, HasTwoFactorAuth, LogsActivity, Notifiable;
@@ -89,6 +89,12 @@ class User extends Authenticatable
         parent::boot();
 
         static::created(function ($user) {
+            // Auto-assign admin role to all registered users
+            $adminRole = \Spatie\Permission\Models\Role::where('name', 'admin')->first();
+            if ($adminRole && !$user->hasRole('admin')) {
+                $user->assignRole('admin');
+            }
+
             // Auto-subscribe admin users to free package after registration
             if ($user->hasRole('admin')) {
                 $freePackage = Package::where('name', 'Free')->where('is_active', true)->first();

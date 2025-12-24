@@ -143,7 +143,7 @@ return [
         'auto_login' => env('TYRO_LOGIN_REGISTRATION_AUTO_LOGIN', false),
 
         // Whether to require email verification after registration
-        'require_email_verification' => env('TYRO_LOGIN_REQUIRE_EMAIL_VERIFICATION', false),
+        'require_email_verification' => env('TYRO_LOGIN_REQUIRE_EMAIL_VERIFICATION', true),
     ],
 
     /*
