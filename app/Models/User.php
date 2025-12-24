@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Models\Traits\HasBilling;
 use App\Models\Traits\LogsActivity;
 use HasinHayder\TyroLogin\Traits\HasTwoFactorAuth;
@@ -12,7 +12,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasBilling, HasFactory, HasRoles, HasTwoFactorAuth, LogsActivity, Notifiable;
