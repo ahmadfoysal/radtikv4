@@ -200,6 +200,13 @@ class PayStationGateway implements PaymentGatewayContract
                     'transaction_id' => $trxId,
                     'user_id' => $user->id,
                 ]);
+
+                // Send payment notification
+                $user->notify(new \App\Notifications\Billing\PaymentReceivedNotification(
+                    $invoice,
+                    $invoice->amount,
+                    $invoice->balance_after
+                ));
             });
 
             // Remove payment data from session

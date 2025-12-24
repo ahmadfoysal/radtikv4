@@ -23,141 +23,195 @@
 
     {{-- Router stats grid --}}
     <div class="px-2 sm:px-4">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             @forelse ($routers as $router)
                 @php
                     // Get zone name from relation, fallback to note or dash
                     $zone = $router->zone?->name ?? ($router->note ?? '—');
                     // Rotate through semantic colors for visual variety
-                    $colors = [
-                        'text-primary',
-                        'text-secondary',
-                        'text-accent',
-                        'text-info',
-                        'text-success',
-                        'text-warning',
-                    ];
-                    $iconColor = $colors[$loop->index % count($colors)];
+                    $colors = ['primary', 'secondary', 'accent', 'info', 'success', 'warning'];
+                    $colorClass = $colors[$loop->index % count($colors)];
 
                     $totalUsers = $router->total_vouchers_count ?? 0;
                     $activeUsers = $router->active_vouchers_count ?? 0;
                     $expiredUsers = $router->expired_vouchers_count ?? 0;
                     $inactiveUsers = max($totalUsers - $activeUsers, 0);
+
+                    $isOnline = isset($pingStatuses[$router->id]) && $pingStatuses[$router->id] === 'ok';
+                    $isOffline = isset($pingStatuses[$router->id]) && $pingStatuses[$router->id] === 'fail';
                 @endphp
 
                 <div
-                    class="bg-base-100 p-4 space-y-4 shadow-sm hover:shadow-md transition-all duration-300 border border-base-300">
-                    {{-- Header Section --}}
-                    <div class="flex items-start justify-between gap-3">
-                        <div class="flex items-start gap-3 flex-1 min-w-0">
-                            <div class="p-2.5 bg-base-200 flex-shrink-0">
-                                <x-mary-icon name="s-server" class="w-6 h-6 {{ $iconColor }}" />
+                    class="group bg-base-100 rounded-xl border border-base-300 overflow-hidden shadow-sm hover:shadow-lg hover:border-{{ $colorClass }}/30 transition-all duration-300">
+                    {{-- Card Header with Gradient --}}
+                    <div
+                        class="relative bg-gradient-to-br from-{{ $colorClass }}/10 via-{{ $colorClass }}/5 to-transparent p-5 pb-4">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex items-start gap-3 flex-1 min-w-0">
+                                <div class="relative">
+                                    <div
+                                        class="p-3 bg-{{ $colorClass }}/10 rounded-lg border border-{{ $colorClass }}/20 group-hover:scale-105 transition-transform duration-300">
+                                        <x-mary-icon name="s-server" class="w-6 h-6 text-{{ $colorClass }}" />
+                                    </div>
+                                    {{-- Online Pulse Indicator --}}
+                                    @if ($isOnline)
+                                        <span class="absolute -top-1 -right-1 flex h-3 w-3">
+                                            <span
+                                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
+                                            <span class="relative inline-flex rounded-full h-3 w-3 bg-success"></span>
+                                        </span>
+                                    @endif
+                                </div>
+                                <div class="flex-1 min-w-0 pt-0.5">
+                                    <h3
+                                        class="font-bold text-lg truncate text-base-content group-hover:text-{{ $colorClass }} transition-colors">
+                                        {{ $router->name }}
+                                    </h3>
+                                    <div class="flex items-center gap-1.5 mt-1.5">
+                                        <x-mary-icon name="o-map-pin" class="w-3.5 h-3.5 text-base-content/50" />
+                                        <span class="text-sm text-base-content/70 truncate">{{ $zone }}</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="flex-1 min-w-0">
-                                <h3 class="font-semibold text-base truncate mb-1">
-                                    {{ $router->name }}
-                                </h3>
-                                <div class="text-xs text-base-content/60 flex items-center gap-1.5">
-                                    <x-mary-icon name="o-map-pin" class="w-3.5 h-3.5 flex-shrink-0" />
-                                    <span class="truncate">{{ $zone }}</span>
+
+                            {{-- Status Badge --}}
+                            <div class="flex-shrink-0">
+                                @if ($isOnline)
+                                    <div class="px-2.5 py-1 bg-success/10 rounded-full border border-success/20">
+                                        <span class="text-xs font-semibold text-success flex items-center gap-1">
+                                            <x-mary-icon name="o-check-circle" class="w-3.5 h-3.5" />
+                                            Online
+                                        </span>
+                                    </div>
+                                @elseif($isOffline)
+                                    <div class="px-2.5 py-1 bg-error/10 rounded-full border border-error/20">
+                                        <span class="text-xs font-semibold text-error flex items-center gap-1">
+                                            <x-mary-icon name="o-x-circle" class="w-3.5 h-3.5" />
+                                            Offline
+                                        </span>
+                                    </div>
+                                @else
+                                    <div class="px-2.5 py-1 bg-base-200 rounded-full border border-base-300">
+                                        <span
+                                            class="text-xs font-semibold text-base-content/50 flex items-center gap-1">
+                                            <x-mary-icon name="o-question-mark-circle" class="w-3.5 h-3.5" />
+                                            Unknown
+                                        </span>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Card Body --}}
+                    <div class="p-5 pt-4 space-y-4">
+                        {{-- Voucher Statistics --}}
+                        <div class="bg-base-200/50 rounded-lg p-4">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-semibold text-base-content/80">Voucher Overview</span>
+                                <div class="px-2.5 py-0.5 bg-{{ $colorClass }}/10 rounded-full">
+                                    <span
+                                        class="text-sm font-bold text-{{ $colorClass }}">{{ $totalUsers }}</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-4 mt-3">
+                                <div class="flex items-center gap-1.5">
+                                    <div class="w-2 h-2 rounded-full bg-success"></div>
+                                    <span class="text-xs text-base-content/60">Active:</span>
+                                    <span class="text-sm font-bold text-success">{{ $activeUsers }}</span>
+                                </div>
+                                <div class="w-px h-4 bg-base-300"></div>
+                                <div class="flex items-center gap-1.5">
+                                    <div class="w-2 h-2 rounded-full bg-base-content/40"></div>
+                                    <span class="text-xs text-base-content/60">Inactive:</span>
+                                    <span class="text-sm font-bold text-base-content/70">{{ $inactiveUsers }}</span>
+                                </div>
+                                <div class="w-px h-4 bg-base-300"></div>
+                                <div class="flex items-center gap-1.5">
+                                    <div class="w-2 h-2 rounded-full bg-warning"></div>
+                                    <span class="text-xs text-base-content/60">Expired:</span>
+                                    <span class="text-sm font-bold text-warning">{{ $expiredUsers }}</span>
                                 </div>
                             </div>
                         </div>
-                        {{-- Status Indicator --}}
-                        <div class="flex-shrink-0">
-                            @if (isset($pingStatuses[$router->id]))
-                                @if ($pingStatuses[$router->id] === 'ok')
-                                    <div class="tooltip tooltip-left" data-tip="Router Online">
-                                        <x-mary-icon name="o-check-circle" class="w-5 h-5 text-success" />
+
+                        {{-- Technical Information --}}
+                        <div class="flex items-center gap-4 pt-2">
+                            <div class="flex items-center gap-2 text-xs">
+                                <div class="p-1.5 bg-{{ $colorClass }}/10 rounded">
+                                    <x-mary-icon name="o-cpu-chip" class="w-3.5 h-3.5 text-{{ $colorClass }}" />
+                                </div>
+                                <span class="text-base-content/60">API:</span>
+                                <span class="font-semibold text-base-content">{{ $router->port }}</span>
+                            </div>
+                            @if ($router->ssh_port)
+                                <div class="flex items-center gap-2 text-xs">
+                                    <div class="p-1.5 bg-{{ $colorClass }}/10 rounded">
+                                        <x-mary-icon name="o-key" class="w-3.5 h-3.5 text-{{ $colorClass }}" />
                                     </div>
-                                @elseif ($pingStatuses[$router->id] === 'fail')
-                                    <div class="tooltip tooltip-left" data-tip="Router Offline">
-                                        <x-mary-icon name="o-x-circle" class="w-5 h-5 text-error" />
-                                    </div>
-                                @endif
+                                    <span class="text-base-content/60">SSH:</span>
+                                    <span class="font-semibold text-base-content">{{ $router->ssh_port }}</span>
+                                </div>
                             @endif
                         </div>
-                    </div>
 
-                    {{-- User Statistics Section --}}
-                    <div class="space-y-2.5">
-                        <div class="flex items-center justify-between text-xs">
-                            <span class="font-semibold text-base-content/70">Voucher Statistics</span>
-                            <span class="font-bold text-primary">{{ $totalUsers }}</span>
-                        </div>
-                        <div class="flex flex-wrap gap-1.5 pt-1">
-                            <x-mary-badge value="{{ $activeUsers }}" class="badge-success badge-sm">
-                                <x-slot:icon>
-                                    <x-mary-icon name="o-check-circle" class="w-3 h-3" />
-                                </x-slot:icon>
-                            </x-mary-badge>
-                            <x-mary-badge value="{{ $inactiveUsers }}" class="badge-ghost badge-sm">
-                                <x-slot:icon>
-                                    <x-mary-icon name="o-pause-circle" class="w-3 h-3" />
-                                </x-slot:icon>
-                            </x-mary-badge>
-                            <x-mary-badge value="{{ $expiredUsers }}" class="badge-warning badge-sm">
-                                <x-slot:icon>
-                                    <x-mary-icon name="o-clock" class="w-3 h-3" />
-                                </x-slot:icon>
-                            </x-mary-badge>
-                        </div>
-                    </div>
-
-                    {{-- Technical Details --}}
-                    <div class="flex flex-wrap gap-3 pt-2 border-t border-base-300 text-[11px] text-base-content/60">
-                        <div class="flex items-center gap-1.5">
-                            <x-mary-icon name="o-cpu-chip" class="w-3.5 h-3.5" />
-                            <span>API: <strong class="text-base-content">{{ $router->port }}</strong></span>
-                        </div>
-                        @if ($router->ssh_port)
-                            <div class="flex items-center gap-1.5">
-                                <x-mary-icon name="o-key" class="w-3.5 h-3.5" />
-                                <span>SSH: <strong class="text-base-content">{{ $router->ssh_port }}</strong></span>
+                        {{-- Ping Status Message --}}
+                        @if ($pingedId === $router->id)
+                            <div class="animate-fade-in">
+                                @if ($pingSuccess)
+                                    <div
+                                        class="flex items-center gap-2 p-2.5 bg-success/10 rounded-lg border border-success/20">
+                                        <x-mary-icon name="o-check-circle" class="w-4 h-4 text-success" />
+                                        <span class="text-sm font-medium text-success">Connection successful</span>
+                                    </div>
+                                @else
+                                    <div
+                                        class="flex items-center gap-2 p-2.5 bg-error/10 rounded-lg border border-error/20">
+                                        <x-mary-icon name="o-x-circle" class="w-4 h-4 text-error" />
+                                        <span class="text-sm font-medium text-error">Connection failed</span>
+                                    </div>
+                                @endif
                             </div>
                         @endif
                     </div>
 
-                    {{-- Action Buttons --}}
-                    <div class="flex items-center justify-between gap-2 pt-2 border-t border-base-300">
-                        {{-- Ping Status Message --}}
-                        <div class="flex-1">
-                            @if ($pingedId === $router->id)
-                                @if ($pingSuccess)
-                                    <span class="text-xs font-medium text-success flex items-center gap-1">
-                                        <x-mary-icon name="o-check-circle" class="w-3.5 h-3.5" />
-                                        Ping OK
-                                    </span>
-                                @else
-                                    <span class="text-xs font-medium text-error flex items-center gap-1">
-                                        <x-mary-icon name="o-x-circle" class="w-3.5 h-3.5" />
-                                        Ping Failed
-                                    </span>
-                                @endif
-                            @endif
-                        </div>
+                    {{-- Card Footer --}}
+                    <div class="px-5 pb-5">
+                        <div class="flex items-center justify-between gap-2 pt-3 border-t border-base-300">
+                            <div class="tooltip tooltip-right" data-tip="Install Scripts">
+                                <button wire:click="installScripts({{ $router->id }})" wire:loading.attr="disabled"
+                                    wire:target="installScripts({{ $router->id }})"
+                                    class="btn btn-circle btn-sm btn-ghost hover:bg-{{ $colorClass }}/10 hover:text-{{ $colorClass }} transition-colors">
+                                    <x-mary-icon name="o-cog-6-tooth" class="w-4 h-4" />
+                                    <span wire:loading wire:target="installScripts({{ $router->id }})"
+                                        class="loading loading-spinner loading-xs"></span>
+                                </button>
+                            </div>
 
-                        {{-- Action Buttons Group --}}
-                        <div class="flex items-center gap-1">
-                            <div class="tooltip" data-tip="Install Scripts">
-                                <x-mary-button icon="o-cog-6-tooth"
-                                    class="btn-ghost btn-xs !px-2 text-primary hover:bg-primary/10"
-                                    wire:click="installScripts({{ $router->id }})"
-                                    spinner="installScripts({{ $router->id }})" wire:loading.attr="disabled"
-                                    wire:target="installScripts({{ $router->id }})" />
+                            <div class="tooltip" data-tip="Test Connection">
+                                <button wire:click="ping({{ $router->id }})" wire:loading.attr="disabled"
+                                    wire:target="ping({{ $router->id }})"
+                                    class="btn btn-circle btn-sm btn-ghost hover:bg-{{ $colorClass }}/10 hover:text-{{ $colorClass }} transition-colors">
+                                    <x-mary-icon name="o-wifi" class="w-4 h-4" />
+                                    <span wire:loading wire:target="ping({{ $router->id }})"
+                                        class="loading loading-spinner loading-xs"></span>
+                                </button>
                             </div>
-                            <div class="tooltip" data-tip="Ping Router">
-                                <x-mary-button icon="o-wifi" class="btn-ghost btn-xs !px-2 hover:bg-base-200"
-                                    wire:click="ping({{ $router->id }})" spinner="ping({{ $router->id }})"
-                                    wire:loading.attr="disabled" wire:target="ping({{ $router->id }})" />
-                            </div>
-                            <div class="tooltip" data-tip="View Details">
-                                <x-mary-button icon="o-eye" class="btn-ghost btn-xs !px-2 hover:bg-base-200"
-                                    href="{{ route('routers.show', $router) }}" wire:navigate />
-                            </div>
+
+                            <div class="flex-1"></div>
+
+                            <a href="{{ route('routers.show', $router) }}" wire:navigate
+                                class="btn btn-sm btn-{{ $colorClass }}/90 hover:btn-{{ $colorClass }} gap-2 group/btn">
+                                <x-mary-icon name="o-eye" class="w-4 h-4" />
+                                <span>View</span>
+                            </a>
+
                             <div class="tooltip" data-tip="Edit Router">
-                                <x-mary-button icon="o-pencil" class="btn-ghost btn-xs !px-2 hover:bg-base-200"
-                                    href="{{ route('routers.edit', $router) }}" wire:navigate />
+                                <a href="{{ route('routers.edit', $router) }}" wire:navigate
+                                    class="btn btn-circle btn-sm btn-ghost hover:bg-base-200">
+                                    <x-mary-icon name="o-pencil" class="w-4 h-4" />
+                                </a>
                             </div>
                         </div>
                     </div>

@@ -5,6 +5,7 @@ namespace App\Livewire\Router;
 use App\Models\Package;
 use App\Models\Router;
 use App\Models\VoucherTemplate;
+use App\Models\Zone;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
@@ -44,6 +45,9 @@ class Edit extends Component
     #[Rule(['nullable', 'numeric', 'min:0'])]
     public float $monthly_isp_cost = 0.0;
 
+    #[Rule(['nullable', 'integer', 'exists:zones,id'])]
+    public ?int $zone_id = null;
+
     #[Rule(['nullable', 'image', 'max:2048', 'mimes:jpg,jpeg,png,svg,webp'])]
     public $logo = null;
 
@@ -61,6 +65,7 @@ class Edit extends Component
         $this->password = Crypt::decryptString($router->password);
         $this->voucher_template_id = $router->voucher_template_id;
         $this->monthly_isp_cost = $router->monthly_isp_cost ?? 0.0;
+        $this->zone_id = $router->zone_id;
     }
 
     public function update(): void
@@ -77,6 +82,7 @@ class Edit extends Component
             'password' => Crypt::encryptString($this->password),
             'voucher_template_id' => $this->voucher_template_id,
             'monthly_isp_cost' => $this->monthly_isp_cost,
+            'zone_id' => $this->zone_id,
         ];
 
         // Handle logo upload - replace old logo if new one is uploaded

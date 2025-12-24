@@ -223,6 +223,11 @@ class User extends Authenticatable
             ->withTimestamps();
     }
 
+    public function notificationPreferences()
+    {
+        return $this->hasOne(NotificationPreference::class);
+    }
+
     public function getResellerProfiles()
     {
         return $this->resellerProfiles()->get();
@@ -376,12 +381,19 @@ class User extends Authenticatable
 
         // Create invoice for subscription only if amount is greater than 0 (skip for free packages)
         if ($amount > 0) {
-            $this->debit(
+            $invoice = $this->debit(
                 amount: $amount,
                 category: 'subscription',
                 description: "Subscription to {$package->name} ({$cycle})",
                 meta: ['subscription_id' => $subscription->id, 'package_id' => $package->id, 'billing_cycle' => $cycle]
             );
+
+            // Send subscription notification
+            $this->notify(new \App\Notifications\Billing\SubscriptionRenewalNotification(
+                $subscription,
+                $invoice,
+                false // Not auto-renewal
+            ));
         }
 
         return $subscription;

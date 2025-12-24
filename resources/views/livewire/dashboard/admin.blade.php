@@ -164,25 +164,6 @@
                 <x-mary-chart wire:model="activationChart" />
             </div>
         </x-mary-card>
-
-        {{-- Income by Profile Chart --}}
-        <x-mary-card class="border border-base-300 bg-base-100 lg:col-span-2">
-            <x-slot name="title">
-                <div class="flex items-center gap-2">
-                    <x-mary-icon name="o-chart-pie" class="w-5 h-5 text-primary" />
-                    <span>Income by Profile</span>
-                </div>
-            </x-slot>
-            <div class="h-64">
-                @if (!empty($profileIncomeChart))
-                    <x-mary-chart wire:model="profileIncomeChart" />
-                @else
-                    <div class="flex items-center justify-center h-full">
-                        <p class="text-base-content/60 text-sm">No activation data yet</p>
-                    </div>
-                @endif
-            </div>
-        </x-mary-card>
     </div>
 
     {{-- Tables Section --}}

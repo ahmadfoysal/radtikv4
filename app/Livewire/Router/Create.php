@@ -6,6 +6,7 @@ use App\Models\Package;
 use App\Models\ResellerRouter;
 use App\Models\Router;
 use App\Models\VoucherTemplate;
+use App\Models\Zone;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
@@ -42,6 +43,9 @@ class Create extends Component
 
     #[Rule(['nullable', 'numeric', 'min:0'])]
     public float $monthly_isp_cost = 0.0;
+
+    #[Rule(['nullable', 'integer', 'exists:zones,id'])]
+    public ?int $zone_id = null;
 
     #[Rule(['nullable', 'image', 'max:2048', 'mimes:jpg,jpeg,png,svg,webp'])]
     public $logo = null;
@@ -93,11 +97,26 @@ class Create extends Component
             return;
         }
 
+        // Get active subscription and check expiration
+        $subscription = $billingUser->activeSubscription();
+
+        if ($subscription->hasEnded()) {
+            $this->error(
+                title: 'Subscription Expired',
+                description: 'Your subscription has expired on ' . $subscription->end_date->format('M d, Y') . '. Please renew your subscription to add routers.'
+            );
+            return;
+        }
+
         // Check if the admin can add more routers based on their subscription package
         if (!$billingUser->canAddRouter()) {
             $package = $billingUser->getCurrentPackage();
             $maxRouters = $package ? $package->max_routers : 0;
-            $this->error(title: 'Router Limit Reached', description: "Your current subscription allows a maximum of {$maxRouters} routers. Upgrade your package to add more.");
+            $currentRouters = $billingUser->routers()->count();
+            $this->error(
+                title: 'Router Limit Reached',
+                description: "You have {$currentRouters} of {$maxRouters} routers allowed by your {$package->name} package. Upgrade your package to add more routers."
+            );
             return;
         }
 
@@ -114,6 +133,7 @@ class Create extends Component
                 'user_id' => $routerOwner->id,  // Router belongs to admin, not reseller
                 'voucher_template_id' => $voucherTemplateId,
                 'monthly_isp_cost' => $this->monthly_isp_cost,
+                'zone_id' => $this->zone_id,
                 'logo' => $logoPath,
             ]);
 
@@ -144,6 +164,7 @@ class Create extends Component
             'password',
             'voucher_template_id',
             'monthly_isp_cost',
+            'zone_id',
             'logo',
         ]);
         $this->port = 8728;

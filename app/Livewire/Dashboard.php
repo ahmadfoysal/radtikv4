@@ -19,7 +19,7 @@ class Dashboard extends Component
     // Public chart properties for MaryUI
     public array $incomeChart = [];
     public array $activationChart = [];
-    public array $profileIncomeChart = [];
+
 
     public function render(): View
     {
@@ -38,7 +38,7 @@ class Dashboard extends Component
             // Set chart data as public properties for MaryUI
             $this->incomeChart = $data['incomeChart'] ?? [];
             $this->activationChart = $data['activationChart'] ?? [];
-            $this->profileIncomeChart = $data['profileIncomeChart'] ?? [];
+
 
             return view('livewire.dashboard.admin', $data)
                 ->title(__('Dashboard'));
@@ -387,34 +387,6 @@ class Dashboard extends Component
             ],
         ];
 
-        // Income by Profile Pie Chart
-        $profileIncomeChart = [];
-        if ($incomeByProfile->isNotEmpty()) {
-            $profileIncomeChart = [
-                'type' => 'pie',
-                'data' => [
-                    'labels' => $incomeByProfile->pluck('profile')->toArray(),
-                    'datasets' => [[
-                        'data' => $incomeByProfile->pluck('total_income')->toArray(),
-                        'backgroundColor' => [
-                            'rgb(16, 185, 129)',
-                            'rgb(59, 130, 246)',
-                            'rgb(245, 158, 11)',
-                            'rgb(239, 68, 68)',
-                            'rgb(139, 92, 246)',
-                        ],
-                    ]],
-                ],
-                'options' => [
-                    'responsive' => true,
-                    'maintainAspectRatio' => false,
-                    'plugins' => [
-                        'legend' => ['display' => true, 'position' => 'bottom'],
-                    ],
-                ],
-            ];
-        }
-
         // Invoice Statistics
         $invoiceQuery = Invoice::where('user_id', $user->id);
         $startOfMonth = Carbon::now()->startOfMonth();
@@ -501,7 +473,6 @@ class Dashboard extends Component
             'topRouters',
             'incomeChart',
             'activationChart',
-            'profileIncomeChart'
         );
     }
 

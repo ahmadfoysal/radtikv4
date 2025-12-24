@@ -40,6 +40,15 @@
             </div>
 
             <div>
+                <x-mary-select label="Zone" wire:model.live="zone_id" :options="App\Models\Zone::where('is_active', true)
+                    ->orderBy('name')
+                    ->get()
+                    ->map(fn($z) => ['id' => $z->id, 'name' => $z->name])
+                    ->toArray()" option-label="name"
+                    option-value="id" placeholder="Select a zone (optional)" />
+            </div>
+
+            <div>
                 <x-mary-file label="Logo" wire:model="logo" accept="image/*" />
                 @error('logo')
                     <div class="text-error text-sm mt-1">{{ $message }}</div>

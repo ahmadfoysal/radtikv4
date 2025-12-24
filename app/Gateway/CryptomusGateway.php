@@ -37,7 +37,7 @@ class CryptomusGateway implements PaymentGatewayContract
         }
 
         // Generate unique order ID
-        $orderId = 'PAY-'.uniqid().'-'.time();
+        $orderId = 'PAY-' . uniqid() . '-' . time();
         $callbackUrl = route('payment.cryptomus.callback');
 
         // Store payment data in session (to be used after successful payment)
@@ -67,12 +67,12 @@ class CryptomusGateway implements PaymentGatewayContract
         try {
             // Cryptomus uses the same URL for both test and production
             $baseUrl = 'https://api.cryptomus.com/v1';
-            
+
             $response = Http::withHeaders([
                 'merchant' => $merchantId,
                 'sign' => $sign,
                 'Content-Type' => 'application/json',
-            ])->post($baseUrl.'/payment', $data);
+            ])->post($baseUrl . '/payment', $data);
 
             if (! $response->successful()) {
                 Log::error('Cryptomus payment creation failed', [
@@ -103,7 +103,7 @@ class CryptomusGateway implements PaymentGatewayContract
                 'error' => $e->getMessage(),
                 'order_id' => $orderId,
             ]);
-            
+
             session()->forget('pending_payment');
             throw $e;
         }
@@ -115,11 +115,11 @@ class CryptomusGateway implements PaymentGatewayContract
     public function handleCallback(Request $request): void
     {
         $data = $request->all();
-        
+
         // Verify signature
         $receivedSign = $request->header('sign');
         $apiKey = $this->gateway->data['api_key'] ?? null;
-        
+
         if (! $this->verifySignature($data, $receivedSign, $apiKey)) {
             Log::warning('Invalid Cryptomus callback signature', ['data' => $data]);
             return;
@@ -136,7 +136,7 @@ class CryptomusGateway implements PaymentGatewayContract
 
         // Check if invoice already exists for this transaction
         $existingInvoice = Invoice::where('transaction_id', $uuid)->first();
-        
+
         if ($existingInvoice) {
             Log::info('Invoice already exists for transaction', ['transaction_id' => $uuid]);
             return;
@@ -144,7 +144,7 @@ class CryptomusGateway implements PaymentGatewayContract
 
         // Get payment data from session
         $paymentData = session()->get('pending_payment');
-        
+
         if (! $paymentData || $paymentData['order_id'] !== $orderId) {
             Log::warning('No matching pending payment in session', [
                 'order_id' => $orderId,
@@ -157,7 +157,7 @@ class CryptomusGateway implements PaymentGatewayContract
         if ($status === 'paid' || $status === 'paid_over') {
             // Get user
             $user = User::find($paymentData['user_id']);
-            
+
             if (! $user) {
                 Log::error('User not found for payment', ['user_id' => $paymentData['user_id']]);
                 return;
@@ -190,6 +190,13 @@ class CryptomusGateway implements PaymentGatewayContract
                     'transaction_id' => $uuid,
                     'user_id' => $user->id,
                 ]);
+
+                // Send payment notification
+                $user->notify(new \App\Notifications\Billing\PaymentReceivedNotification(
+                    $invoice,
+                    $invoice->amount,
+                    $invoice->balance_after
+                ));
             });
 
             // Remove payment data from session
@@ -199,7 +206,7 @@ class CryptomusGateway implements PaymentGatewayContract
                 'order_id' => $orderId,
                 'status' => $status,
             ]);
-            
+
             // Remove payment data from session
             session()->forget('pending_payment');
         }
@@ -211,7 +218,7 @@ class CryptomusGateway implements PaymentGatewayContract
     protected function generateSignature(array $data, string $apiKey): string
     {
         $json = json_encode($data, JSON_UNESCAPED_UNICODE);
-        return md5(base64_encode($json).$apiKey);
+        return md5(base64_encode($json) . $apiKey);
     }
 
     /**
@@ -225,7 +232,7 @@ class CryptomusGateway implements PaymentGatewayContract
 
         unset($data['sign']); // Remove sign from data before verification
         $expectedSign = $this->generateSignature($data, $apiKey);
-        
+
         return hash_equals($expectedSign, $receivedSign);
     }
 }
