@@ -72,9 +72,8 @@ class DemoDataSeeder extends Seeder
         $this->command->info('✅ Demo data created successfully!');
         $this->command->info('');
         $this->command->info('📝 Demo Credentials:');
-        $this->command->info('  Superadmin: demo-superadmin@radtik.local / password');
-        $this->command->info('  Admin:      demo-admin@radtik.local / password');
-        $this->command->info('  Reseller:   demo-reseller@radtik.local / password');
+        $this->command->info('  Admin:    demo@example.com / 12345678');
+        $this->command->info('  Reseller: reseller@example.com / 12345678');
         $this->command->info('');
         $this->command->warn('⚠️  Demo data will reset every hour!');
     }
@@ -119,20 +118,27 @@ class DemoDataSeeder extends Seeder
 
     protected function createDemoSuperAdmin(): User
     {
-        $this->command->info('Creating demo superadmin...');
+        $this->command->info('Creating superadmin with strong password...');
+
+        // Generate a strong random password for superadmin (not for demo access)
+        $strongPassword = bin2hex(random_bytes(16)); // 32 character random password
 
         $user = User::updateOrCreate(
-            ['email' => 'demo-superadmin@radtik.local'],
+            ['email' => 'superadmin@radtik.local'],
             [
-                'name' => 'Demo Superadmin',
-                'password' => Hash::make('password'),
+                'name' => 'System Administrator',
+                'password' => Hash::make($strongPassword),
                 'is_active' => true,
-                'balance' => 50000,
+                'balance' => 100000,
                 'email_verified_at' => now(),
             ]
         );
 
         $user->syncRoles(['superadmin']);
+
+        // Store password in environment or display it once
+        $this->command->warn('🔐 SUPERADMIN PASSWORD (SAVE THIS!): ' . $strongPassword);
+        $this->command->warn('   Email: superadmin@radtik.local');
 
         return $user;
     }
@@ -142,10 +148,10 @@ class DemoDataSeeder extends Seeder
         $this->command->info('Creating demo admin...');
 
         $user = User::updateOrCreate(
-            ['email' => 'demo-admin@radtik.local'],
+            ['email' => 'demo@example.com'],
             [
                 'name' => 'Demo Admin',
-                'password' => Hash::make('password'),
+                'password' => Hash::make('12345678'),
                 'is_active' => true,
                 'balance' => 25000,
                 'email_verified_at' => now(),
@@ -162,10 +168,10 @@ class DemoDataSeeder extends Seeder
         $this->command->info('Creating demo reseller...');
 
         $user = User::updateOrCreate(
-            ['email' => 'demo-reseller@radtik.local'],
+            ['email' => 'reseller@example.com'],
             [
                 'name' => 'Demo Reseller',
-                'password' => Hash::make('password'),
+                'password' => Hash::make('12345678'),
                 'is_active' => true,
                 'balance' => 5000,
                 'admin_id' => $admin->id,
