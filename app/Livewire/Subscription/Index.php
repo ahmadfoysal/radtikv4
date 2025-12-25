@@ -18,6 +18,44 @@ class Index extends Component
     public ?int $selectedPackageId = null;
     public string $selectedCycle = 'monthly';
     public bool $showSubscribeModal = false;
+    public string $viewCycle = 'monthly'; // For toggling display between monthly/yearly
+
+    public function getDiscountAmountProperty(): float
+    {
+        $user = Auth::user();
+        if (!$this->selectedPackageId || !$user->hasRole('admin') || $user->commission <= 0) {
+            return 0;
+        }
+
+        $package = Package::find($this->selectedPackageId);
+        if (!$package) {
+            return 0;
+        }
+
+        $amount = $this->selectedCycle === 'yearly'
+            ? ($package->price_yearly ?? $package->price_monthly * 12)
+            : $package->price_monthly;
+
+        return round(($amount * $user->commission) / 100, 2);
+    }
+
+    public function getFinalAmountProperty(): float
+    {
+        if (!$this->selectedPackageId) {
+            return 0;
+        }
+
+        $package = Package::find($this->selectedPackageId);
+        if (!$package) {
+            return 0;
+        }
+
+        $amount = $this->selectedCycle === 'yearly'
+            ? ($package->price_yearly ?? $package->price_monthly * 12)
+            : $package->price_monthly;
+
+        return $amount - $this->discountAmount;
+    }
 
     public function mount(): void
     {

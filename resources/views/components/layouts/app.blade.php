@@ -141,18 +141,10 @@
                         <div class="flex items-center gap-3">
                             <x-mary-icon name="o-sparkles" class="w-6 h-6 flex-shrink-0 animate-pulse" />
                             <div>
-                                <p class="font-bold text-sm sm:text-base">🎭 Demo Mode Active</p>
+                                <p class="font-bold text-sm sm:text-base">🚀 Demo Environment - Explore Freely!</p>
                                 <p class="text-xs sm:text-sm opacity-90">All data resets every hour. Use demo
                                     credentials to
                                     explore features.</p>
-                            </div>
-                        </div>
-                        <div class="flex flex-col sm:flex-row gap-2 text-xs">
-                            <div class="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-lg border border-white/30">
-                                <span class="font-semibold">Admin:</span> admin@example.com
-                            </div>
-                            <div class="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-lg border border-white/30">
-                                <span class="font-semibold">Reseller:</span> reseller@example.com
                             </div>
                         </div>
                     </div>

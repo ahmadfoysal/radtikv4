@@ -81,88 +81,107 @@
     <div id="packages-section">
         <x-mary-card class="border border-base-300 bg-base-100">
             <x-slot name="title">
-                <div class="flex items-center gap-2">
-                    <x-mary-icon name="o-cube" class="w-6 h-6 text-primary" />
-                    <span>Available Packages</span>
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <x-mary-icon name="o-cube" class="w-6 h-6 text-primary" />
+                        <span>Available Packages</span>
+                    </div>
+
+                    {{-- Billing Cycle Toggle --}}
+                    <div class="flex items-center gap-3 bg-base-200 rounded-lg p-1">
+                        <button wire:click="$set('viewCycle', 'monthly')"
+                            class="px-4 py-2 rounded-md text-sm font-medium transition-all
+                            {{ $viewCycle === 'monthly' ? 'bg-primary text-primary-content shadow-sm' : 'text-base-content/70 hover:text-base-content' }}">
+                            Monthly
+                        </button>
+                        <button wire:click="$set('viewCycle', 'yearly')"
+                            class="px-4 py-2 rounded-md text-sm font-medium transition-all
+                            {{ $viewCycle === 'yearly' ? 'bg-success text-success-content shadow-sm' : 'text-base-content/70 hover:text-base-content' }}">
+                            Yearly
+                        </button>
+                    </div>
                 </div>
             </x-slot>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 @forelse ($packages as $package)
+                    @php
+                        $price =
+                            $viewCycle === 'yearly'
+                                ? $package->price_yearly ?? $package->price_monthly * 12
+                                : $package->price_monthly;
+                        $discountedPrice =
+                            $price > 0 && auth()->user()->commission > 0
+                                ? $price * (1 - auth()->user()->commission / 100)
+                                : $price;
+                        $hasDiscount = $price > 0 && auth()->user()->commission > 0;
+                    @endphp
+
                     <div
-                        class="border border-base-300 rounded-lg p-6 space-y-4 hover:shadow-lg transition-all 
+                        class="border border-base-300 rounded-lg p-4 hover:shadow-md transition-all 
                         {{ $currentSubscription && $currentSubscription->package_id === $package->id ? 'border-primary bg-primary/5' : 'bg-base-100' }}">
 
                         {{-- Package Header --}}
-                        <div class="text-center">
-                            <h3 class="text-xl font-bold mb-2">{{ $package->name }}</h3>
-                            <p class="text-sm text-base-content/70">{{ $package->description }}</p>
+                        <div class="text-center mb-3">
+                            <h3 class="text-xl font-bold mb-1">{{ $package->name }}</h3>
+                            <p class="text-sm text-base-content/60 line-clamp-2">{{ $package->description }}</p>
 
                             @if ($currentSubscription && $currentSubscription->package_id === $package->id)
-                                <x-mary-badge value="Current Plan" class="badge-primary mt-2" />
+                                <x-mary-badge value="Current" class="badge-primary badge-sm mt-1" />
                             @endif
                         </div>
 
                         {{-- Pricing --}}
-                        <div class="text-center py-4 border-y border-base-300">
-                            <div class="mb-3">
-                                <p class="text-sm text-base-content/60 mb-1">Monthly</p>
-                                <p class="text-3xl font-bold text-primary">@userCurrency($package->price_monthly)</p>
-                                <p class="text-xs text-base-content/50">/month</p>
-                            </div>
-                            @if ($package->price_yearly)
-                                <div>
-                                    <p class="text-sm text-base-content/60 mb-1">Yearly</p>
-                                    <p class="text-2xl font-bold text-success">@userCurrency($package->price_yearly)</p>
-                                    <p class="text-xs text-base-content/50">/year</p>
-                                </div>
+                        <div class="text-center py-3 border-y border-base-300">
+                            @if ($hasDiscount)
+                                <p class="text-base line-through text-base-content/40">@userCurrency($price)</p>
+                                <p class="text-3xl font-bold text-success">@userCurrency($discountedPrice)</p>
+                                <span
+                                    class="badge badge-success badge-sm mt-1">-{{ auth()->user()->commission }}%</span>
+                            @else
+                                <p class="text-3xl font-bold {{ $price > 0 ? 'text-primary' : 'text-base-content' }}">
+                                    @userCurrency($price)
+                                </p>
                             @endif
+                            <p class="text-xs text-base-content/50 mt-1">
+                                /{{ $viewCycle === 'yearly' ? 'year' : 'month' }}</p>
                         </div>
 
                         {{-- Features --}}
-                        <div class="space-y-2">
+                        <div class="space-y-2 my-3">
                             <div class="flex items-center gap-2 text-sm">
-                                <x-mary-icon name="o-check-circle" class="w-4 h-4 text-success" />
+                                <x-mary-icon name="o-server" class="w-4 h-4 text-primary" />
                                 <span>{{ $package->max_routers }} Routers</span>
                             </div>
                             <div class="flex items-center gap-2 text-sm">
-                                <x-mary-icon name="o-check-circle" class="w-4 h-4 text-success" />
-                                <span>{{ $package->max_users ?? 'Unlimited' }} Users</span>
+                                <x-mary-icon name="o-users" class="w-4 h-4 text-primary" />
+                                <span>{{ $package->max_users ?? '∞' }} Users</span>
                             </div>
                             <div class="flex items-center gap-2 text-sm">
-                                <x-mary-icon name="o-check-circle" class="w-4 h-4 text-success" />
-                                <span>{{ $package->max_zones ?? 'Unlimited' }} Zones</span>
+                                <x-mary-icon name="o-map" class="w-4 h-4 text-primary" />
+                                <span>{{ $package->max_zones ?? '∞' }} Zones</span>
                             </div>
                             <div class="flex items-center gap-2 text-sm">
-                                <x-mary-icon name="o-check-circle" class="w-4 h-4 text-success" />
-                                <span>{{ $package->max_vouchers_per_router ?? 'Unlimited' }} Vouchers/Router</span>
+                                <x-mary-icon name="o-ticket" class="w-4 h-4 text-primary" />
+                                <span>{{ $package->max_vouchers_per_router ?? '∞' }} Vouchers</span>
                             </div>
                             @if ($package->grace_period_days > 0)
                                 <div class="flex items-center gap-2 text-sm">
-                                    <x-mary-icon name="o-check-circle" class="w-4 h-4 text-success" />
-                                    <span>{{ $package->grace_period_days }} days grace period</span>
+                                    <x-mary-icon name="o-clock" class="w-4 h-4 text-primary" />
+                                    <span>{{ $package->grace_period_days }}d grace</span>
                                 </div>
                             @endif
                         </div>
 
-                        {{-- Action Buttons --}}
-                        <div class="pt-4 space-y-2">
-                            @if ($package->price_monthly > 0)
-                                <x-mary-button label="Subscribe Monthly" icon="o-arrow-right"
-                                    class="btn-primary btn-block btn-sm"
-                                    wire:click="openSubscribeModal({{ $package->id }}, 'monthly')" />
-                            @endif
-                            @if ($package->price_yearly)
-                                <x-mary-button label="Subscribe Yearly" icon="o-arrow-right"
-                                    class="btn-success btn-block btn-sm"
-                                    wire:click="openSubscribeModal({{ $package->id }}, 'yearly')" />
-                            @endif
-                            @if ($package->price_monthly === 0)
-                                <x-mary-button label="Get Free Package" icon="o-gift"
-                                    class="btn-ghost btn-block btn-sm"
-                                    wire:click="openSubscribeModal({{ $package->id }}, 'monthly')" />
-                            @endif
-                        </div>
+                        {{-- Action Button --}}
+                        @if ($price > 0)
+                            <x-mary-button :label="'Subscribe ' . ucfirst($viewCycle)" icon="o-arrow-right"
+                                class="{{ $viewCycle === 'yearly' ? 'btn-success' : 'btn-primary' }} btn-block btn-sm"
+                                wire:click="openSubscribeModal({{ $package->id }}, '{{ $viewCycle }}')" />
+                        @else
+                            <x-mary-button label="Get Free" icon="o-gift" class="btn-ghost btn-block btn-sm"
+                                wire:click="openSubscribeModal({{ $package->id }}, 'monthly')" />
+                        @endif
                     </div>
                 @empty
                     <div class="col-span-3 text-center py-8">
@@ -178,10 +197,17 @@
         @if ($selectedPackageId)
             @php
                 $selectedPackage = $packages->firstWhere('id', $selectedPackageId);
-                $amount =
+                $originalAmount =
                     $selectedCycle === 'yearly'
                         ? $selectedPackage->price_yearly ?? $selectedPackage->price_monthly * 12
                         : $selectedPackage->price_monthly;
+                $discount = 0;
+                $finalAmount = $originalAmount;
+
+                if ($originalAmount > 0 && auth()->user()->hasRole('admin') && auth()->user()->commission > 0) {
+                    $discount = round(($originalAmount * auth()->user()->commission) / 100, 2);
+                    $finalAmount = $originalAmount - $discount;
+                }
             @endphp
 
             <div class="space-y-4">
@@ -191,17 +217,39 @@
                     <p class="text-sm text-base-content/70">{{ ucfirst($selectedCycle) }} billing</p>
                 </div>
 
-                <div class="flex items-center justify-between p-4 bg-warning/10 border border-warning/20 rounded">
-                    <span class="font-semibold">Amount to be charged:</span>
-                    <span class="text-xl font-bold text-warning">@userCurrency($amount)</span>
-                </div>
+                @if ($discount > 0)
+                    <div class="space-y-2 p-4 bg-success/10 border border-success/20 rounded">
+                        <div class="flex items-center justify-between text-sm">
+                            <span>Original Price:</span>
+                            <span class="line-through text-base-content/60">@userCurrency($originalAmount)</span>
+                        </div>
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="flex items-center gap-1">
+                                <x-mary-icon name="o-tag" class="w-4 h-4" />
+                                Commission Discount ({{ auth()->user()->commission }}%):
+                            </span>
+                            <span class="text-success font-semibold">-@userCurrency($discount)</span>
+                        </div>
+                        <div class="border-t border-success/30 pt-2 mt-2">
+                            <div class="flex items-center justify-between">
+                                <span class="font-semibold">Final Amount:</span>
+                                <span class="text-xl font-bold text-success">@userCurrency($finalAmount)</span>
+                            </div>
+                        </div>
+                    </div>
+                @else
+                    <div class="flex items-center justify-between p-4 bg-warning/10 border border-warning/20 rounded">
+                        <span class="font-semibold">Amount to be charged:</span>
+                        <span class="text-xl font-bold text-warning">@userCurrency($finalAmount)</span>
+                    </div>
+                @endif
 
                 <div class="flex items-center justify-between p-4 bg-info/10 border border-info/20 rounded">
                     <span class="font-semibold">Your Balance:</span>
                     <span class="text-xl font-bold text-info">@userCurrency($balance)</span>
                 </div>
 
-                @if ($balance < $amount)
+                @if ($balance < $finalAmount)
                     <x-mary-alert icon="o-exclamation-triangle" class="alert-error">
                         Insufficient balance! Please add funds to your wallet first.
                     </x-mary-alert>
@@ -217,7 +265,7 @@
             <x-slot:actions>
                 <x-mary-button label="Cancel" wire:click="$set('showSubscribeModal', false)" />
                 <x-mary-button label="Confirm & Subscribe" class="btn-primary" wire:click="subscribe"
-                    spinner="subscribe" :disabled="$balance < $amount" />
+                    spinner="subscribe" :disabled="$balance < $finalAmount" />
             </x-slot:actions>
         @endif
     </x-mary-modal>

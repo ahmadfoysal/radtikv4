@@ -364,9 +364,17 @@ class User extends Authenticatable
         string $cycle = 'monthly',
         ?string $promoCode = null
     ): Subscription {
-        $amount = $cycle === 'yearly'
+        $originalAmount = $cycle === 'yearly'
             ? ($package->price_yearly ?? $package->price_monthly * 12)
             : $package->price_monthly;
+
+        // Apply commission discount for admin users (except for free packages)
+        $discount = 0;
+        if ($originalAmount > 0 && $this->hasRole('admin') && $this->commission > 0) {
+            $discount = round(($originalAmount * $this->commission) / 100, 2);
+        }
+
+        $finalAmount = $originalAmount - $discount;
 
         $startDate = now();
         $endDate = $cycle === 'yearly'
@@ -378,20 +386,29 @@ class User extends Authenticatable
             'start_date' => $startDate,
             'end_date' => $endDate,
             'billing_cycle' => $cycle,
-            'amount' => $amount,
-            'original_price' => $amount,
+            'amount' => $finalAmount,
+            'original_price' => $originalAmount,
             'next_billing_date' => $endDate,
             'status' => 'active',
             'promo_code' => $promoCode,
         ]);
 
         // Create invoice for subscription only if amount is greater than 0 (skip for free packages)
-        if ($amount > 0) {
+        if ($finalAmount > 0) {
             $invoice = $this->debit(
-                amount: $amount,
+                amount: $finalAmount,
                 category: 'subscription',
-                description: "Subscription to {$package->name} ({$cycle})",
-                meta: ['subscription_id' => $subscription->id, 'package_id' => $package->id, 'billing_cycle' => $cycle]
+                description: $discount > 0
+                    ? "Subscription to {$package->name} ({$cycle}) - {$this->commission}% discount applied"
+                    : "Subscription to {$package->name} ({$cycle})",
+                meta: [
+                    'subscription_id' => $subscription->id,
+                    'package_id' => $package->id,
+                    'billing_cycle' => $cycle,
+                    'original_price' => $originalAmount,
+                    'discount_amount' => $discount,
+                    'discount_percentage' => $this->commission
+                ]
             );
 
             // Send subscription notification

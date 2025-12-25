@@ -28,24 +28,6 @@ class ManualAdjustment extends Component
 
     public ?float $currentBalance = null;
 
-    public ?float $commissionPercentage = null;
-
-    public function getCommissionAmountProperty(): float
-    {
-        if (!$this->amount || !$this->commissionPercentage || $this->action !== 'credit') {
-            return 0;
-        }
-        return round(($this->amount * $this->commissionPercentage) / 100, 2);
-    }
-
-    public function getTotalCreditProperty(): float
-    {
-        if ($this->action !== 'credit' || !$this->amount) {
-            return 0;
-        }
-        return $this->amount + $this->commissionAmount;
-    }
-
     public function mount(): void
     {
         //  abort_unless(auth()->user()?->hasRole('superadmin'), 403);
@@ -61,19 +43,17 @@ class ManualAdjustment extends Component
     public function updatedAdminId($value): void
     {
         $this->currentBalance = null;
-        $this->commissionPercentage = null;
 
         if (empty($value)) {
             return;
         }
 
         $user = User::role('admin')
-            ->select('id', 'balance', 'commission')
+            ->select('id', 'balance')
             ->find($value);
 
         if ($user) {
             $this->currentBalance = (float) $user->balance;
-            $this->commissionPercentage = (float) $user->commission;
         }
     }
 

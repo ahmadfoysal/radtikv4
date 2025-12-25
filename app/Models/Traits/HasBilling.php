@@ -46,8 +46,8 @@ trait HasBilling
             // Refresh the current user model
             $this->refresh();
 
-            // Create the invoice record for actual credit
-            $invoice = Invoice::create([
+            // Create the invoice record
+            return Invoice::create([
                 'user_id' => $this->id,
                 'router_id' => $router?->id,
                 'type' => 'credit',
@@ -59,42 +59,6 @@ trait HasBilling
                 'description' => $description,
                 'meta' => ! empty($meta) ? $meta : null,
             ]);
-
-            // Check if user has commission percentage and add commission credit
-            if ($this->commission > 0) {
-                $commissionAmount = round(($amount * $this->commission) / 100, 2);
-
-                if ($commissionAmount > 0) {
-                    // Update balance again with commission
-                    $lockedUser = static::where('id', $this->id)->lockForUpdate()->first();
-                    $commissionNewBalance = (float) $lockedUser->balance + $commissionAmount;
-                    $lockedUser->balance = $commissionNewBalance;
-                    $lockedUser->save();
-
-                    $this->refresh();
-
-                    // Create commission invoice
-                    Invoice::create([
-                        'user_id' => $this->id,
-                        'router_id' => $router?->id,
-                        'type' => 'credit',
-                        'category' => 'commission',
-                        'status' => 'completed',
-                        'amount' => $commissionAmount,
-                        'currency' => 'BDT',
-                        'balance_after' => $commissionNewBalance,
-                        'description' => "Commission ({$this->commission}%) on {$category}",
-                        'meta' => [
-                            'commission_percentage' => $this->commission,
-                            'original_amount' => $amount,
-                            'original_category' => $category,
-                            'source_invoice_id' => $invoice->id,
-                        ],
-                    ]);
-                }
-            }
-
-            return $invoice;
         });
     }
 

@@ -80,10 +80,30 @@
                     @forelse ($packages as $package)
                         <tr class="hover:bg-base-200/40 border-t border-base-200 text-center">
                             <td class="px-4 py-3 text-left font-medium">{{ $package->name }}</td>
-                            <td class="px-4 py-3 text-left">@userCurrency($package->price_monthly)</td>
+                            <td class="px-4 py-3 text-left">
+                                <div>
+                                    @userCurrency($package->price_monthly)
+                                    @if ($package->price_monthly > 0 && auth()->user()->hasRole('admin') && auth()->user()->commission > 0)
+                                        <div class="text-xs text-success">
+                                            Your price: @userCurrency($package->price_monthly * (1 - auth()->user()->commission / 100))
+                                            <span
+                                                class="badge badge-success badge-xs ml-1">-{{ auth()->user()->commission }}%</span>
+                                        </div>
+                                    @endif
+                                </div>
+                            </td>
                             <td class="px-4 py-3 text-left">
                                 @if ($package->price_yearly)
-                                    @userCurrency($package->price_yearly)
+                                    <div>
+                                        @userCurrency($package->price_yearly)
+                                        @if ($package->price_yearly > 0 && auth()->user()->hasRole('admin') && auth()->user()->commission > 0)
+                                            <div class="text-xs text-success">
+                                                Your price: @userCurrency($package->price_yearly * (1 - auth()->user()->commission / 100))
+                                                <span
+                                                    class="badge badge-success badge-xs ml-1">-{{ auth()->user()->commission }}%</span>
+                                            </div>
+                                        @endif
+                                    </div>
                                 @else
                                     —
                                 @endif

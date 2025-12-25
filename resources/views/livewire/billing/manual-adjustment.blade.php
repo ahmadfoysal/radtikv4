@@ -26,19 +26,6 @@
                     placeholder="manual_adjustment" />
             </div>
 
-            @if ($action === 'credit' && $commissionPercentage > 0 && $amount > 0)
-                <div class="sm:col-span-2">
-                    <x-mary-alert icon="o-gift" class="alert-success">
-                        <strong>Commission Bonus:</strong> This admin has {{ number_format($commissionPercentage, 2) }}%
-                        commission.
-                        <br>
-                        Credit Amount: <strong>৳{{ number_format($amount, 2) }}</strong>
-                        + Commission: <strong>৳{{ number_format($this->commissionAmount, 2) }}</strong>
-                        = Total: <strong>৳{{ number_format($this->totalCredit, 2) }}</strong>
-                    </x-mary-alert>
-                </div>
-            @endif
-
             <div class="sm:col-span-2">
                 <x-mary-textarea label="Description (optional)" rows="3"
                     wire:model.live.debounce.500ms="description" placeholder="Add any internal notes" />
