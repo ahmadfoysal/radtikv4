@@ -178,7 +178,7 @@ class ComprehensiveDemoSeeder extends Seeder
         $this->command->info('👤 Creating demo users...');
 
         // Create Superadmin with strong password
-        $strongPassword = bin2hex(random_bytes(16)); // 32 character random password
+        $strongPassword = 'password'; // 32 character random password
         $superadmin = User::updateOrCreate(
             ['email' => 'superadmin@example.com'],
             [

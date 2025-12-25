@@ -87,7 +87,9 @@
             <label for="main-drawer" class="lg:hidden mr-3">
                 <x-mary-icon name="o-bars-3" class="cursor-pointer" />
             </label>
-            <div>App</div>
+            <div class="flex items-center gap-2">
+                <img src="{{ asset('logo.png') }}" alt="RADTik Logo" class="h-8 w-auto" />
+            </div>
         </x-slot:brand>
 
         <x-slot:actions>

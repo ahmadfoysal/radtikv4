@@ -484,4 +484,27 @@ class User extends Authenticatable
         // Create new subscription
         return $this->subscribeToPackage($newPackage, $cycle);
     }
+
+    /**
+     * Get total topup amount for the user.
+     */
+    public function totalTopup(): float
+    {
+        return (float) $this->invoices()
+            ->where('type', 'credit')
+            // ->where('category', 'topup')
+            ->where('status', 'completed')
+            ->sum('amount');
+    }
+
+    /**
+     * Get total spend amount for the user.
+     */
+    public function totalSpend(): float
+    {
+        return (float) $this->invoices()
+            ->where('type', 'debit')
+            ->where('status', 'completed')
+            ->sum('amount');
+    }
 }

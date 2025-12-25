@@ -95,6 +95,11 @@
                             <td class="px-4 py-3">
                                 <div class="flex justify-end gap-3">
                                     @if (auth()->user()->hasRole('superadmin'))
+                                        {{-- View Icon --}}
+                                        <a href="{{ route('users.view', $user) }}" wire:navigate
+                                            class="text-info hover:text-info/80 transition-colors" title="View">
+                                            <x-mary-icon name="o-eye" class="w-5 h-5" />
+                                        </a>
                                         {{-- Suspension Controls --}}
                                         @if ($user->isSuspended())
                                             <button wire:click="unsuspendUser({{ $user->id }})"

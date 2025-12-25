@@ -9,6 +9,15 @@ use Illuminate\Http\Request;
 // use request
 use Illuminate\Support\Facades\Route;
 
+// Landing Page (Public)
+Route::get('/', function () {
+    // If user is authenticated, redirect to dashboard
+    if (auth()->check()) {
+        return redirect()->route('dashboard');
+    }
+    return view('landing');
+})->name('landing');
+
 // All routes below require login and suspension check
 Route::middleware(['auth', 'check.suspended'])->group(function () {
 
@@ -16,8 +25,8 @@ Route::middleware(['auth', 'check.suspended'])->group(function () {
      * ALL AUTHENTICATED USERS
      * ======================================== */
     // Dashboard
-    Route::get('/', App\Livewire\Dashboard::class)->name('home');
     Route::get('/dashboard', App\Livewire\Dashboard::class)->name('dashboard');
+    Route::get('/home', App\Livewire\Dashboard::class)->name('home');
 
     // Support & Help
     Route::get('/support/contact', App\Livewire\Tickets\Index::class)->name('tickets.index');
@@ -40,6 +49,9 @@ Route::middleware(['auth', 'check.suspended'])->group(function () {
         Route::get('/packages', App\Livewire\Package\Index::class)->name('packages.index');
         Route::get('/package/add', App\Livewire\Package\Create::class)->name('packages.create');
         Route::get('/package/{package}/edit', App\Livewire\Package\Edit::class)->name('packages.edit');
+
+        // User View (Details)
+        Route::get('/user/{user}/view', App\Livewire\User\View::class)->name('users.view');
 
         // Billing - Revenue Analytics & Manual Adjustment
         Route::get('/billing/revenue-analytics', App\Livewire\Admin\RevenueAnalytics::class)->name('billing.revenue-analytics');
