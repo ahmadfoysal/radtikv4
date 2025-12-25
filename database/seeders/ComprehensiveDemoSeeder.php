@@ -177,12 +177,13 @@ class ComprehensiveDemoSeeder extends Seeder
     {
         $this->command->info('👤 Creating demo users...');
 
-        // Create Superadmin
+        // Create Superadmin with strong password
+        $strongPassword = bin2hex(random_bytes(16)); // 32 character random password
         $superadmin = User::updateOrCreate(
-            ['email' => 'superadmin@radtik.demo'],
+            ['email' => 'superadmin@example.com'],
             [
                 'name' => 'System Administrator',
-                'password' => Hash::make('password'),
+                'password' => Hash::make($strongPassword),
                 'phone' => '+8801711000001',
                 'address' => 'Head Office, Dhaka',
                 'country' => 'Bangladesh',
@@ -196,91 +197,64 @@ class ComprehensiveDemoSeeder extends Seeder
         );
         $superadmin->syncRoles([$superadminRole]);
 
-        // Create 5 Admin users
-        $admins = [];
-        $adminNames = [
-            ['name' => 'Ahmed Khan', 'city' => 'Dhaka', 'area' => 'Gulshan'],
-            ['name' => 'Fatima Rahman', 'city' => 'Chittagong', 'area' => 'Agrabad'],
-            ['name' => 'Jamal Hossain', 'city' => 'Sylhet', 'area' => 'Zindabazar'],
-            ['name' => 'Nishat Alam', 'city' => 'Rajshahi', 'area' => 'Shaheb Bazar'],
-            ['name' => 'Rashed Mahmud', 'city' => 'Khulna', 'area' => 'Sonadanga'],
-        ];
+        $this->command->warn('🔐 SUPERADMIN PASSWORD (SAVE THIS!): ' . $strongPassword);
+        $this->command->warn('   Email: superadmin@example.com');
 
-        foreach ($adminNames as $index => $adminData) {
-            $admin = User::updateOrCreate(
-                ['email' => 'admin' . ($index + 1) . '@radtik.demo'],
-                [
-                    'name' => $adminData['name'],
-                    'password' => Hash::make('password'),
-                    'phone' => '+880171100' . str_pad($index + 10, 4, '0', STR_PAD_LEFT),
-                    'address' => $adminData['area'] . ', ' . $adminData['city'],
-                    'country' => 'Bangladesh',
-                    'balance' => rand(150000, 250000),
-                    'commission' => rand(5, 15),
-                    'is_active' => true,
-                    'is_phone_verified' => true,
-                    'email_verified_at' => now(),
-                    'last_login_at' => Carbon::now()->subHours(rand(1, 48)),
-                ]
-            );
-            $admin->syncRoles([$adminRole]);
-            $admins[] = $admin;
-        }
+        // Create single demo admin
+        $admin = User::updateOrCreate(
+            ['email' => 'admin@example.com'],
+            [
+                'name' => 'Demo Admin',
+                'password' => Hash::make('12345678'),
+                'phone' => '+8801711000010',
+                'address' => 'Demo Location, Dhaka',
+                'country' => 'Bangladesh',
+                'balance' => 25000,
+                'commission' => 10,
+                'is_active' => true,
+                'is_phone_verified' => true,
+                'email_verified_at' => now(),
+                'last_login_at' => Carbon::now()->subHours(2),
+            ]
+        );
+        $admin->syncRoles([$adminRole]);
+        $admins = [$admin];
 
-        // Create 10 Reseller users
-        $resellers = [];
-        $resellerNames = [
-            'Jamal Uddin',
-            'Shabnam Sultana',
-            'Rahim Mia',
-            'Kulsum Begum',
-            'Habib Rahman',
-            'Amina Khatun',
-            'Saiful Islam',
-            'Rahela Akter',
-            'Monir Hossain',
-            'Nasrin Jahan'
-        ];
+        // Create single demo reseller
+        $reseller = User::updateOrCreate(
+            ['email' => 'reseller@example.com'],
+            [
+                'name' => 'Demo Reseller',
+                'password' => Hash::make('12345678'),
+                'phone' => '+8801711000020',
+                'address' => 'Demo Reseller Location, Dhaka',
+                'country' => 'Bangladesh',
+                'balance' => 5000,
+                'admin_id' => $admin->id,
+                'commission' => 0,
+                'is_active' => true,
+                'is_phone_verified' => true,
+                'email_verified_at' => now(),
+                'last_login_at' => Carbon::now()->subHours(1),
+            ]
+        );
+        $reseller->syncRoles([$resellerRole]);
 
-        foreach ($resellerNames as $index => $name) {
-            $adminOwner = $admins[array_rand($admins)];
+        // Assign permissions to reseller
+        $resellerPermissions = Permission::whereIn('name', [
+            'view_router',
+            'view_vouchers',
+            'generate_vouchers',
+            'print_vouchers',
+            'view_hotspot_users',
+            'create_single_user',
+            'view_active_sessions',
+            'view_voucher_logs',
+            'view_hotspot_logs'
+        ])->get();
+        $reseller->syncPermissions($resellerPermissions);
 
-            $reseller = User::updateOrCreate(
-                ['email' => 'reseller' . ($index + 1) . '@radtik.demo'],
-                [
-                    'name' => $name,
-                    'password' => Hash::make('password'),
-                    'phone' => '+880171200' . str_pad($index + 10, 4, '0', STR_PAD_LEFT),
-                    'address' => $this->bangladeshAreas[array_rand($this->bangladeshAreas)] . ', ' .
-                        $this->bangladeshCities[array_rand($this->bangladeshCities)],
-                    'country' => 'Bangladesh',
-                    'balance' => rand(1000, 10000),
-                    'admin_id' => $adminOwner->id,
-                    'commission' => 0,
-                    'is_active' => $index < 8, // 2 inactive
-                    'is_phone_verified' => true,
-                    'email_verified_at' => now(),
-                    'last_login_at' => Carbon::now()->subDays(rand(0, 7)),
-                ]
-            );
-            $reseller->syncRoles([$resellerRole]);
-
-            // Assign permissions to resellers
-            $resellerPermissions = Permission::whereIn('name', [
-                'view_router',
-                'view_vouchers',
-                'generate_vouchers',
-                'print_vouchers',
-                'view_hotspot_users',
-                'create_single_user',
-                'view_active_sessions',
-                'view_voucher_logs',
-                'view_hotspot_logs'
-            ])->get();
-            $reseller->syncPermissions($resellerPermissions);
-
-            $resellers[] = $reseller;
-        }
+        $resellers = [$reseller];
 
         return [$superadmin, $admins, $resellers];
     }
@@ -785,17 +759,13 @@ class ComprehensiveDemoSeeder extends Seeder
         $this->command->table(
             ['Role', 'Email', 'Password'],
             [
-                ['Superadmin', 'superadmin@radtik.demo', 'password'],
-                ['Admin User', 'admin@example.com', '12345678'],
-                ['Admin 2', 'admin2@radtik.demo', 'password'],
-                ['Admin 3', 'admin3@radtik.demo', 'password'],
-                ['Reseller User', 'reseller@example.com', '12345678'],
-                ['Reseller 2', 'reseller2@radtik.demo', 'password'],
+                ['Admin', 'admin@example.com', '12345678'],
+                ['Reseller', 'reseller@example.com', '12345678'],
             ]
         );
 
         $this->command->newLine();
-        $this->command->warn('⚠️  DEMO MODE: All demo accounts use email domain "@radtik.demo"');
-        $this->command->info('💡 You can login with any of the above credentials to explore the system');
+        $this->command->warn('⚠️  Superadmin credentials are secure and not available for demo access.');
+        $this->command->info('💡 You can login with the above demo credentials to explore the system');
     }
 }

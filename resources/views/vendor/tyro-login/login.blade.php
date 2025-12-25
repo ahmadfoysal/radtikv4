@@ -42,6 +42,25 @@
                     @endif
                 </div>
 
+                <!-- Demo Mode Credentials -->
+                @if (env('DEMO_MODE', false))
+                    <div
+                        style="background-color: #dbeafe; border: 1px solid #93c5fd; color: #1e40af; padding: 12px; border-radius: 6px; margin-bottom: 16px;">
+                        <div style="font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" style="width: 18px; height: 18px;" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Demo Mode - Test Credentials
+                        </div>
+                        <div style="font-size: 0.875rem; line-height: 1.5;">
+                            <div style="margin-bottom: 4px;"><strong>Admin:</strong> admin@example.com / 12345678</div>
+                            <div><strong>Reseller:</strong> reseller@example.com / 12345678</div>
+                        </div>
+                    </div>
+                @endif
+
                 <!-- Error Messages -->
                 @if (session('error') || request('error') === 'account_suspended')
                     <div

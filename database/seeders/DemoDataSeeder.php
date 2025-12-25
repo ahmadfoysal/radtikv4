@@ -72,7 +72,7 @@ class DemoDataSeeder extends Seeder
         $this->command->info('✅ Demo data created successfully!');
         $this->command->info('');
         $this->command->info('📝 Demo Credentials:');
-        $this->command->info('  Admin:    demo@example.com / 12345678');
+        $this->command->info('  Admin:    admin@example.com / 12345678');
         $this->command->info('  Reseller: reseller@example.com / 12345678');
         $this->command->info('');
         $this->command->warn('⚠️  Demo data will reset every hour!');
@@ -124,7 +124,7 @@ class DemoDataSeeder extends Seeder
         $strongPassword = bin2hex(random_bytes(16)); // 32 character random password
 
         $user = User::updateOrCreate(
-            ['email' => 'superadmin@radtik.local'],
+            ['email' => 'superadmin@example.com'],
             [
                 'name' => 'System Administrator',
                 'password' => Hash::make($strongPassword),
@@ -138,7 +138,7 @@ class DemoDataSeeder extends Seeder
 
         // Store password in environment or display it once
         $this->command->warn('🔐 SUPERADMIN PASSWORD (SAVE THIS!): ' . $strongPassword);
-        $this->command->warn('   Email: superadmin@radtik.local');
+        $this->command->warn('   Email: superadmin@example.com');
 
         return $user;
     }
@@ -148,7 +148,7 @@ class DemoDataSeeder extends Seeder
         $this->command->info('Creating demo admin...');
 
         $user = User::updateOrCreate(
-            ['email' => 'demo@example.com'],
+            ['email' => 'admin@example.com'],
             [
                 'name' => 'Demo Admin',
                 'password' => Hash::make('12345678'),

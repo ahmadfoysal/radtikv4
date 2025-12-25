@@ -49,7 +49,7 @@ class ResetDemoData extends Command
             $this->info("✅ Demo data reset completed in {$duration} seconds!");
             $this->newLine();
             $this->info('📝 Demo Credentials:');
-            $this->info('  Admin:    demo@example.com / 12345678');
+            $this->info('  Admin:    admin@example.com / 12345678');
             $this->info('  Reseller: reseller@example.com / 12345678');
             $this->newLine();
             $this->warn('⚠️  Superadmin credentials are secure and not available for demo access.');
