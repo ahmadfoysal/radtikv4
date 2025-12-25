@@ -73,7 +73,7 @@ class ResetDemoData extends Command
         try {
             // Delete data created by demo users (identified by email domain @radtik.local)
             $demoUserIds = DB::table('users')
-                ->where('email', 'like', '%@radtik.local')
+                ->where('email', 'like', '%@example.com')
                 ->pluck('id')
                 ->toArray();
 
@@ -163,7 +163,7 @@ class ResetDemoData extends Command
 
             // 12. Finally, delete demo users
             $deleted = DB::table('users')
-                ->where('email', 'like', '%@radtik.local')
+                ->where('email', 'like', '%@example.com')
                 ->delete();
             $this->line("  - Deleted {$deleted} demo users");
 
