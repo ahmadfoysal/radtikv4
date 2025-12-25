@@ -786,10 +786,10 @@ class ComprehensiveDemoSeeder extends Seeder
             ['Role', 'Email', 'Password'],
             [
                 ['Superadmin', 'superadmin@radtik.demo', 'password'],
-                ['Admin 1', 'admin1@radtik.demo', 'password'],
+                ['Admin User', 'admin@example.com', '12345678'],
                 ['Admin 2', 'admin2@radtik.demo', 'password'],
                 ['Admin 3', 'admin3@radtik.demo', 'password'],
-                ['Reseller 1', 'reseller1@radtik.demo', 'password'],
+                ['Reseller User', 'reseller@example.com', '12345678'],
                 ['Reseller 2', 'reseller2@radtik.demo', 'password'],
             ]
         );
