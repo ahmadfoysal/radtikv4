@@ -16,27 +16,26 @@ class PullProfilesScript
         $token = $router->app_key;
 
         // On-Login script with escaped quotes for RouterOS
-        // We use \32 for double quotes to avoid terminal break
         $onLoginScript = '{
-            :local u "\$user";
-            :local m \$"mac-address";
-            :if ([:len \$u] = 0) do={:set u [/ip hotspot active get [find where address="\$address"] user]};
+            :local u $user;
+            :local m $"mac-address";
+            :if ([:len $u] = 0) do={:set u [/ip hotspot active get [find where address=$address] user]};
             /ip hotspot user {
-                :local uid [find where name="\$u"];
-                :if ([:len \$uid] > 0) do={
-                    :local comment [get \$uid comment];
-                    :local isAct [:find "\$comment" "ACT="];
-                    :if ([:len \$isAct] = 0) do={
+                :local uid [find where name=$u];
+                :if ([:len $uid] > 0) do={
+                    :local comment [get $uid comment];
+                    :local isAct [:find $comment "ACT="];
+                    :if ([:len $isAct] = 0) do={
                         :local date [/system clock get date];
                         :local time [/system clock get time];
-                        :local newTS "ACT=\$date \$time";
-                        set \$uid comment=("\$newTS | \$comment");
-                        :log info ("RADTik: Activation Set for " . \$u);
+                        :local newTS "ACT=$date $time";
+                        set $uid comment=("$newTS | $comment");
+                        :log info ("RADTik: Activation Set for " . $u);
                     }
-                    :if ([:find "\$comment" "LOCK=1"] != nil) do={
-                        :local smac [get \$uid mac-address];
-                        :if (\$smac = "00:00:00:00:00:00" || [:len \$smac] = 0) do={
-                            set \$uid mac-address=\$m;
+                    :if ([:find $comment "LOCK=1"] != nil) do={
+                        :local smac [get $uid mac-address];
+                        :if ($smac = "00:00:00:00:00:00" || [:len $smac] = 0) do={
+                            set $uid mac-address=$m;
                         };
                     };
                 };
