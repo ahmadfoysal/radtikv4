@@ -31,10 +31,8 @@ class ProfileOnLoginScript
     :if ([:len $uid] > 0) do={
         :local comment [get $uid comment];
         
-        # 1. Activation Logic (Check if ACT= exists)
+        # 1. Activation Logic
         :local isAct [:find "$comment" "ACT="];
-        
-        # If isAct is empty/nil, it means ACT= not found
         :if ([:len $isAct] = 0) do={
             :local date [/system clock get date];
             :local time [/system clock get time];
@@ -42,12 +40,12 @@ class ProfileOnLoginScript
             
             set $uid comment=("$newTS | $comment");
             :log info ("RADTik: Activation Set for $u");
-            # Update local comment variable to include the new ACT tag
             :set comment ("$newTS | $comment");
         }
 
-        # 2. MAC Lock Logic
-        :if ([:find "$comment" "LOCK=1"] != nil) do={
+        # 2. MAC Lock Logic (Strict Check for LOCK=1)
+        :local lockPos [:find "$comment" "LOCK=1"];
+        :if ([:typeof $lockPos] != "nil") do={
             :local smac [get $uid mac-address];
             :if ($smac = "00:00:00:00:00:00" || [:len $smac] = 0) do={
                 :if ([:len $m] > 0) do={
