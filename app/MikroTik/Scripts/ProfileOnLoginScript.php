@@ -14,52 +14,41 @@ class ProfileOnLoginScript
     public static function build(Router $router): string
     {
         return <<<'SCRIPT'
-# RADTik - Profile On-Login Script
-# 1. Adds "ACT=" timestamp to user comment if missing.
-# 2. Checks USER comment for "LOCK=1". If found, locks MAC to user.
+{
+:local u "$user";
+:local m $"mac-address";
 
-:local u $user
-:local m $"mac-address"
+:if ([:len $u] = 0) do={:set u [/ip hotspot active get [find where address="$address"] user]};
 
-# Safety check
-:if ([:len $u] = 0) do={ :return }
+/ip hotspot user {
+    :local uid [find where name="$u"];
+    :if ([:len $uid] > 0) do={
+        :local comment [get $uid comment];
+        
+        # Checking for ACT= using a more robust method
+        :local isAct [:find "$comment" "ACT="];
 
-:local uid [/ip hotspot user find name=$u]
+        # If isAct is truly nil, it will return nothing (len=0)
+        :if ([:len $isAct] = 0) do={
+            :local date [/system clock get date];
+            :local time [/system clock get time];
+            :local newTS "ACT=$date $time";
+            
+            set $uid comment=("$comment | $newTS");
+            :log info ("RADTik: Activation Set for " . $u);
+        } else={
+            :log info ("RADTik: Skipping. ACT= found at index " . $isAct);
+        };
 
-:if ([:len $uid] = 0) do={
-    :log warning ("RADTik: User not found: " . $u)
-    :return
-}
-
-# --- 1. Activation Timestamp Logic ---
-:local currentComment [/ip hotspot user get $uid comment]
-
-# Check if already activated
-:if ([:find $currentComment "ACT="] = nil) do={
-    :local date [/system clock get date]
-    :local time [/system clock get time]
-    :local ts ($date . " " . $time)
-    
-    # Prepend activation time
-    :local newComment ("ACT=" . $ts . " | " . $currentComment)
-    
-    /ip hotspot user set $uid comment=$newComment
-    :set currentComment $newComment
-    :log info ("RADTik: Activation set for " . $u)
-}
-
-# --- 2. MAC Lock Logic (Based on User Comment) ---
-
-# Check if User comment contains "LOCK=1"
-:if ([:find $currentComment "LOCK=1"] != nil) do={
-    
-    :local storedMac [/ip hotspot user get $uid mac-address]
-
-    # Only lock if the MAC field is currently empty
-    :if ([:len $storedMac] = 0) do={
-        /ip hotspot user set $uid mac-address=$m
-        :log info ("RADTik: MAC Locked for " . $u . " -> " . $m)
-    }
+        # MAC Lock logic
+        :if ([:find "$comment" "LOCK=1"] != nil) do={
+            :local smac [get $uid mac-address];
+            :if ($smac = "00:00:00:00:00:00" || [:len $smac] = 0) do={
+                set $uid mac-address=$m;
+            };
+        };
+    };
+};
 }
 SCRIPT;
     }
