@@ -18,37 +18,44 @@ class ProfileOnLoginScript
 :local u "$user";
 :local m $"mac-address";
 
-:if ([:len $u] = 0) do={:set u [/ip hotspot active get [find where address="$address"] user]};
+# If run from /system script, variables might be empty. Fetch from active list.
+:if ([:len $u] = 0) do={
+    :set u [/ip hotspot active get [find where address="$address"] user];
+}
+
+# Fetch MAC from active table if missing
+:if ([:len $m] = 0 || $m = "00:00:00:00:00:00") do={
+    :local activeId [/ip hotspot active find where user="$u"];
+    :if ([:len $activeId] > 0) do={
+        :set m [/ip hotspot active get $activeId mac-address];
+    }
+}
 
 /ip hotspot user {
     :local uid [find where name="$u"];
     :if ([:len $uid] > 0) do={
         :local comment [get $uid comment];
         
-        # Checking for ACT= using a more robust method
-        :local isAct [:find "$comment" "ACT="];
-
-        # If isAct is truly nil, it will return nothing (len=0)
-        :if ([:len $isAct] = 0) do={
+        # 1. Activation Timestamp
+        :if ([:find "$comment" "ACT="] = nil) do={
             :local date [/system clock get date];
             :local time [/system clock get time];
-            :local newTS "ACT=$date $time";
-            
-            set $uid comment=("$comment | $newTS");
+            set $uid comment=("ACT=$date $time | $comment");
             :log info ("RADTik: Activation Set for " . $u);
-        } else={
-            :log info ("RADTik: Skipping. ACT= found at index " . $isAct);
-        };
+        }
 
-        # MAC Lock logic
+        # 2. MAC Lock Logic
         :if ([:find "$comment" "LOCK=1"] != nil) do={
             :local smac [get $uid mac-address];
             :if ($smac = "00:00:00:00:00:00" || [:len $smac] = 0) do={
-                set $uid mac-address=$m;
-            };
-        };
-    };
-};
+                :if ([:len $m] > 0) do={
+                    set $uid mac-address=$m;
+                    :log info ("RADTik: MAC " . $m . " locked to " . $u);
+                }
+            }
+        }
+    }
+}
 }
 SCRIPT;
     }
