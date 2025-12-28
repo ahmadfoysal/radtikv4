@@ -28,7 +28,7 @@ class PullProfilesScript
 
 :local baseUrl "BASEURL_PLACEHOLDER"
 :local token   "TOKEN_PLACEHOLDER"
-:local onLoginCmd {:local u $user; :local m $"mac-address"; :if ([:len $u] = 0) do={:set u [/ip hotspot active get [find where address=$address] user]}; /ip hotspot user {:local uid [find where name=$u]; :if ([:len $uid] > 0) do={:local comment [get $uid comment]; :local isAct [:find $comment "ACT="]; :if ([:len $isAct] = 0) do={:local date [/system clock get date]; :local time [/system clock get time]; :local newTS "ACT=$date $time"; set $uid comment=("$newTS | $comment"); :log info ("RADTik: Activation Set for " . $u)}; :if ([:find $comment "LOCK=1"] != nil) do={:local smac [get $uid mac-address]; :if ($smac = "00:00:00:00:00:00" || [:len $smac] = 0) do={set $uid mac-address=$m}}}};}
+:local onLoginCmd ":local u \$user; :local m \$\"mac-address\"; :if ([:len \$u] = 0) do={:set u [/ip hotspot active get [find where address=\$address] user]}; /ip hotspot user {:local uid [find where name=\$u]; :if ([:len \$uid] > 0) do={:local comment [get \$uid comment]; :local isAct [:find \$comment \"ACT=\"]; :if ([:len \$isAct] = 0) do={:local date [/system clock get date]; :local time [/system clock get time]; :local newTS (\"ACT=\" . \$date . \" \" . \$time); set \$uid comment=(\$newTS . \" | \" . \$comment); :log info (\"RADTik: Activation Set for \" . \$u)}; :if ([:find \$comment \"LOCK=1\"] >= 0) do={:local smac [get \$uid mac-address]; :if (\$smac = \"00:00:00:00:00:00\" || [:len \$smac] = 0) do={set \$uid mac-address=\$m}}}}"
 
 # We request 'format=flat' for reliable parsing (Name;Shared;Rate)
 :local url ($baseUrl . "?token=" . $token . "&format=flat")
