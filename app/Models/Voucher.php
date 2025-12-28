@@ -32,8 +32,8 @@ class Voucher extends Model
 
     protected static function booted()
     {
-        // Log voucher deletion
-        static::deleted(function ($voucher) {
+        // Log voucher deletion BEFORE it's deleted to avoid FK constraint issues
+        static::deleting(function ($voucher) {
             VoucherLogger::log(
                 $voucher,
                 $voucher->router,
