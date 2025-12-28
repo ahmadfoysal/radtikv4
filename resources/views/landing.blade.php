@@ -102,8 +102,8 @@
         <div class="navbar-start">
             <a href="/"
                 class="btn btn-ghost normal-case text-5xl md:text-6xl font-bold gradient-text flex items-center gap-4 py-2 px-4">
-                <img src="{{ asset('logo.png') }}" alt="RADTik Logo" class="h-24 w-24 aspect-square object-contain"
-                    style="max-width:96px;max-height:96px;" />
+                <img src="{{ asset('logo_color.png') }}" alt="RADTik Logo"
+                    class="h-24 w-24 aspect-square object-contain" style="max-width:96px;max-height:96px;" />
             </a>
         </div>
         <div class="navbar-center hidden lg:flex">
