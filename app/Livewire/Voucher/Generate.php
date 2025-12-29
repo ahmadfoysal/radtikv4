@@ -116,9 +116,8 @@ class Generate extends Component
             Voucher::insert($rows);
 
             // Log bulk voucher generation
-            \App\Services\ActivityLogger::logCustom(
+            \App\Models\ActivityLog::log(
                 'bulk_generated',
-                null,
                 "Generated {$this->quantity} vouchers in batch {$rows[0]['batch']}",
                 [
                     'quantity' => $this->quantity,

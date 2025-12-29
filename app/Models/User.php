@@ -4,7 +4,6 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Models\Traits\HasBilling;
-use App\Models\Traits\LogsActivity;
 use HasinHayder\TyroLogin\Traits\HasTwoFactorAuth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -15,7 +14,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasBilling, HasFactory, HasRoles, HasTwoFactorAuth, LogsActivity, Notifiable;
+    use HasBilling, HasFactory, HasRoles, HasTwoFactorAuth, Notifiable;
 
     /**
      * The attributes that are mass assignable.

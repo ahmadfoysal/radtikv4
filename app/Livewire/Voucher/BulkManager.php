@@ -134,9 +134,8 @@ class BulkManager extends Component
             });
 
             // Log bulk voucher deletion
-            \App\Services\ActivityLogger::logCustom(
+            \App\Models\ActivityLog::log(
                 'bulk_deleted',
-                null,
                 "Bulk deleted {$count} vouchers",
                 [
                     'count' => $count,

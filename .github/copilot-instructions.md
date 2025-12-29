@@ -162,7 +162,7 @@ if (!$client->reachable($router)) { /* handle */ }
 
 Key models use these traits:
 
--   `User`: `HasRoles, HasBilling, LogsActivity`
+-   `User`: `HasRoles, HasBilling`
 -   Encrypted fields use `Crypt::encrypt()` for router passwords
 
 ### Factories for Testing

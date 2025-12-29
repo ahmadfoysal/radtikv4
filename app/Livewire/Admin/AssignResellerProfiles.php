@@ -88,9 +88,8 @@ class AssignResellerProfiles extends Component
                     ->delete();
 
                 // Log profile unassignment
-                \App\Services\ActivityLogger::logCustom(
+                \App\Models\ActivityLog::log(
                     'profiles_unassigned',
-                    null,
                     "Unassigned " . count($profileIdsToDetach) . " profile(s) from reseller",
                     [
                         'reseller_id' => $this->resellerId,
@@ -114,9 +113,8 @@ class AssignResellerProfiles extends Component
 
             // Log profile assignment
             if (count($selected) > 0) {
-                \App\Services\ActivityLogger::logCustom(
+                \App\Models\ActivityLog::log(
                     'profiles_assigned',
-                    null,
                     "Assigned " . count($selected) . " profile(s) to reseller",
                     [
                         'reseller_id' => $this->resellerId,

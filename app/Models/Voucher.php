@@ -2,27 +2,28 @@
 
 namespace App\Models;
 
-use App\Models\Traits\LogsActivity;
 use App\Services\VoucherLogger;
 use Illuminate\Database\Eloquent\Model;
 
 class Voucher extends Model
 {
-    use LogsActivity;
 
     protected $fillable = [
         'name',
+        'user_profile_id',
         'username',
         'password',
+        'status',
+        'mac_address',
+        'activated_at',
         'expires_at',
         'user_id',
         'router_id',
         'created_by',
-        'status',
-        'mac_address',
-        'activated_at',
+        'bytes_in',
+        'bytes_out',
+        'up_time',
         'batch',
-        'user_profile_id',
     ];
 
     protected $casts = [

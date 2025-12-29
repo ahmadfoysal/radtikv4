@@ -2,12 +2,10 @@
 
 namespace App\Models;
 
-use App\Models\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 
 class UserProfile extends Model
 {
-    use LogsActivity;
     protected $fillable = [
         'name',
         'rate_limit',

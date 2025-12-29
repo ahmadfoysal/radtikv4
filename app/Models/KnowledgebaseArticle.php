@@ -2,14 +2,12 @@
 
 namespace App\Models;
 
-use App\Models\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 class KnowledgebaseArticle extends Model
 {
-    use LogsActivity;
     protected $fillable = [
         'title',
         'slug',
@@ -48,9 +46,10 @@ class KnowledgebaseArticle extends Model
         $suffix = 1;
 
         while (static::where('slug', $slug)
-            ->when($ignoreId, fn (Builder $query) => $query->where('id', '!=', $ignoreId))
-            ->exists()) {
-            $slug = $base.'-'.$suffix;
+            ->when($ignoreId, fn(Builder $query) => $query->where('id', '!=', $ignoreId))
+            ->exists()
+        ) {
+            $slug = $base . '-' . $suffix;
             $suffix++;
         }
 

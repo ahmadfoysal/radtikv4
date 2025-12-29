@@ -2,14 +2,12 @@
 
 namespace App\Models;
 
-use App\Models\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 
 class EmailSetting extends Model
 {
-    use LogsActivity;
 
     protected $fillable = [
         'key',

@@ -88,9 +88,8 @@ class AssignResellerRouters extends Component
                     ->delete();
 
                 // Log router unassignment
-                \App\Services\ActivityLogger::logCustom(
+                \App\Models\ActivityLog::log(
                     'routers_unassigned',
-                    null,
                     "Unassigned " . count($routerIdsToDetach) . " router(s) from reseller",
                     [
                         'reseller_id' => $this->resellerId,
@@ -114,9 +113,8 @@ class AssignResellerRouters extends Component
 
             // Log router assignment
             if (count($selected) > 0) {
-                \App\Services\ActivityLogger::logCustom(
+                \App\Models\ActivityLog::log(
                     'routers_assigned',
-                    null,
                     "Assigned " . count($selected) . " router(s) to reseller",
                     [
                         'reseller_id' => $this->resellerId,
@@ -134,8 +132,8 @@ class AssignResellerRouters extends Component
     public function updatedSelectedRouterIds($value): void
     {
         $this->selectedRouterIds = collect($value ?? [])
-            ->filter(fn ($id) => filled($id))
-            ->map(fn ($id) => (int) $id)
+            ->filter(fn($id) => filled($id))
+            ->map(fn($id) => (int) $id)
             ->unique()
             ->values()
             ->toArray();
@@ -157,7 +155,7 @@ class AssignResellerRouters extends Component
             ->orderBy('name')
             ->limit(20)
             ->get()
-            ->map(fn (User $reseller) => [
+            ->map(fn(User $reseller) => [
                 'id' => $reseller->id,
                 'name' => $reseller->name,
                 'email' => $reseller->email,
@@ -173,7 +171,7 @@ class AssignResellerRouters extends Component
             ->orderBy('name')
             ->limit(25)
             ->get()
-            ->map(fn (Router $router) => [
+            ->map(fn(Router $router) => [
                 'id' => $router->id,
                 'name' => $router->name,
                 'address' => $router->address,
@@ -197,9 +195,9 @@ class AssignResellerRouters extends Component
             ->with(['router:id,name,address', 'assignedBy:id,name'])
             ->get();
 
-        $this->selectedRouterIds = $assignments->pluck('router_id')->map(fn ($id) => (int) $id)->toArray();
+        $this->selectedRouterIds = $assignments->pluck('router_id')->map(fn($id) => (int) $id)->toArray();
 
-        $this->assignedRouters = $assignments->map(fn (ResellerRouter $assignment) => [
+        $this->assignedRouters = $assignments->map(fn(ResellerRouter $assignment) => [
             'id' => $assignment->router_id,
             'name' => $assignment->router?->name ?? __('Unknown Router'),
             'address' => $assignment->router?->address,
@@ -223,7 +221,7 @@ class AssignResellerRouters extends Component
         }
 
         if ($term !== null && trim($term) !== '') {
-            $value = '%'.trim($term).'%';
+            $value = '%' . trim($term) . '%';
             $query->where(function (Builder $builder) use ($value) {
                 $builder->where('name', 'like', $value)
                     ->orWhere('email', 'like', $value);
@@ -246,7 +244,7 @@ class AssignResellerRouters extends Component
         }
 
         if ($term !== null && trim($term) !== '') {
-            $value = '%'.trim($term).'%';
+            $value = '%' . trim($term) . '%';
             $query->where(function (Builder $builder) use ($value) {
                 $builder->where('name', 'like', $value)
                     ->orWhere('address', 'like', $value);
@@ -263,7 +261,7 @@ class AssignResellerRouters extends Component
         }
 
         $exists = collect($this->resellerOptions)
-            ->contains(fn ($option) => (int) $option['id'] === (int) $this->resellerId);
+            ->contains(fn($option) => (int) $option['id'] === (int) $this->resellerId);
 
         if (! $exists) {
             $reseller = $this->resellerQuery(null)
@@ -286,9 +284,9 @@ class AssignResellerRouters extends Component
             return;
         }
 
-        $existingIds = collect($this->routerOptions)->pluck('id')->map(fn ($id) => (int) $id);
+        $existingIds = collect($this->routerOptions)->pluck('id')->map(fn($id) => (int) $id);
         $missingIds = collect($this->selectedRouterIds)
-            ->map(fn ($id) => (int) $id)
+            ->map(fn($id) => (int) $id)
             ->diff($existingIds)
             ->values();
 
@@ -299,7 +297,7 @@ class AssignResellerRouters extends Component
         $additionalRouters = $this->routerQuery(null)
             ->whereIn('id', $missingIds->all())
             ->get()
-            ->map(fn (Router $router) => [
+            ->map(fn(Router $router) => [
                 'id' => $router->id,
                 'name' => $router->name,
                 'address' => $router->address,
@@ -317,7 +315,7 @@ class AssignResellerRouters extends Component
     {
         return $this->routerQuery(null)
             ->pluck('id')
-            ->map(fn ($id) => (int) $id)
+            ->map(fn($id) => (int) $id)
             ->toArray();
     }
 

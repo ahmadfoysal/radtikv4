@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,7 +11,7 @@ use Illuminate\Support\Str;
 
 class Zone extends Model
 {
-    use HasFactory, LogsActivity;
+    use HasFactory;
 
     /**
      * @var array<int, string>
@@ -51,9 +50,10 @@ class Zone extends Model
         $suffix = 1;
 
         while (static::where('slug', $slug)
-            ->when($ignoreId, fn (Builder $query) => $query->where('id', '!=', $ignoreId))
-            ->exists()) {
-            $slug = $base.'-'.$suffix;
+            ->when($ignoreId, fn(Builder $query) => $query->where('id', '!=', $ignoreId))
+            ->exists()
+        ) {
+            $slug = $base . '-' . $suffix;
             $suffix++;
         }
 
