@@ -92,7 +92,7 @@
                             @endif
                         </div>
 
-                        {{-- MAC --}}
+                        {{-- MAC + Data Usage --}}
                         <div class="flex items-center gap-1">
                             <span class="opacity-60">MAC:</span>
                             @if ($v->mac_address)
@@ -100,23 +100,19 @@
                             @else
                                 <span class="opacity-50">00:00:00:00:00:00</span>
                             @endif
-                        </div>
 
-                        {{-- Data Usage (Download / Upload) --}}
-                        @if ($v->bytes_out > 0 || $v->bytes_in > 0)
-                            <div class="flex items-center gap-1">
-                                <span class="opacity-60">Data:</span>
-                                <div class="flex items-center gap-0.5" title="Download / Upload">
-                                    <x-mary-icon name="o-arrow-down" class="w-3 h-3 text-success" />
+                            {{-- Show data usage if available --}}
+                            @if (($v->bytes_out ?? 0) > 0 || ($v->bytes_in ?? 0) > 0)
+                                <span class="ml-2 flex items-center gap-1 text-[11px] opacity-80">
+                                    <x-mary-icon name="o-arrow-down" class="w-3 h-3 text-success" title="Downloaded" />
                                     <span
                                         class="font-medium">{{ \Illuminate\Support\Number::fileSize($v->bytes_out ?? 0) }}</span>
-                                    <span class="opacity-40 px-1">/</span>
-                                    <x-mary-icon name="o-arrow-up" class="w-3 h-3 text-warning" />
+                                    <x-mary-icon name="o-arrow-up" class="w-3 h-3 text-warning ml-1" title="Uploaded" />
                                     <span
                                         class="font-medium">{{ \Illuminate\Support\Number::fileSize($v->bytes_in ?? 0) }}</span>
-                                </div>
-                            </div>
-                        @endif
+                                </span>
+                            @endif
+                        </div>
 
                     </div>
 
