@@ -229,8 +229,9 @@ class MikrotikApiController extends Controller
 
             $updateData = [
                 'mac_address' => !empty($data['mac']) ? $data['mac'] : $voucher->mac_address,
-                'bytes_in'    => (int) $data['bytesIn'],
-                'bytes_out'   => (int) $data['bytesOut'],
+                // MikroTik: bytes-in = download (received), bytes-out = upload (sent)
+                'bytes_out'   => (int) $data['bytesIn'], // Downloaded
+                'bytes_in'    => (int) $data['bytesOut'], // Uploaded
                 'up_time'     => $data['uptime'],
                 'status'      => 'active',
                 'updated_at'  => now(),
