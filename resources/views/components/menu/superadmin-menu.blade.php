@@ -42,6 +42,7 @@
             {{-- <x-mary-menu-item title="API Keys" icon="o-key" link="/settings/api" /> --}}
             <x-mary-menu-item title="Payment Gateways" icon="o-credit-card" link="/superadmin/payment-gateways"
                 wire:navigate />
+            <x-mary-menu-item title="Log Management" icon="o-document-text" link="/superadmin/logs" wire:navigate />
             <x-mary-menu-item title="Profile & Security" icon="o-shield-check" link="/settings/profile" wire:navigate />
         </x-mary-menu-sub>
 

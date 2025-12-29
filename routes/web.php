@@ -61,6 +61,9 @@ Route::middleware(['auth', 'check.suspended'])->group(function () {
         Route::get('/superadmin/payment-gateways', App\Livewire\Admin\PaymentGatewaySettings::class)->name('superadmin.payment-gateways');
         Route::get('/superadmin/email-settings', App\Livewire\Admin\EmailSettings::class)->name('superadmin.email-settings');
         Route::get('/admin/theme-settings', App\Livewire\Admin\ThemeSettings::class)->name('admin.theme-settings');
+
+        // Log Management
+        Route::get('/superadmin/logs', App\Livewire\Admin\LogManagement::class)->name('superadmin.logs');
     });
 
     /* ========================================
