@@ -8,6 +8,7 @@ use App\Models\Voucher;
 use App\Services\VoucherLogger;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class MikrotikApiController extends Controller
 {
@@ -134,7 +135,8 @@ class MikrotikApiController extends Controller
             return response()->json(['status' => 'no_data']);
         }
 
-        \log::info('MikrotikApiController: pushActiveUsers - Received data', ['router_id' => $router->id, 'data_length' => strlen($content)]);
+        //log info
+        Log::info('MikrotikApiController: pushActiveUsers - Data received', ['router_id' => $router->id, 'data' => $content]);
 
         $lines = explode("\n", $content);
         $userData = [];
