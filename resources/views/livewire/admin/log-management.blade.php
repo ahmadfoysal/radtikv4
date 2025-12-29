@@ -2,8 +2,7 @@
     <x-mary-header title="Log Management" subtitle="Laravel application logs (laravel.log)" separator>
         <x-slot:actions>
             <x-mary-button icon="o-arrow-path" label="Refresh" class="btn-sm btn-ghost" wire:click="refreshLogs" />
-            <x-mary-button icon="o-arrow-down-tray" label="Download" class="btn-sm btn-primary"
-                wire:click="downloadLog" />
+            <x-mary-button icon="o-arrow-down-tray" label="Download" class="btn-sm btn-primary" wire:click="downloadLog" />
             @if ($logInfo['exists'] && $logInfo['total_entries'] > 0)
                 <x-mary-button icon="o-trash" label="Clear All" class="btn-error btn-sm" wire:click="clearAllLogs"
                     wire:confirm="Are you sure you want to delete ALL log entries? This action cannot be undone!" />
@@ -131,8 +130,7 @@
                                             </div>
                                             <div>
                                                 <span class="text-sm font-semibold text-gray-500">Environment:</span>
-                                                <span
-                                                    class="badge badge-outline">{{ $log['environment'] }}</span>
+                                                <span class="badge badge-outline">{{ $log['environment'] }}</span>
                                             </div>
                                             <div>
                                                 <div class="text-sm font-semibold text-gray-500 mb-2">Message:</div>

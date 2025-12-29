@@ -71,7 +71,7 @@ class LogManagement extends Component
     {
         $logs = [];
         $pattern = '/\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\] (\w+)\.(\w+): (.+?)(?=\[\d{4}-\d{2}-\d{2}|$)/s';
-        
+
         preg_match_all($pattern, $content, $matches, PREG_SET_ORDER);
 
         foreach ($matches as $index => $match) {
@@ -108,8 +108,8 @@ class LogManagement extends Component
             $searchLower = strtolower($this->searchText);
             $filtered = array_filter($filtered, function ($log) use ($searchLower) {
                 return str_contains(strtolower($log['message']), $searchLower) ||
-                       str_contains(strtolower($log['level']), $searchLower) ||
-                       str_contains(strtolower($log['datetime']), $searchLower);
+                    str_contains(strtolower($log['level']), $searchLower) ||
+                    str_contains(strtolower($log['datetime']), $searchLower);
             });
         }
 
@@ -189,10 +189,10 @@ class LogManagement extends Component
 
             // Read current content
             $content = File::get($logPath);
-            
+
             // Remove the specific log entry
             $content = str_replace($logToDelete['raw'], '', $content);
-            
+
             // Write back to file
             File::put($logPath, $content);
 
@@ -200,7 +200,7 @@ class LogManagement extends Component
             $this->loadLogs();
 
             $this->success('Log entry deleted successfully!');
-            
+
             // Log the deletion activity
             activity()
                 ->causedBy(auth()->user())
@@ -210,7 +210,6 @@ class LogManagement extends Component
                     'log_message_preview' => substr($logToDelete['message'], 0, 100),
                 ])
                 ->log('Deleted log entry');
-                
         } catch (\Exception $e) {
             $this->error('Failed to delete log entry: ' . $e->getMessage());
         }
@@ -257,12 +256,11 @@ class LogManagement extends Component
             $this->logs = [];
 
             $this->success('All logs cleared successfully!');
-            
+
             // Log the activity
             activity()
                 ->causedBy(auth()->user())
                 ->log('Cleared all log entries from laravel.log');
-                
         } catch (\Exception $e) {
             $this->error('Failed to clear logs: ' . $e->getMessage());
         }

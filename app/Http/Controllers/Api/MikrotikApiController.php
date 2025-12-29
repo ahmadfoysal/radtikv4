@@ -339,11 +339,14 @@ class MikrotikApiController extends Controller
         $router = Router::where('app_key', $token)->first();
 
         if (! $router) {
+            \log::warning('MikrotikApiController: syncOrphans - Invalid token used', ['token' => $token]);
             return response('Invalid Token', 403);
         }
 
         // 2. Get Router's User List from Body
         $content = $request->getContent();
+
+        \log::info('MikrotikApiController: syncOrphans - Received user list', ['router_id' => $router->id, 'content_length' => strlen($content)]);
 
         if (empty($content)) {
             // No users sent means nothing to check
