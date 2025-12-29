@@ -134,6 +134,8 @@ class MikrotikApiController extends Controller
             return response()->json(['status' => 'no_data']);
         }
 
+        \log::info('MikrotikApiController: pushActiveUsers - Received data', ['router_id' => $router->id, 'data_length' => strlen($content)]);
+
         $lines = explode("\n", $content);
         $userData = [];
         $usernames = [];
