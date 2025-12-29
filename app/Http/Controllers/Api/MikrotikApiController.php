@@ -114,181 +114,7 @@ class MikrotikApiController extends Controller
             ->header('Content-Type', 'text/plain');
     }
 
-    /**
-     * MikroTik sends usage, login, mac, uptime etc to Laravel.
-     * POST /api/mikrotik/push-usage
-     */
-    public function pushActiveUsers(Request $request)
-    {
-        // 1. Authenticate via URL Query Token
-        $token = $request->query('token');
 
-        $router = Router::where('app_key', $token)->first();
-
-        if (! $router) {
-            // Return 403 to prevent MikroTik "www-authenticate" header error
-            return response()->json(['error' => 'Invalid token'], 403);
-        }
-
-        $content = $request->getContent();
-        if (empty($content)) {
-            return response()->json(['status' => 'no_data']);
-        }
-
-        //log info
-        Log::info('MikrotikApiController: pushActiveUsers - Data received', ['router_id' => $router->id, 'data' => $content]);
-
-        $lines = explode("\n", $content);
-        $userData = [];
-        $usernames = [];
-
-        // 3. Pre-process all lines from the request
-        foreach ($lines as $line) {
-            $line = trim($line);
-            if (empty($line)) {
-                continue;
-            }
-
-            $parts = explode(';', $line);
-            if (count($parts) < 6) {
-                continue;
-            }
-
-            [$username, $mac, $bytesIn, $bytesOut, $uptime, $comment] = $parts;
-            if (stripos($comment, 'act:') === false) {
-                continue; // Only track users with activation metadata
-            }
-            $usernames[] = $username;
-            $userData[$username] = compact('mac', 'bytesIn', 'bytesOut', 'uptime', 'comment');
-        }
-
-        if (empty($usernames)) {
-            return response()->json(['status' => 'no_valid_data_found']);
-        }
-
-        // 4. Fetch all relevant vouchers in a single query
-        $vouchers = Voucher::with('profile')
-            ->where('router_id', $router->id)
-            ->whereIn('username', $usernames)
-            ->get()
-            ->keyBy('username');
-
-        $updatedCount = 0;
-
-        // 5. Iterate over fetched vouchers and update them
-        foreach ($vouchers as $username => $voucher) {
-            // Add a check to prevent errors if username case mismatches
-            if (! isset($userData[$username])) {
-                continue;
-            }
-
-            $data = $userData[$username];
-            $updateData = [
-                'mac_address' => ! empty($data['mac']) ? $data['mac'] : $voucher->mac_address,
-                'bytes_in' => (int) $data['bytesIn'],
-                'bytes_out' => (int) $data['bytesOut'],
-                'up_time' => $data['uptime'],
-                'status' => 'active',
-                'updated_at' => now(),
-            ];
-
-            // 6. CRITICAL: Parse and Set Activation Date ONLY if not already set in database
-            // Once activated_at is set, it should NEVER be updated, even if MikroTik sends different data
-            // This ensures accurate historical activation tracking
-            if (is_null($voucher->activated_at)) {
-                $activationTimestamp = $this->parseActivationTimestamp($data['comment'], $voucher->id);
-                if ($activationTimestamp) {
-                    $updateData['activated_at'] = $activationTimestamp;
-
-                    // 7. Calculate and Set Expiry Date based on first activation
-                    // This also should only be set once on first activation
-                    if (is_null($voucher->expires_at)) {
-                        $expiresAt = $this->calculateExpiryDate($voucher, $activationTimestamp);
-                        if ($expiresAt) {
-                            $updateData['expires_at'] = $expiresAt;
-                        }
-                    }
-
-                    // Log voucher activation
-                    VoucherLogger::log(
-                        $voucher,
-                        $voucher->router,
-                        'activated',
-                        [
-                            'activated_at' => $activationTimestamp,
-                            'expires_at' => $updateData['expires_at'] ?? null,
-                            'mac_address' => $updateData['mac_address'],
-                        ]
-                    );
-                }
-            }
-            // If activated_at already exists in database, we completely ignore any activation data from MikroTik
-            // This prevents accidental overwrites and maintains data integrity
-
-            $voucher->update($updateData);
-            $updatedCount++;
-        }
-
-        return response()->json([
-            'status' => 'success',
-            'processed' => $updatedCount,
-        ]);
-    }
-
-    /**
-     * Parse activation timestamp from a comment string.
-     */
-    private function parseActivationTimestamp(string $comment, int $voucherId): ?Carbon
-    {
-        if (preg_match('/Act:\s*([^|]+)/i', $comment, $matches)) {
-            $dateStr = trim($matches[1]);
-            try {
-                // MikroTik format "M/d/Y H:i:s" is tricky with Carbon::parse.
-                // createFromFormat is more reliable for non-standard formats.
-                return str_contains($dateStr, '/')
-                    ? Carbon::createFromFormat('M/d/Y H:i:s', $dateStr, config('app.timezone'))
-                    : Carbon::parse($dateStr);
-            } catch (\Exception $e) {
-                \Log::error("MikroTik PushActiveUsers: Failed to parse date '{$dateStr}' for voucher {$voucherId}", ['exception' => $e->getMessage()]);
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Calculate the expiry date based on profile validity.
-     */
-    private function calculateExpiryDate(Voucher $voucher, Carbon $activationTimestamp): ?Carbon
-    {
-        if (! $voucher->profile || ! $voucher->profile->validity) {
-            return null;
-        }
-
-        try {
-            $validity = strtolower(trim($voucher->profile->validity));
-            $expiresAt = $activationTimestamp->copy(); // Use copy to avoid mutating the original
-            $amount = (int) $validity;
-
-            if ($amount <= 0) {
-                return null;
-            }
-
-            if (str_contains($validity, 'h')) {
-                return $expiresAt->addHours($amount);
-            }
-            if (str_contains($validity, 'm') && ! str_contains($validity, 'mo')) {
-                return $expiresAt->addMinutes($amount);
-            }
-
-            // Default to days (covers 'd', 'days', or just number)
-            return $expiresAt->addDays($amount);
-        } catch (\Exception $e) {
-            \Log::warning("Could not calculate expiry for voucher {$voucher->id}", ['validity' => $voucher->profile->validity, 'exception' => $e->getMessage()]);
-        }
-
-        return null;
-    }
 
     public function pullProfiles(Request $request)
     {
@@ -331,6 +157,160 @@ class MikrotikApiController extends Controller
         ]);
     }
 
+
+
+    public function pushActiveUsers(Request $request)
+    {
+        // 1. Authenticate
+        $token = $request->query('token');
+        $router = Router::where('app_key', $token)->first();
+
+        if (!$router) {
+            return response()->json(['error' => 'Invalid token'], 403);
+        }
+
+        // 2. Get Data
+        $content = $request->getContent();
+        if (empty($content)) {
+            return response()->json(['status' => 'no_data']);
+        }
+
+        $lines = explode("\n", $content);
+        $userData = [];
+        $usernames = [];
+
+        // 3. Process Lines
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if (empty($line)) continue;
+
+            // Limit 6 prevents comment truncation if it contains semicolons
+            $parts = explode(';', $line, 6);
+
+            if (count($parts) < 6) continue;
+
+            [$username, $mac, $bytesIn, $bytesOut, $uptime, $comment] = $parts;
+
+            // STRICT FILTER: Only process if "Act:" is present
+            // This double-checks the MikroTik script logic
+            if (stripos($comment, 'act:') === false) {
+                continue;
+            }
+
+            $usernames[] = $username;
+            $userData[$username] = compact('mac', 'bytesIn', 'bytesOut', 'uptime', 'comment');
+        }
+
+        if (empty($usernames)) {
+            return response()->json(['status' => 'no_active_users_found']);
+        }
+
+        // 4. Fetch Vouchers
+        $vouchers = Voucher::with('profile')
+            ->where('router_id', $router->id)
+            ->whereIn('username', $usernames)
+            ->get();
+
+        $updatedCount = 0;
+
+        // 5. Update Database
+        foreach ($vouchers as $voucher) {
+            $username = $voucher->username;
+
+            if (!isset($userData[$username])) continue;
+
+            $data = $userData[$username];
+
+            $updateData = [
+                'mac_address' => !empty($data['mac']) ? $data['mac'] : $voucher->mac_address,
+                'bytes_in'    => (int) $data['bytesIn'],
+                'bytes_out'   => (int) $data['bytesOut'],
+                'up_time'     => $data['uptime'],
+                'status'      => 'active',
+                'updated_at'  => now(),
+            ];
+
+            // 6. Handle Activation Date (First Time Only)
+            if (is_null($voucher->activated_at)) {
+                $activationTimestamp = $this->parseActivationTimestamp($data['comment'], $voucher->id);
+
+                if ($activationTimestamp) {
+                    $updateData['activated_at'] = $activationTimestamp;
+
+                    // Calculate Expiry
+                    if (is_null($voucher->expires_at)) {
+                        $expiresAt = $this->calculateExpiryDate($voucher, $activationTimestamp);
+                        if ($expiresAt) {
+                            $updateData['expires_at'] = $expiresAt;
+                        }
+                    }
+
+                    // Log activation event (optional)
+                    Log::info("Voucher Activated via Push: {$username}");
+                }
+            }
+
+            $voucher->update($updateData);
+            $updatedCount++;
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'processed' => $updatedCount,
+        ]);
+    }
+
+    /**
+     * Helper: Parse activation timestamp from comment
+     */
+    private function parseActivationTimestamp(string $comment, int $voucherId): ?Carbon
+    {
+        // Regex looks for "Act: <date>" until the next pipe or end of string
+        if (preg_match('/Act:\s*([^|]+)/i', $comment, $matches)) {
+            $dateStr = trim($matches[1]);
+            try {
+                // Handle MikroTik default format "M/d/Y H:i:s" (e.g., dec/04/2025 10:00:00)
+                if (str_contains($dateStr, '/')) {
+                    return Carbon::createFromFormat('M/d/Y H:i:s', ucfirst($dateStr));
+                }
+                // Handle standard format
+                return Carbon::parse($dateStr);
+            } catch (\Exception $e) {
+                Log::error("MikroTik Date Parse Error [Voucher {$voucherId}]: " . $e->getMessage());
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Helper: Calculate expiry date based on profile validity
+     */
+    private function calculateExpiryDate(Voucher $voucher, Carbon $activation): ?Carbon
+    {
+        if (!$voucher->profile || !$voucher->profile->validity) {
+            return null;
+        }
+
+        try {
+            $validity = strtolower(trim($voucher->profile->validity));
+            $expiresAt = $activation->copy();
+            $amount = (int) $validity;
+
+            if ($amount <= 0) return null;
+
+            if (str_contains($validity, 'h')) {
+                return $expiresAt->addHours($amount);
+            }
+            if (str_contains($validity, 'm') && !str_contains($validity, 'mo')) {
+                return $expiresAt->addMinutes($amount);
+            }
+
+            // Default to days
+            return $expiresAt->addDays($amount);
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
     /**
      * Smart Cleanup Endpoint
      * Receives comma-separated usernames from router.
