@@ -38,9 +38,9 @@ class ProfileOnLoginScript
             :local time [/system clock get time];
             :local newTS "ACT=$date $time";
             
-            set $uid comment=("$newTS | $comment");
+            set $uid comment=("$comment | $newTS");
             :log info ("RADTik: Activation Set for $u");
-            :set comment ("$newTS | $comment");
+            :set comment ("$comment | $newTS");
         }
 
         # 2. MAC Lock Logic (Strict Check for LOCK=1)
