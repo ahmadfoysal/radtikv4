@@ -194,9 +194,12 @@ class MikrotikApiController extends Controller
 
             [$username, $mac, $bytesIn, $bytesOut, $uptime, $comment] = $parts;
 
-            // STRICT FILTER: Only process if "Act:" is present
+            // STRICT FILTER: Only process if "Act:" or "ACT=" is present (case-insensitive)
             // This double-checks the MikroTik script logic
-            if (stripos($comment, 'act:') === false) {
+            if (
+                stripos($comment, 'act:') === false &&
+                stripos($comment, 'act=') === false
+            ) {
                 continue;
             }
 
@@ -268,8 +271,8 @@ class MikrotikApiController extends Controller
      */
     private function parseActivationTimestamp(string $comment, int $voucherId): ?Carbon
     {
-        // Regex looks for "Act: <date>" until the next pipe or end of string
-        if (preg_match('/Act:\s*([^|]+)/i', $comment, $matches)) {
+        // Regex looks for "Act: <date>" or "ACT=<date>" until the next pipe or end of string
+        if (preg_match('/Act[:=]\s*([^|]+)/i', $comment, $matches)) {
             $dateStr = trim($matches[1]);
             try {
                 // Handle MikroTik default format "M/d/Y H:i:s" (e.g., dec/04/2025 10:00:00)
