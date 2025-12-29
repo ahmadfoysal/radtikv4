@@ -146,7 +146,7 @@ Route::get('/mikrotik/api/pull-active-users', [MikrotikApiController::class, 'pu
     ->name('mikrotik.pullActiveUsers')->middleware('check.router.subscription');
 Route::post('/mikrotik/api/push-active-users', [MikrotikApiController::class, 'pushActiveUsers'])
     ->name('mikrotik.pushActiveUsers')->withoutMiddleware([VerifyCsrfToken::class])->middleware('check.router.subscription');
-Route::get('/mikrotik/api/sync-orphans', [MikrotikApiController::class, 'syncOrphans'])
+Route::post('/mikrotik/api/sync-orphans', [MikrotikApiController::class, 'syncOrphans'])
     ->name('mikrotik.syncOrphans')->withoutMiddleware([VerifyCsrfToken::class])->middleware('check.router.subscription');
 
 /* Hotspot profile sync */
