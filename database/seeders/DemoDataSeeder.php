@@ -401,7 +401,7 @@ class DemoDataSeeder extends Seeder
     {
         $this->command->info('Creating invoices...');
 
-        $categories = ['router_subscription', 'balance_topup', 'router_renewal'];
+        $categories = ['subscription', 'balance_topup', 'subscription_renewal'];
         $statuses = ['completed', 'pending'];
 
         // Create 30 invoices

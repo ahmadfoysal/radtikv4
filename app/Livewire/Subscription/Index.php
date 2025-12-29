@@ -137,8 +137,16 @@ class Index extends Component
                 ? ($package->price_yearly ?? $package->price_monthly * 12)
                 : $package->price_monthly;
 
-            // Check if user has sufficient balance
-            if ($user->balance < $amount) {
+            // Apply commission discount for admin users
+            $discount = 0;
+            if ($amount > 0 && $user->hasRole('admin') && $user->commission > 0) {
+                $discount = round(($amount * $user->commission) / 100, 2);
+            }
+
+            $finalAmount = $amount - $discount;
+
+            // Check if user has sufficient balance for the final amount (after discount)
+            if ($user->balance < $finalAmount) {
                 $this->error('Insufficient balance. Please add funds to your wallet first.');
                 $this->showSubscribeModal = false;
                 return;

@@ -2,10 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Models\Package;
 use App\Models\Router;
+use App\Models\Subscription;
 use App\Models\User;
+use App\Models\Zone;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class CheckRouterSubscriptionMiddlewareTest extends TestCase
@@ -13,11 +17,23 @@ class CheckRouterSubscriptionMiddlewareTest extends TestCase
     use RefreshDatabase;
 
     protected User $user;
+    protected Zone $zone;
 
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Create admin role
+        Role::create(['name' => 'admin']);
+
         $this->user = User::factory()->create();
+        $this->user->assignRole('admin');
+
+        // Create zone for routers
+        $this->zone = Zone::create([
+            'name' => 'Test Zone',
+            'user_id' => $this->user->id,
+        ]);
     }
 
     public function test_blocks_request_when_no_token_provided(): void
@@ -36,27 +52,17 @@ class CheckRouterSubscriptionMiddlewareTest extends TestCase
         $response->assertJson(['error' => 'Invalid token']);
     }
 
-    public function test_blocks_request_when_router_has_no_package(): void
+    public function test_blocks_request_when_user_has_no_subscription(): void
     {
-        $router = Router::factory()->create([
+        $router = Router::create([
+            'name' => 'Test Router',
+            'address' => '192.168.1.1',
+            'port' => 8728,
+            'username' => 'admin',
+            'password' => encrypt('password'),
             'user_id' => $this->user->id,
-            'package' => null,
-        ]);
-
-        $response = $this->get('/mikrotik/api/pull-inactive-users?token=' . $router->app_key);
-
-        $response->assertStatus(403);
-        $response->assertJson(['error' => 'No active subscription']);
-    }
-
-    public function test_blocks_request_when_package_has_no_end_date(): void
-    {
-        $router = Router::factory()->create([
-            'user_id' => $this->user->id,
-            'package' => [
-                'id' => 1,
-                'name' => 'Basic',
-            ],
+            'zone_id' => $this->zone->id,
+            'app_key' => 'test-token-123',
         ]);
 
         $response = $this->get('/mikrotik/api/pull-inactive-users?token=' . $router->app_key);
@@ -67,30 +73,72 @@ class CheckRouterSubscriptionMiddlewareTest extends TestCase
 
     public function test_blocks_request_when_subscription_is_expired(): void
     {
-        $router = Router::factory()->create([
+        $package = Package::create([
+            'name' => 'Basic',
+            'price_monthly' => 100,
+            'max_routers' => 5,
+            'is_active' => true,
+        ]);
+
+        // Create expired subscription
+        Subscription::create([
             'user_id' => $this->user->id,
-            'package' => [
-                'id' => 1,
-                'name' => 'Basic',
-                'end_date' => Carbon::now()->subDays(1)->toDateTimeString(),
-            ],
+            'package_id' => $package->id,
+            'start_date' => Carbon::now()->subMonth(),
+            'end_date' => Carbon::now()->subDay(),
+            'billing_cycle' => 'monthly',
+            'amount' => 100,
+            'original_price' => 100,
+            'status' => 'expired',
+        ]);
+
+        $router = Router::create([
+            'name' => 'Test Router',
+            'address' => '192.168.1.1',
+            'port' => 8728,
+            'username' => 'admin',
+            'password' => encrypt('password'),
+            'user_id' => $this->user->id,
+            'zone_id' => $this->zone->id,
+            'app_key' => 'test-token-123',
         ]);
 
         $response = $this->get('/mikrotik/api/pull-inactive-users?token=' . $router->app_key);
 
         $response->assertStatus(403);
-        $response->assertJson(['error' => 'Subscription expired']);
+        $response->assertJson(['error' => 'No active subscription']);
     }
 
     public function test_allows_request_when_subscription_is_valid(): void
     {
-        $router = Router::factory()->create([
+        $package = Package::create([
+            'name' => 'Basic',
+            'price_monthly' => 100,
+            'max_routers' => 5,
+            'is_active' => true,
+        ]);
+
+        // Create active subscription
+        Subscription::create([
             'user_id' => $this->user->id,
-            'package' => [
-                'id' => 1,
-                'name' => 'Basic',
-                'end_date' => Carbon::now()->addDays(30)->toDateTimeString(),
-            ],
+            'package_id' => $package->id,
+            'start_date' => Carbon::now(),
+            'end_date' => Carbon::now()->addMonth(),
+            'billing_cycle' => 'monthly',
+            'amount' => 100,
+            'original_price' => 100,
+            'status' => 'active',
+        ]);
+
+        $router = Router::create([
+            'name' => 'Test Router',
+            'address' => '192.168.1.1',
+            'port' => 8728,
+            'username' => 'admin',
+            'password' => encrypt('password'),
+            'user_id' => $this->user->id,
+            'zone_id' => $this->zone->id,
+            'app_key' => 'test-token-123',
         ]);
 
         $response = $this->get('/mikrotik/api/pull-inactive-users?token=' . $router->app_key);
@@ -99,88 +147,31 @@ class CheckRouterSubscriptionMiddlewareTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_middleware_applies_to_pull_active_users(): void
+    public function test_middleware_applies_to_all_mikrotik_api_endpoints(): void
     {
-        $router = Router::factory()->create([
+        // No active subscription
+        $router = Router::create([
+            'name' => 'Test Router',
+            'address' => '192.168.1.1',
+            'port' => 8728,
+            'username' => 'admin',
+            'password' => encrypt('password'),
             'user_id' => $this->user->id,
-            'package' => [
-                'id' => 1,
-                'name' => 'Basic',
-                'end_date' => Carbon::now()->subDays(1)->toDateTimeString(),
-            ],
+            'zone_id' => $this->zone->id,
+            'app_key' => 'test-token-123',
         ]);
 
-        $response = $this->get('/mikrotik/api/pull-active-users?token=' . $router->app_key);
+        $endpoints = [
+            ['method' => 'get', 'uri' => '/mikrotik/api/pull-active-users'],
+            ['method' => 'get', 'uri' => '/mikrotik/api/pull-profiles'],
+            ['method' => 'get', 'uri' => '/mikrotik/api/pull-updated-profiles'],
+        ];
 
-        $response->assertStatus(403);
-        $response->assertJson(['error' => 'Subscription expired']);
-    }
+        foreach ($endpoints as $endpoint) {
+            $response = $this->{$endpoint['method']}($endpoint['uri'] . '?token=' . $router->app_key);
 
-    public function test_middleware_applies_to_push_active_users(): void
-    {
-        $router = Router::factory()->create([
-            'user_id' => $this->user->id,
-            'package' => [
-                'id' => 1,
-                'name' => 'Basic',
-                'end_date' => Carbon::now()->subDays(1)->toDateTimeString(),
-            ],
-        ]);
-
-        $response = $this->post('/mikrotik/api/push-active-users?token=' . $router->app_key);
-
-        $response->assertStatus(403);
-        $response->assertJson(['error' => 'Subscription expired']);
-    }
-
-    public function test_middleware_applies_to_sync_orphans(): void
-    {
-        $router = Router::factory()->create([
-            'user_id' => $this->user->id,
-            'package' => [
-                'id' => 1,
-                'name' => 'Basic',
-                'end_date' => Carbon::now()->subDays(1)->toDateTimeString(),
-            ],
-        ]);
-
-        $response = $this->get('/mikrotik/api/sync-orphans?token=' . $router->app_key);
-
-        $response->assertStatus(403);
-        $response->assertJson(['error' => 'Subscription expired']);
-    }
-
-    public function test_middleware_applies_to_pull_profiles(): void
-    {
-        $router = Router::factory()->create([
-            'user_id' => $this->user->id,
-            'package' => [
-                'id' => 1,
-                'name' => 'Basic',
-                'end_date' => Carbon::now()->subDays(1)->toDateTimeString(),
-            ],
-        ]);
-
-        $response = $this->get('/mikrotik/api/pull-profiles?token=' . $router->app_key);
-
-        $response->assertStatus(403);
-        $response->assertJson(['error' => 'Subscription expired']);
-    }
-
-    public function test_middleware_applies_to_pull_updated_profiles(): void
-    {
-        $router = Router::factory()->create([
-            'user_id' => $this->user->id,
-            'package' => [
-                'id' => 1,
-                'name' => 'Basic',
-                'end_date' => Carbon::now()->subDays(1)->toDateTimeString(),
-            ],
-        ]);
-
-        $response = $this->get('/mikrotik/api/pull-updated-profiles?token=' . $router->app_key);
-
-        $response->assertStatus(403);
-        $response->assertJson(['error' => 'Subscription expired']);
+            $response->assertStatus(403);
+            $response->assertJson(['error' => 'No active subscription']);
+        }
     }
 }

@@ -135,7 +135,7 @@ php artisan db:seed --class=RouterSeeder
 
 **Invoices:**
 
--   Categories: router_subscription, balance_topup, router_renewal, commission_payment
+-   Categories: subscription, balance_topup, subscription_renewal, commission_payment
 -   80% completed, 20% pending/failed/cancelled
 -   Amounts: 100-10,000 BDT
 -   Distributed over past 90 days

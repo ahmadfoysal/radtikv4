@@ -299,7 +299,6 @@ radtikv4/
 -   **Authentication**: Username and encrypted password storage
 -   **Zone Assignment**: Organize routers by location
 -   **RADIUS Integration**: Enable/disable RADIUS usage
--   **Package Subscription**: Subscribe routers to packages
 -   **Voucher Template**: Assign voucher templates
 -   **API Key**: Unique app_key for API authentication
 -   **Logo Upload**: Custom router branding
@@ -397,11 +396,11 @@ Routers can be subscribed to packages with:
 
 -   **Invoice Types**: Debit and credit invoices
 -   **Invoice Categories**:
-    -   `router_subscription`: New router subscription
-    -   `router_renewal`: Router subscription renewal
+    -   `subscription`: User subscription to package
+    -   `subscription_renewal`: User subscription renewal
     -   `manual_adjustment`: Manual balance changes
     -   `payment`: Payment received
--   **Invoice Linking**: Link invoices to routers/users
+-   **Invoice Linking**: Link invoices to users
 -   **Invoice Tracking**: Complete invoice history
 
 ### Balance Management
@@ -427,12 +426,12 @@ Routers can be subscribed to packages with:
 
 ### Subscription Service
 
-The `RouterSubscriptionService` handles:
+User subscription management handles:
 
 -   Balance validation before subscription
 -   Subscription creation with billing
 -   Subscription renewal
--   Package snapshot storage
+-   Package tracking via subscriptions table
 -   Subscription date management
 
 ### Subscription Flow
@@ -440,15 +439,16 @@ The `RouterSubscriptionService` handles:
 1. **Check Balance**: Validate user has sufficient balance
 2. **Deduct Balance**: Charge package price
 3. **Create Invoice**: Generate invoice record
-4. **Store Package**: Save package snapshot to router
+4. **Create Subscription**: Store subscription record with package details
 5. **Set Dates**: Set subscription start and end dates
 6. **Enable Auto-Renewal**: If configured
 
 ### Auto-Renewal
 
--   **Command**: `routers:renew-subscriptions`
+-   **Command**: `subscriptions:renew`
 -   **Scheduling**: Can be scheduled via Laravel scheduler
 -   **Expiry Window**: Configurable days before expiry
+-   **Process**: Automatically renews user subscriptions with sufficient balance
 -   **Auto-Renewal Check**: Only renews if `auto_renew` is true
 -   **Error Handling**: Logs failures but continues processing
 
@@ -456,9 +456,9 @@ The `RouterSubscriptionService` handles:
 
 `CheckRouterSubscription` middleware:
 
--   Validates router token
--   Checks subscription status
--   Blocks expired subscriptions
+-   Validates router token (app_key)
+-   Checks if router owner has active subscription
+-   Blocks access for users without active subscriptions
 -   Applied to all MikroTik API routes
 
 ---
@@ -761,7 +761,6 @@ php artisan test --coverage
 For detailed documentation on specific features, see:
 
 -   `docs/TICKET_SYSTEM.md` - Support ticket system details
--   `docs/ROUTER_SUBSCRIPTION_SERVICE.md` - Subscription service documentation
 -   `ACTIVITY_LOGGING.md` - Activity logging system
 -   `KNOWLEDGEBASE_DOCUMENTATION.md` - Knowledge base implementation
 -   `PR_DESCRIPTION.md` - Subscription middleware implementation
