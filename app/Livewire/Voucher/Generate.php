@@ -110,6 +110,17 @@ class Generate extends Component
                 return;
             }
 
+            // Voucher limit check
+            $subscription = $user->activeSubscription();
+            $maxVouchers = $subscription && $subscription->package ? $subscription->package->max_vouchers_per_router : null;
+            if ($maxVouchers !== null) {
+                $currentCount = Voucher::where('router_id', $this->router_id)->count();
+                if ($currentCount + $this->quantity > $maxVouchers) {
+                    $this->error("Voucher limit exceeded! You can only generate " . ($maxVouchers - $currentCount) . " more vouchers for this router based on your subscription.");
+                    return;
+                }
+            }
+
             $codes = $this->generateCodes();
             $rows = $this->buildRows($codes);
 
@@ -128,7 +139,6 @@ class Generate extends Component
             );
 
             $this->success('Vouchers generated successfully.');
-            // nevigat to route
             $this->redirect(route('vouchers.index'), navigate: true);
         } catch (\Throwable $e) {
             $this->error('Failed to generate vouchers: ' . $e->getMessage());

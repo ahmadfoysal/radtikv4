@@ -19,7 +19,7 @@ class VoucherLog extends Model
         'username',
         'profile',
         'price',
-        'validity_days',
+        'validity',
         'router_name',
         'meta',
     ];
