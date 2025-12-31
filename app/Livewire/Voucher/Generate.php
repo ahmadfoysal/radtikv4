@@ -14,7 +14,7 @@ class Generate extends Component
     use Toast;
 
     // === Inputs ===
-    #[V(['required', 'integer', 'min:1', 'max:5000'])]
+    #[V(['required', 'integer', 'min:1', 'max:1000'])]
     public int $quantity = 10;
 
     #[V(['required', 'integer', 'min:4', 'max:32'])]

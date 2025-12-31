@@ -1,4 +1,87 @@
 <div class="space-y-6">
+    {{-- Subscription Expiry Alert --}}
+    @if (isset($subscriptionAlert))
+        @if ($subscriptionAlert['gracePeriod'])
+            {{-- Grace Period Alert - Red --}}
+            <div
+                class="bg-gradient-to-r from-error/20 via-error/10 to-error/5 border-l-4 border-error rounded-lg p-4 shadow-lg">
+                <div class="flex items-center gap-4">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-error rounded-full flex items-center justify-center animate-pulse">
+                            <svg class="w-6 h-6 text-error-content" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h3 class="text-lg font-bold text-error mb-1">⚠️ Subscription Expired!</h3>
+                        <p class="text-base-content">{{ $subscriptionAlert['message'] }}</p>
+                    </div>
+                    @if ($subscriptionAlert['daysLeft'] > 0)
+                        <div class="flex-shrink-0">
+                            <div class="bg-error text-error-content rounded-xl px-6 py-3 text-center shadow-md">
+                                <div class="text-3xl font-bold">{{ $subscriptionAlert['daysLeft'] }}</div>
+                                <div class="text-sm font-medium">
+                                    {{ $subscriptionAlert['daysLeft'] == 1 ? 'Day' : 'Days' }} Left</div>
+                            </div>
+                        </div>
+                    @endif
+                    <div class="flex-shrink-0">
+                        <button
+                            onclick="document.getElementById('packages-section').scrollIntoView({behavior: 'smooth'})"
+                            class="btn btn-error btn-sm gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Renew Now
+                        </button>
+                    </div>
+                </div>
+            </div>
+        @else
+            {{-- Expiring Soon Alert - Warning --}}
+            <div
+                class="bg-gradient-to-r from-warning/20 via-warning/10 to-warning/5 border-l-4 border-warning rounded-lg p-4 shadow-lg">
+                <div class="flex items-center gap-4">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-warning rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6 text-warning-content" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h3 class="text-lg font-bold text-warning mb-1">⏰ Subscription Expiring Soon!</h3>
+                        <p class="text-base-content">{{ $subscriptionAlert['message'] }}</p>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <div class="bg-warning text-warning-content rounded-xl px-6 py-3 text-center shadow-md">
+                            <div class="text-3xl font-bold">{{ $subscriptionAlert['daysLeft'] }}</div>
+                            <div class="text-sm font-medium">{{ $subscriptionAlert['daysLeft'] == 1 ? 'Day' : 'Days' }}
+                                Left</div>
+                        </div>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <button
+                            onclick="document.getElementById('packages-section').scrollIntoView({behavior: 'smooth'})"
+                            class="btn btn-warning btn-sm gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Renew Now
+                        </button>
+                    </div>
+                </div>
+            </div>
+        @endif
+    @endif
+
     {{-- Current Subscription Status --}}
     @if ($currentSubscription)
         <x-mary-card class="border border-base-300 bg-gradient-to-br from-primary/10 to-base-100">
@@ -29,7 +112,8 @@
                 </div>
                 <div class="p-2 bg-warning/10 rounded border border-warning/20">
                     <p class="text-xs text-base-content/60">Expires</p>
-                    <p class="font-semibold text-warning text-xs">{{ $currentSubscription->end_date->format('M d, Y') }}
+                    <p class="font-semibold text-warning text-xs">
+                        {{ $currentSubscription->end_date->format('M d, Y') }}
                     </p>
                 </div>
                 <div class="p-2 bg-info/10 rounded border border-info/20">

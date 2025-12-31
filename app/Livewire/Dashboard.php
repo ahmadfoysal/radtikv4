@@ -158,6 +158,40 @@ class Dashboard extends Component
         $startOfMonth = Carbon::now()->startOfMonth();
         $trendStart = Carbon::now()->subDays(6)->startOfDay();
 
+        // Check subscription expiry status
+        $subscription = $user->activeSubscription();
+        $subscriptionAlert = null;
+        if ($subscription) {
+            $now = now();
+            $endDate = $subscription->end_date;
+
+            if ($subscription->status === 'grace_period') {
+                // In grace period - calculate days remaining in grace
+                $gracePeriodDays = $subscription->package->grace_period_days ?? 0;
+                $daysPassedSinceExpiry = (int) ceil($now->diffInDays($endDate, false));
+                $graceRemaining = max(0, $gracePeriodDays - abs($daysPassedSinceExpiry));
+
+                $subscriptionAlert = [
+                    'type' => 'error',
+                    'message' => "Your subscription has expired. Please renew within {$graceRemaining} day" . ($graceRemaining != 1 ? 's' : '') . " to avoid service interruption.",
+                    'daysLeft' => $graceRemaining,
+                    'gracePeriod' => true
+                ];
+            } elseif ($subscription->status === 'active' && $endDate->isFuture()) {
+                // Active subscription - check if expiring within 7 days
+                $daysUntilExpiry = (int) ceil($now->diffInDays($endDate, false));
+
+                if ($daysUntilExpiry <= 7 && $daysUntilExpiry > 0) {
+                    $subscriptionAlert = [
+                        'type' => 'warning',
+                        'message' => "Your subscription will expire in {$daysUntilExpiry} day" . ($daysUntilExpiry > 1 ? 's' : '') . ". Please renew before expiry for smooth operation.",
+                        'daysLeft' => $daysUntilExpiry,
+                        'gracePeriod' => false
+                    ];
+                }
+            }
+        }
+
         $routerQuery = $user->routers()
             ->with(['zone:id,name'])
             ->withCount([
@@ -473,6 +507,7 @@ class Dashboard extends Component
             'topRouters',
             'incomeChart',
             'activationChart',
+            'subscriptionAlert'
         );
     }
 

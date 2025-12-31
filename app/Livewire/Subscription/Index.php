@@ -192,14 +192,54 @@ class Index extends Component
     {
         $user = Auth::user();
         $currentSubscription = $user->activeSubscription();
+        $daysLeft = $currentSubscription ? $currentSubscription->end_date->diffInDays(now(), false) : null;
+        $inGrace = $currentSubscription && $currentSubscription->status === 'grace_period';
+        $graceDays = $currentSubscription && $currentSubscription->package ? $currentSubscription->package->grace_period_days : 0;
         $packages = Package::where('is_active', true)
             ->orderBy('price_monthly')
             ->get();
+
+        // Subscription expiry alerts
+        $subscriptionAlert = null;
+        if ($currentSubscription) {
+            $now = now();
+            $endDate = $currentSubscription->end_date;
+
+            if ($currentSubscription->status === 'grace_period') {
+                // In grace period - calculate days remaining in grace
+                $gracePeriodDays = $currentSubscription->package->grace_period_days ?? 0;
+                $daysPassedSinceExpiry = (int) ceil($now->diffInDays($endDate, false));
+                $graceRemaining = max(0, $gracePeriodDays - abs($daysPassedSinceExpiry));
+
+                $subscriptionAlert = [
+                    'type' => 'error',
+                    'message' => "Your subscription has expired. Please renew within {$graceRemaining} day" . ($graceRemaining != 1 ? 's' : '') . " to avoid service interruption.",
+                    'daysLeft' => $graceRemaining,
+                    'gracePeriod' => true
+                ];
+            } elseif ($currentSubscription->status === 'active' && $endDate->isFuture()) {
+                // Active subscription - check if expiring within 7 days
+                $daysUntilExpiry = (int) ceil($now->diffInDays($endDate, false));
+
+                if ($daysUntilExpiry <= 7 && $daysUntilExpiry > 0) {
+                    $subscriptionAlert = [
+                        'type' => 'warning',
+                        'message' => "Your subscription will expire in {$daysUntilExpiry} day" . ($daysUntilExpiry > 1 ? 's' : '') . ". Please renew before expiry for smooth operation.",
+                        'daysLeft' => $daysUntilExpiry,
+                        'gracePeriod' => false
+                    ];
+                }
+            }
+        }
 
         return view('livewire.subscription.index', [
             'currentSubscription' => $currentSubscription,
             'packages' => $packages,
             'balance' => $user->balance,
+            'daysLeft' => $daysLeft,
+            'inGrace' => $inGrace,
+            'graceDays' => $graceDays,
+            'subscriptionAlert' => $subscriptionAlert,
         ])->title('My Subscription');
     }
 }
