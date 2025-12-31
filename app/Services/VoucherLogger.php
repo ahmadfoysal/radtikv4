@@ -33,7 +33,7 @@ class VoucherLogger
             'username' => $voucher?->username,
             'profile' => $profile?->name,
             'price' => $profile?->price,
-            'validity_days' => $profile?->validity,
+            'validity' => $profile?->validity,
             'router_name' => $router?->name,
             'meta' => $extra,
         ];
