@@ -46,6 +46,33 @@ class Generate extends Component
     public function mount()
     {
         $this->authorize('generate_vouchers');
+
+        $user = auth()->user();
+
+        // Check subscription status for admins
+        if ($user->isAdmin()) {
+            $subscription = $user->activeSubscription();
+
+            if (!$subscription) {
+                $this->error('You need an active subscription to generate vouchers. Please subscribe to a package first.', redirectTo: route('subscription.index'));
+                return;
+            }
+
+            // Check if subscription has expired (block even during grace period)
+            $now = now();
+            $endDate = $subscription->end_date;
+
+            if ($now->gt($endDate)) {
+                // Subscription expired - cannot generate vouchers even during grace period
+                $gracePeriodDays = $subscription->package->grace_period_days ?? 0;
+                $gracePeriodEndDate = $endDate->copy()->addDays($gracePeriodDays);
+                $daysRemaining = max(0, (int) $now->diffInDays($gracePeriodEndDate));
+
+                $this->error("Your subscription has expired. You cannot generate vouchers during the grace period. Please renew within {$daysRemaining} day(s) to restore access.", redirectTo: route('subscription.index'));
+                return;
+            }
+        }
+
         $this->loadProfiles();
     }
 

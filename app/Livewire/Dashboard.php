@@ -164,22 +164,28 @@ class Dashboard extends Component
         if ($subscription) {
             $now = now();
             $endDate = $subscription->end_date;
+            $gracePeriodDays = $subscription->package->grace_period_days ?? 0;
 
-            if ($subscription->status === 'grace_period') {
-                // In grace period - calculate days remaining in grace
-                $gracePeriodDays = $subscription->package->grace_period_days ?? 0;
-                $daysPassedSinceExpiry = (int) ceil($now->diffInDays($endDate, false));
-                $graceRemaining = max(0, $gracePeriodDays - abs($daysPassedSinceExpiry));
+            // Check if past end_date (expired)
+            if ($now->gt($endDate)) {
+                // Calculate grace period end date
+                $gracePeriodEndDate = $endDate->copy()->addDays($gracePeriodDays);
 
-                $subscriptionAlert = [
-                    'type' => 'error',
-                    'message' => "Your subscription has expired. Please renew within {$graceRemaining} day" . ($graceRemaining != 1 ? 's' : '') . " to avoid service interruption.",
-                    'daysLeft' => $graceRemaining,
-                    'gracePeriod' => true
-                ];
-            } elseif ($subscription->status === 'active' && $endDate->isFuture()) {
+                // Check if still within grace period
+                if ($now->lte($gracePeriodEndDate)) {
+                    // In grace period - show remaining days until grace period ends
+                    $graceRemaining = (int) $now->diffInDays($gracePeriodEndDate);
+
+                    $subscriptionAlert = [
+                        'type' => 'error',
+                        'message' => "Your subscription has expired. Please renew within {$graceRemaining} day" . ($graceRemaining != 1 ? 's' : '') . " to avoid service interruption.",
+                        'daysLeft' => $graceRemaining,
+                        'gracePeriod' => true
+                    ];
+                }
+            } elseif ($endDate->isFuture()) {
                 // Active subscription - check if expiring within 7 days
-                $daysUntilExpiry = (int) ceil($now->diffInDays($endDate, false));
+                $daysUntilExpiry = (int) $now->diffInDays($endDate);
 
                 if ($daysUntilExpiry <= 7 && $daysUntilExpiry > 0) {
                     $subscriptionAlert = [

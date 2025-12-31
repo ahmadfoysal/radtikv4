@@ -31,11 +31,23 @@ class RouterClient
             throw new \Exception("Access denied: User account is suspended. Reason: " . ($router->user->suspension_reason ?? 'No reason provided'));
         }
 
-        $host = $router->address;              // prefer IP
-        $port = (int) ($router->port ?: 8728);  // ensure correct field
-        $useSSL = ($port === 8729) || (bool) ($router->use_tls ?? false);
+        // Check subscription status for MikroTik API access
+        if ($router->user && !$router->user->hasRole('superadmin')) {
+            $subscription = $router->user->activeSubscription();
 
-        $options = [
+            if (!$subscription) {
+                throw new \Exception("MikroTik API access denied: Active subscription required. Please subscribe to a package.");
+            }
+
+            // Check if grace period has ended (allow API access during grace period)
+            $now = now();
+            $endDate = $subscription->end_date;
+            $gracePeriodDays = $subscription->package->grace_period_days ?? 0;
+            $gracePeriodEndDate = $endDate->copy()->addDays($gracePeriodDays);
+            
+            // Block only after grace period ends (allow during grace period)
+            if ($now->gt($gracePeriodEndDate)) {
+                throw new \Exception("MikroTik API access blocked: Your subscription and grace period have ended. All router operations are disabled. Please renew immediately.");
             'host' => $host,
             'user' => $router->username,
             'pass' => $router->decryptedPassword(),

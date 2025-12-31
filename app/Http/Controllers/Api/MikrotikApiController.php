@@ -238,6 +238,7 @@ class MikrotikApiController extends Controller
             ];
 
             // 6. Handle Activation Date (First Time Only)
+            $isFirstActivation = false;
             if (is_null($voucher->activated_at)) {
                 $activationTimestamp = $this->parseActivationTimestamp($data['comment'], $voucher->id);
 
@@ -252,12 +253,26 @@ class MikrotikApiController extends Controller
                         }
                     }
 
-                    // Log activation event (optional)
+                    $isFirstActivation = true;
                     Log::info("Voucher Activated via Push: {$username}");
                 }
             }
 
             $voucher->update($updateData);
+
+            // Log activation event to voucher_logs
+            if ($isFirstActivation) {
+                VoucherLogger::log(
+                    $voucher->fresh(),
+                    $router,
+                    'activated',
+                    [
+                        'activation_source' => 'mikrotik_push',
+                        'mac_address' => $data['mac'],
+                    ]
+                );
+            }
+
             $updatedCount++;
         }
 

@@ -192,6 +192,12 @@ class User extends Authenticatable
         return $this->hasMany(Voucher::class);
     }
 
+    //Zone relation
+    public function zones()
+    {
+        return $this->hasMany(Zone::class);
+    }
+
     // Router relation
 
     public function routers()
@@ -352,7 +358,7 @@ class User extends Authenticatable
     public function activeSubscription(): ?Subscription
     {
         return $this->subscriptions()
-            ->where('status', 'active')
+            ->whereIn('status', ['active', 'grace_period'])
             ->first();
     }
 
@@ -368,9 +374,11 @@ class User extends Authenticatable
             : $package->price_monthly;
 
         // Apply commission discount for admin users (except for free packages)
+        $discountPercent = 0;
         $discount = 0;
         if ($originalAmount > 0 && $this->hasRole('admin') && $this->commission > 0) {
-            $discount = round(($originalAmount * $this->commission) / 100, 2);
+            $discountPercent = (int) $this->commission;
+            $discount = round(($originalAmount * $discountPercent) / 100, 2);
         }
 
         $finalAmount = $originalAmount - $discount;
@@ -385,10 +393,17 @@ class User extends Authenticatable
             'start_date' => $startDate,
             'end_date' => $endDate,
             'billing_cycle' => $cycle,
+            'cycle_count' => 1,
             'amount' => $finalAmount,
             'original_price' => $originalAmount,
-            'next_billing_date' => $endDate,
+            'discount_percent' => $discountPercent,
             'status' => 'active',
+            'last_payment_date' => $finalAmount > 0 ? now() : null,
+            'next_billing_date' => $endDate,
+            'last_invoice_id' => null,
+            'auto_renew' => $package->auto_renew_allowed ?? true,
+            'cancelled_at' => null,
+            'cancellation_reason' => null,
             'promo_code' => $promoCode,
         ]);
 
@@ -410,6 +425,11 @@ class User extends Authenticatable
                 ]
             );
 
+            // Update subscription with invoice ID
+            $subscription->update([
+                'last_invoice_id' => $invoice->id,
+            ]);
+
             // Send subscription notification
             $this->notify(new \App\Notifications\Billing\SubscriptionRenewalNotification(
                 $subscription,
@@ -418,7 +438,7 @@ class User extends Authenticatable
             ));
         }
 
-        return $subscription;
+        return $subscription->fresh();
     }
 
     public function hasActiveSubscription(): bool

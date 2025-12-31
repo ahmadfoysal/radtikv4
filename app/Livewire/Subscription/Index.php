@@ -98,6 +98,16 @@ class Index extends Component
         // Check current usage against new package limits
         $activeRouters = $user->routers()->count();
         $activeZones = $user->zones()->count();
+        $activeResellers = $user->reseller()->count();
+
+        // Get max vouchers across all routers
+        $maxVouchersInUse = 0;
+        foreach ($user->routers as $router) {
+            $voucherCount = $router->vouchers()->count();
+            if ($voucherCount > $maxVouchersInUse) {
+                $maxVouchersInUse = $voucherCount;
+            }
+        }
 
         // Prevent downgrade if exceeds router limit
         if ($activeRouters > $package->max_routers) {
@@ -106,10 +116,24 @@ class Index extends Component
             return false;
         }
 
-        // Prevent downgrade if exceeds zone limit (if package has a limit)
+        // Prevent downgrade if exceeds zone limit
         if ($package->max_zones && $activeZones > $package->max_zones) {
             $excess = $activeZones - $package->max_zones;
             $this->error("Cannot downgrade: You have {$activeZones} zones but the {$package->name} package allows only {$package->max_zones}. Please delete {$excess} zone(s) first.");
+            return false;
+        }
+
+        // Prevent downgrade if exceeds reseller/user limit
+        if ($package->max_users && $activeResellers > $package->max_users) {
+            $excess = $activeResellers - $package->max_users;
+            $this->error("Cannot downgrade: You have {$activeResellers} resellers but the {$package->name} package allows only {$package->max_users}. Please remove {$excess} reseller(s) first.");
+            return false;
+        }
+
+        // Prevent downgrade if exceeds voucher per router limit
+        if ($package->max_vouchers_per_router && $maxVouchersInUse > $package->max_vouchers_per_router) {
+            $excess = $maxVouchersInUse - $package->max_vouchers_per_router;
+            $this->error("Cannot downgrade: You have {$maxVouchersInUse} vouchers in one router but the {$package->name} package allows only {$package->max_vouchers_per_router} per router. Please delete {$excess} voucher(s) from your routers first.");
             return false;
         }
 
@@ -155,7 +179,7 @@ class Index extends Component
             DB::transaction(function () use ($user, $package) {
                 // Cancel existing active subscription if any
                 if ($currentSubscription = $user->activeSubscription()) {
-                    $currentSubscription->update(['status' => 'cancelled']);
+                    $currentSubscription->cancel('Switched to ' . $package->name . ' package');
                 }
 
                 // Subscribe to new package
@@ -204,22 +228,28 @@ class Index extends Component
         if ($currentSubscription) {
             $now = now();
             $endDate = $currentSubscription->end_date;
+            $gracePeriodDays = $currentSubscription->package->grace_period_days ?? 0;
 
-            if ($currentSubscription->status === 'grace_period') {
-                // In grace period - calculate days remaining in grace
-                $gracePeriodDays = $currentSubscription->package->grace_period_days ?? 0;
-                $daysPassedSinceExpiry = (int) ceil($now->diffInDays($endDate, false));
-                $graceRemaining = max(0, $gracePeriodDays - abs($daysPassedSinceExpiry));
+            // Check if past end_date (expired)
+            if ($now->gt($endDate)) {
+                // Calculate grace period end date
+                $gracePeriodEndDate = $endDate->copy()->addDays($gracePeriodDays);
 
-                $subscriptionAlert = [
-                    'type' => 'error',
-                    'message' => "Your subscription has expired. Please renew within {$graceRemaining} day" . ($graceRemaining != 1 ? 's' : '') . " to avoid service interruption.",
-                    'daysLeft' => $graceRemaining,
-                    'gracePeriod' => true
-                ];
-            } elseif ($currentSubscription->status === 'active' && $endDate->isFuture()) {
+                // Check if still within grace period
+                if ($now->lte($gracePeriodEndDate)) {
+                    // In grace period - show remaining days until grace period ends
+                    $graceRemaining = (int) $now->diffInDays($gracePeriodEndDate);
+
+                    $subscriptionAlert = [
+                        'type' => 'error',
+                        'message' => "Your subscription has expired. Please renew within {$graceRemaining} day" . ($graceRemaining != 1 ? 's' : '') . " to avoid service interruption.",
+                        'daysLeft' => $graceRemaining,
+                        'gracePeriod' => true
+                    ];
+                }
+            } elseif ($endDate->isFuture()) {
                 // Active subscription - check if expiring within 7 days
-                $daysUntilExpiry = (int) ceil($now->diffInDays($endDate, false));
+                $daysUntilExpiry = (int) $now->diffInDays($endDate);
 
                 if ($daysUntilExpiry <= 7 && $daysUntilExpiry > 0) {
                     $subscriptionAlert = [

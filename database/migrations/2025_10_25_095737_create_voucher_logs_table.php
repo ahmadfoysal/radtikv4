@@ -26,7 +26,7 @@ return new class extends Migration
             $table->string('username')->nullable();
             $table->string('profile')->nullable();
             $table->decimal('price', 12, 2)->nullable();
-            $table->integer('validity')->nullable();
+            $table->string('validity')->nullable();
             $table->string('router_name')->nullable();
 
             // Extra metadata

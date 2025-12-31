@@ -12,8 +12,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
-            'check.router.subscription' => \App\Http\Middleware\CheckRouterSubscription::class,
             'check.suspended' => \App\Http\Middleware\CheckSuspendedUser::class,
+            'check.subscription' => \App\Http\Middleware\CheckActiveSubscription::class,
+            'check.grace.ended' => \App\Http\Middleware\CheckGracePeriodEnded::class,
             'superadmin' => \App\Http\Middleware\EnsureSuperAdmin::class,
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,

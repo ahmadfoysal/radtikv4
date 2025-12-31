@@ -60,9 +60,29 @@ class Create extends Component
             abort(403, 'Reseller must be assigned to an admin to create routers.');
         }
 
-        $this->voucher_template_id = VoucherTemplate::query()
-            ->where('is_active', true)
-            ->value('id') ?? VoucherTemplate::query()->value('id');
+        // Check subscription status for admins
+        if ($user->isAdmin()) {
+            $subscription = $user->activeSubscription();
+
+            if (!$subscription) {
+                $this->error('You need an active subscription to add routers. Please subscribe to a package first.', redirectTo: route('subscription.index'));
+                return;
+            }
+
+            // Check if subscription has expired (block even during grace period)
+            $now = now();
+            $endDate = $subscription->end_date;
+
+            if ($now->gt($endDate)) {
+                // Subscription expired - cannot add routers even during grace period
+                $gracePeriodDays = $subscription->package->grace_period_days ?? 0;
+                $gracePeriodEndDate = $endDate->copy()->addDays($gracePeriodDays);
+                $daysRemaining = max(0, (int) $now->diffInDays($gracePeriodEndDate));
+
+                $this->error("Your subscription has expired. You cannot add routers during the grace period. Please renew within {$daysRemaining} day(s) to restore access.", redirectTo: route('subscription.index'));
+                return;
+            }
+        }
     }
 
     public function save()
