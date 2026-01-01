@@ -102,13 +102,13 @@ class ScriptInstaller
     public function installAllScriptsAndSchedulers(Router $router): void
     {
         $pullInactiveUrl = route('mikrotik.pullInactiveUsers');
-        $pullActiveUrl = route('mikrotik.pullActiveUsers');
+        // $pullActiveUrl = route('mikrotik.pullActiveUsers');
         $pushUrl = route('mikrotik.pushActiveUsers');
         $orphanUserUrl = route('mikrotik.syncOrphans');
         $pullProfilesUrl = route('mikrotik.pullProfiles');
 
         $this->installPullInactiveUsersScript($router, $pullInactiveUrl);
-        $this->installPullActiveUsersScript($router, $pullActiveUrl);
+        // $this->installPullActiveUsersScript($router, $pullActiveUrl);
         $this->installPushActiveUsersScript($router, $pushUrl);
         $this->installRemoveOrphanUsersScript($router, $orphanUserUrl);
         $this->installProfileOnLoginScript($router);
@@ -176,12 +176,12 @@ class ScriptInstaller
                 'interval' => '5m',
                 'on_event' => '/system script run "RADTik-pull-inactive-users"',
             ],
-            [
-                'name' => 'RADTik-PullActiveUsers',
-                'label' => 'Pull Active Users',
-                'interval' => '30m',
-                'on_event' => '/system script run "RADTik-pull-active-users"',
-            ],
+            // [
+            //     'name' => 'RADTik-PullActiveUsers',
+            //     'label' => 'Pull Active Users',
+            //     'interval' => '30m',
+            //     'on_event' => '/system script run "RADTik-pull-active-users"',
+            // ],
             [
                 'name' => 'RADTik-PushActive',
                 'label' => 'Push Active Users',
