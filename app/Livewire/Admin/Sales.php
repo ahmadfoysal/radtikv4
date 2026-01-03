@@ -104,10 +104,10 @@ class Sales extends Component
                         $userQuery->where('name', 'like', "%{$this->search}%")
                             ->orWhere('email', 'like', "%{$this->search}%");
                     })
-                    ->orWhereHas('package', function (Builder $packageQuery) {
-                        $packageQuery->where('name', 'like', "%{$this->search}%");
-                    })
-                    ->orWhere('promo_code', 'like', "%{$this->search}%");
+                        ->orWhereHas('package', function (Builder $packageQuery) {
+                            $packageQuery->where('name', 'like', "%{$this->search}%");
+                        })
+                        ->orWhere('promo_code', 'like', "%{$this->search}%");
                 });
             })
             ->when($this->status !== 'all', function (Builder $query) {

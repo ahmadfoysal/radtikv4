@@ -43,7 +43,8 @@
             <div class="flex items-center gap-3">
                 <x-mary-icon name="o-receipt-percent" class="w-12 h-12 text-warning" />
                 <div>
-                    <div class="text-2xl font-bold text-warning">${{ number_format($stats['total_discount_given'], 2) }}</div>
+                    <div class="text-2xl font-bold text-warning">${{ number_format($stats['total_discount_given'], 2) }}
+                    </div>
                     <div class="text-sm text-base-content/70">Total Discounts</div>
                 </div>
             </div>
@@ -197,16 +198,14 @@
                             </td>
                             <td>
                                 @if ($sale->promo_code)
-                                    <x-mary-badge value="{{ $sale->promo_code }}"
-                                        class="badge-xs badge-accent" />
+                                    <x-mary-badge value="{{ $sale->promo_code }}" class="badge-xs badge-accent" />
                                 @else
                                     <span class="text-xs text-base-content/50">-</span>
                                 @endif
                             </td>
                             <td>
                                 <div class="text-center">
-                                    <x-mary-badge value="{{ $sale->cycle_count }}"
-                                        class="badge-xs badge-ghost" />
+                                    <x-mary-badge value="{{ $sale->cycle_count }}" class="badge-xs badge-ghost" />
                                 </div>
                             </td>
                             <td>
@@ -215,7 +214,8 @@
                             </td>
                             <td>
                                 <div class="text-xs">{{ $sale->created_at->format('M d, Y') }}</div>
-                                <div class="text-xs text-base-content/60">{{ $sale->created_at->format('h:i A') }}</div>
+                                <div class="text-xs text-base-content/60">{{ $sale->created_at->format('h:i A') }}
+                                </div>
                             </td>
                         </tr>
                     @empty
@@ -231,7 +231,8 @@
                                         @endif
                                     </div>
                                     @if ($search || $status !== 'all' || $billing_cycle !== 'all')
-                                        <button wire:click="$set('search', ''); $set('status', 'all'); $set('billing_cycle', 'all')"
+                                        <button
+                                            wire:click="$set('search', ''); $set('status', 'all'); $set('billing_cycle', 'all')"
                                             class="btn btn-sm btn-ghost">
                                             Clear Filters
                                         </button>
