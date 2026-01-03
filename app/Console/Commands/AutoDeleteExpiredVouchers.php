@@ -68,7 +68,20 @@ class AutoDeleteExpiredVouchers extends Command
                     ->chunkById(100, function ($vouchers) use (&$deletedCount) {
                         foreach ($vouchers as $voucher) {
                             try {
-                                $voucher->delete(); // Uses model event for logging
+                                // Log before deletion
+                                \App\Services\VoucherLogger::log(
+                                    $voucher,
+                                    $voucher->router,
+                                    'deleted',
+                                    [
+                                        'deleted_by' => null, // Automated deletion
+                                        'batch' => $voucher->batch,
+                                        'status' => $voucher->status,
+                                        'expired_at' => $voucher->expires_at?->toDateTimeString(),
+                                    ],
+                                    'Automatic deletion of expired voucher'
+                                );
+                                $voucher->delete();
                                 $deletedCount++;
                             } catch (\Exception $e) {
                                 Log::error('Failed to delete expired voucher', [

@@ -63,8 +63,7 @@ class Edit extends Component
 
     public function save(): void
     {
-
-        $this->validate([
+        $validated = $this->validate([
             'name' => [
                 'required',
                 'string',
@@ -73,6 +72,22 @@ class Edit extends Component
                     ->where('user_id', auth()->id())
                     ->ignore($this->profile->id),
             ],
+            'rate_limit' => [
+                'nullable',
+                'string',
+                'max:50',
+                'regex:/^\s*\d+(?:\.\d+)?[kKmMgG]?(?:\/\d+(?:\.\d+)?[kKmMgG]?)?\s*$/',
+            ],
+            'validity' => [
+                'nullable',
+                'string',
+                'max:50',
+                'regex:/^(?:(\d+d)?(\d+h)?(\d+m)?(\d+s)?)$/i',
+            ],
+            'shared_users' => ['nullable', 'integer', 'min:1'],
+            'mac_binding' => ['boolean'],
+            'price' => ['required', 'numeric', 'min:0'],
+            'description' => ['nullable', 'string', 'max:255'],
         ]);
 
         $this->profile->update([

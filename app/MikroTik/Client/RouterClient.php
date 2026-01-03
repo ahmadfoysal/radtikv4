@@ -44,10 +44,19 @@ class RouterClient
             $endDate = $subscription->end_date;
             $gracePeriodDays = $subscription->package->grace_period_days ?? 0;
             $gracePeriodEndDate = $endDate->copy()->addDays($gracePeriodDays);
-            
+
             // Block only after grace period ends (allow during grace period)
             if ($now->gt($gracePeriodEndDate)) {
                 throw new \Exception("MikroTik API access blocked: Your subscription and grace period have ended. All router operations are disabled. Please renew immediately.");
+            }
+        }
+
+        // Parse connection details
+        $host = $router->address;
+        $port = (int) ($router->port ?: 8728);
+        $useSSL = $router->use_ssl ?? false;
+
+        $options = [
             'host' => $host,
             'user' => $router->username,
             'pass' => $router->decryptedPassword(),

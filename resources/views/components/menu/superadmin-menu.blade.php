@@ -5,6 +5,11 @@
         {{-- DASHBOARD --}}
         <x-mary-menu-item title="Dashboard" icon="o-home" link="/dashboard" />
 
+        {{-- CUSTOMER MANAGEMENT --}}
+        <x-mary-menu-sub title="Customers" icon="o-user-group">
+            <x-mary-menu-item title="All Customers" icon="o-users" link="/customers" wire:navigate />
+        </x-mary-menu-sub>
+
         {{-- USER MANAGEMENT --}}
         <x-mary-menu-sub title="User Management" icon="o-users">
             <x-mary-menu-item title="All Users" icon="o-user-group" link="/users" wire:navigate />
@@ -14,6 +19,7 @@
         {{-- BILLING & TRANSACTIONS --}}
         <x-mary-menu-sub title="Billing" icon="o-credit-card">
             <x-mary-menu-item title="Revenue Analytics" icon="o-chart-bar" link="/billing/revenue-analytics" />
+            <x-mary-menu-item title="Sales History" icon="o-shopping-cart" link="/sales" wire:navigate />
             <x-mary-menu-item title="Invoices" icon="o-document-text" link="/billing/invoices" />
             <x-mary-menu-item title="Manual Adjustment" icon="o-pencil" link="/billing/manual-adjustment" />
             {{-- <x-mary-menu-item title="Transactions" icon="o-receipt-percent" link="/billing/transactions" />

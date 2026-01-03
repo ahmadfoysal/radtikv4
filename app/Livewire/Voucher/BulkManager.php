@@ -107,7 +107,19 @@ class BulkManager extends Component
             // Single Delete
             $voucher = Voucher::find($id);
             if ($voucher) {
-                $voucher->delete(); // Will trigger model's deleted event for logging
+                // Log before deletion
+                \App\Services\VoucherLogger::log(
+                    $voucher,
+                    $voucher->router,
+                    'deleted',
+                    [
+                        'deleted_by' => auth()->id(),
+                        'batch' => $voucher->batch,
+                        'status' => $voucher->status,
+                    ],
+                    'Single deletion from bulk manager'
+                );
+                $voucher->delete();
             }
             $this->success('Voucher deleted successfully.');
         } else {
@@ -129,7 +141,19 @@ class BulkManager extends Component
             // Fetch vouchers before deletion for logging
             $query->chunkById(1000, function ($vouchers) {
                 foreach ($vouchers as $voucher) {
-                    $voucher->delete(); // Will trigger model's deleted event for logging
+                    // Log each voucher before deletion
+                    \App\Services\VoucherLogger::log(
+                        $voucher,
+                        $voucher->router,
+                        'deleted',
+                        [
+                            'deleted_by' => auth()->id(),
+                            'batch' => $voucher->batch,
+                            'status' => $voucher->status,
+                        ],
+                        'Bulk deletion from bulk manager'
+                    );
+                    $voucher->delete();
                 }
             });
 

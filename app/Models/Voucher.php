@@ -31,23 +31,6 @@ class Voucher extends Model
         'expires_at' => 'datetime',
     ];
 
-    protected static function booted()
-    {
-        // Log voucher deletion BEFORE it's deleted to avoid FK constraint issues
-        static::deleting(function ($voucher) {
-            VoucherLogger::log(
-                $voucher,
-                $voucher->router,
-                'deleted',
-                [
-                    'deleted_by' => auth()->id(),
-                    'batch' => $voucher->batch,
-                    'status' => $voucher->status,
-                ]
-            );
-        });
-    }
-
     public function user()
     {
         return $this->belongsTo(User::class);

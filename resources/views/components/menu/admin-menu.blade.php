@@ -44,8 +44,11 @@
             <x-mary-menu-item title="Reseller Permissions" icon="o-cube" link="/resellers/permissions" />
         </x-mary-menu-sub>
 
-        {{-- MY SUBSCRIPTION --}}
-        <x-mary-menu-item title="My Subscription" icon="o-cube" link="/subscription" />
+        {{-- SUBSCRIPTION MANAGEMENT --}}
+        <x-mary-menu-sub title="Subscription" icon="o-cube">
+            <x-mary-menu-item title="My Subscription" icon="o-check-badge" link="/subscription" />
+            <x-mary-menu-item title="Subscription History" icon="o-clock" link="/subscription/history" />
+        </x-mary-menu-sub>
 
         {{-- BILLING & TRANSACTIONS --}}
         <x-mary-menu-sub title="Billing" icon="o-credit-card">

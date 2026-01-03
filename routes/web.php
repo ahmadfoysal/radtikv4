@@ -45,6 +45,11 @@ Route::middleware(['auth', 'check.suspended'])->group(function () {
      * SUPERADMIN ONLY
      * ======================================== */
     Route::middleware(['role:superadmin'])->group(function () {
+        // Customer Management
+        Route::get('/customers', App\Livewire\Admin\CustomerManagement\Index::class)->name('customers.index');
+        Route::get('/customers/{customer}', App\Livewire\Admin\CustomerManagement\Show::class)->name('customers.show');
+        Route::get('/customers/{customer}/edit', App\Livewire\Admin\CustomerManagement\Edit::class)->name('customers.edit');
+
         // Package Management
         Route::get('/packages', App\Livewire\Package\Index::class)->name('packages.index');
         Route::get('/package/add', App\Livewire\Package\Create::class)->name('packages.create');
@@ -56,6 +61,9 @@ Route::middleware(['auth', 'check.suspended'])->group(function () {
         // Billing - Revenue Analytics & Manual Adjustment
         Route::get('/billing/revenue-analytics', App\Livewire\Admin\RevenueAnalytics::class)->name('billing.revenue-analytics');
         Route::get('/billing/manual-adjustment', App\Livewire\Billing\ManualAdjustment::class)->name('billing.manual-adjustment');
+
+        // Sales History
+        Route::get('/sales', App\Livewire\Admin\Sales::class)->name('sales.index');
 
         // Superadmin Settings
         Route::get('/superadmin/payment-gateways', App\Livewire\Admin\PaymentGatewaySettings::class)->name('superadmin.payment-gateways');
@@ -97,6 +105,7 @@ Route::middleware(['auth', 'check.suspended'])->group(function () {
 
         // Subscription Management
         Route::get('/subscription', App\Livewire\Subscription\Index::class)->name('subscription.index');
+        Route::get('/subscription/history', App\Livewire\Subscription\History::class)->name('subscription.history');
 
         // Billing
         Route::get('/billing/add-balance', App\Livewire\Billing\AddBalance::class)->name('billing.add-balance');
@@ -121,7 +130,6 @@ Route::middleware(['auth', 'check.suspended'])->group(function () {
         // Voucher Management
         Route::get('/vouchers', App\Livewire\Voucher\Index::class)->name('vouchers.index');
         Route::get('/voucher/add', App\Livewire\Voucher\Generate::class)->name('vouchers.create');
-        Route::get('/voucher/{voucher}/edit', App\Livewire\Voucher\Edit::class)->name('vouchers.edit');
         Route::get('/vouchers/generate', App\Livewire\Voucher\Generate::class)->name('vouchers.generate');
         Route::get('/vouchers/bulk-manager', App\Livewire\Voucher\BulkManager::class)->name('vouchers.bulk-manager');
         Route::get('/vouchers/logs', App\Livewire\VoucherLogs\Index::class)->name('vouchers.logs');

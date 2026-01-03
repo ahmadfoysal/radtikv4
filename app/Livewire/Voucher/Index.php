@@ -92,6 +92,25 @@ class Index extends Component
         $this->authorize('delete_vouchers');
 
         $user = auth()->user();
+
+        // Get voucher before deletion for logging
+        $voucher = \App\Models\Voucher::find($id);
+
+        if ($voucher) {
+            // Log the deletion with reason BEFORE deleting
+            \App\Services\VoucherLogger::log(
+                $voucher,
+                $voucher->router,
+                'deleted',
+                [
+                    'deleted_by' => auth()->id(),
+                    'batch' => $voucher->batch,
+                    'status' => $voucher->status,
+                ],
+                'Manual deletion by user'
+            );
+        }
+
         $result = $this->voucherService->deleteVoucher($user, $id);
 
         if ($result['success']) {

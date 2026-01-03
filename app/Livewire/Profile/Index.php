@@ -42,6 +42,18 @@ class Index extends Component
             return;
         }
 
+        // Check if any vouchers are using this profile
+        $voucherCount = $profile->vouchers()->count();
+
+        if ($voucherCount > 0) {
+            $this->error(
+                title: 'Cannot Delete',
+                description: "This profile is being used by {$voucherCount} voucher(s). Please delete or reassign the vouchers first."
+            );
+
+            return;
+        }
+
         $profile->delete();
 
         $this->success(

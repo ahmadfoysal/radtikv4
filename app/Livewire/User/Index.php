@@ -46,7 +46,7 @@ class Index extends Component
         // Role-based filtering
         if ($currentUser->hasRole('superadmin')) {
             // Superadmin sees all admins
-            $query->whereHas('roles', fn($q) => $q->where('name', 'admin'));
+            $query->whereHas('roles', fn($q) => $q->where('name', 'superadmin'));
         } elseif ($currentUser->hasRole('admin')) {
             // Admin sees their resellers
             $query->whereHas('roles', fn($q) => $q->where('name', 'reseller'))

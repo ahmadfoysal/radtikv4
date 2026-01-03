@@ -16,9 +16,10 @@ class VoucherLogger
      * @param  Router|null  $router  The router associated with the event
      * @param  string  $eventType  The type of event (e.g., 'activated', 'deleted', 'expired', 'synced')
      * @param  array  $extra  Additional metadata to store with the log
+     * @param  string|null  $reason  Optional reason for the event (e.g., why voucher was deleted/activated)
      * @return VoucherLog The created log entry
      */
-    public static function log(?Voucher $voucher, ?Router $router, string $eventType, array $extra = []): VoucherLog
+    public static function log(?Voucher $voucher, ?Router $router, string $eventType, array $extra = [], ?string $reason = null): VoucherLog
     {
         $userId = Auth::id();
 
@@ -35,7 +36,7 @@ class VoucherLogger
             'price' => $profile?->price,
             'validity' => $profile?->validity,
             'router_name' => $router?->name,
-            'meta' => $extra,
+            'meta' => $reason ? array_merge($extra, ['reason' => $reason]) : $extra,
         ];
 
         return VoucherLog::create($data);

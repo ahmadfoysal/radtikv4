@@ -135,23 +135,46 @@ class AutoRenewSubscriptions extends Command
      */
     protected function getEligibleSubscriptions()
     {
-        $today = now();
+        $today = now()->startOfDay();
 
         return Subscription::with(['user', 'package'])
             ->where('status', 'active')
             ->where('auto_renew', true)
-            ->whereHas('package', function ($query) {
-                $query->whereNotNull('early_pay_days')
-                    ->where('early_pay_days', '>', 0);
+            ->whereHas('package', function ($query) use ($today) {
+                // Case 1: Subscriptions within early payment window (will expire soon)
+                // If early_pay_days = 5, renew subscriptions expiring within the next 5 days
+                $query->where(function ($q) use ($today) {
+                    $q->where('early_pay_days', '>', 0)
+                        ->whereHas('subscriptions', function ($subQuery) use ($today) {
+                            $subQuery->whereDate('end_date', '>=', $today)
+                                ->whereRaw('end_date <= DATE_ADD(?, INTERVAL (SELECT early_pay_days FROM packages WHERE id = subscriptions.package_id) DAY)', [$today->toDateString()]);
+                        });
+                })
+                    // Case 2: Subscriptions that expired but within grace period
+                    // If grace_period_days = 3, renew subscriptions that expired up to 3 days ago
+                    ->orWhere(function ($q) use ($today) {
+                        $q->where('grace_period_days', '>', 0)
+                            ->whereHas('subscriptions', function ($subQuery) use ($today) {
+                                $subQuery->whereDate('end_date', '<', $today)
+                                    ->whereRaw('end_date >= DATE_SUB(?, INTERVAL (SELECT grace_period_days FROM packages WHERE id = subscriptions.package_id) DAY)', [$today->toDateString()]);
+                            });
+                    });
             })
             ->where(function ($query) use ($today) {
-                // Subscriptions where end_date is within the early_pay_days window
-                $query->whereRaw('DATEDIFF(end_date, ?) <= (SELECT early_pay_days FROM packages WHERE id = subscriptions.package_id)', [$today])
-                    ->where('end_date', '>', $today); // Not yet expired
+                // Case 1 & 2 direct on subscription
+                $query->where(function ($q) use ($today) {
+                    $q->whereDate('end_date', '>=', $today)
+                        ->whereRaw('end_date <= DATE_ADD(?, INTERVAL (SELECT early_pay_days FROM packages WHERE id = subscriptions.package_id) DAY)', [$today->toDateString()]);
+                })
+                    ->orWhere(function ($q) use ($today) {
+                        $q->whereDate('end_date', '<', $today)
+                            ->whereRaw('end_date >= DATE_SUB(?, INTERVAL (SELECT grace_period_days FROM packages WHERE id = subscriptions.package_id) DAY)', [$today->toDateString()]);
+                    });
             })
-            // Exclude subscriptions already renewed recently (prevent duplicate renewals)
+            // Prevent duplicate renewals: Only renew if last payment was before today OR never paid
+            // This allows testing with manual date changes while preventing double renewals
             ->where(function ($query) use ($today) {
-                $query->where('last_payment_date', '<', $today->copy()->subDay())
+                $query->whereDate('last_payment_date', '<', $today)
                     ->orWhereNull('last_payment_date');
             })
             ->get();

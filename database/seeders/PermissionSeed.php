@@ -13,9 +13,9 @@ class PermissionSeed extends Seeder
      */
     public function run(): void
     {
-        Role::create(['name' => 'superadmin']);
-        Role::create(['name' => 'admin']);
-        Role::create(['name' => 'reseller']);
+        Role::firstOrCreate(['name' => 'superadmin']);
+        Role::firstOrCreate(['name' => 'admin']);
+        Role::firstOrCreate(['name' => 'reseller']);
 
         // create permissions
         $permissions = [
@@ -51,6 +51,9 @@ class PermissionSeed extends Seeder
             'print_single_voucher',
             'bulk_delete_vouchers',
             'reset_voucher',
+
+            // Subscription Management
+            'view_subscription',
 
             // Reports
             'view_reports',
