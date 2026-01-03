@@ -51,18 +51,68 @@ class Import extends Component
             return;
         }
 
+        $user = Auth::user();
+
+        // Show warning if user is admin and will exceed router limit
+        if ($user->hasRole('admin') && $user->hasActiveSubscription()) {
+            $package = $user->getCurrentPackage();
+            $currentRouters = $user->routers()->count();
+            $maxRouters = $package ? $package->max_routers : 0;
+            $availableSlots = max(0, $maxRouters - $currentRouters);
+
+            $newRoutersToCreate = $this->calculateNewRoutersCount();
+
+            if ($newRoutersToCreate > $availableSlots) {
+                $this->warning(
+                    title: 'Router Limit Warning',
+                    description: "This file contains {$newRoutersToCreate} new routers, but you only have {$availableSlots} available slots. Import will fail unless you upgrade your subscription."
+                );
+            }
+        }
+
         $this->parsedReady = true;
     }
 
     public function import(): void
     {
         $this->authorize('import_router_configs');
+
         $this->validate();
 
         if (empty($this->parsed)) {
             $this->addError('configFile', 'Please select a valid config file first.');
 
             return;
+        }
+
+        $user = Auth::user();
+
+        // Check subscription for admins
+        if ($user->hasRole('admin')) {
+            if (!$user->hasActiveSubscription()) {
+                $this->error(
+                    title: 'No Active Subscription',
+                    description: 'You need an active subscription to import routers.',
+                    redirectTo: route('subscription.index')
+                );
+                return;
+            }
+
+            // Check if user has enough router slots
+            $newRoutersToCreate = $this->calculateNewRoutersCount();
+            $currentRouters = $user->routers()->count();
+            $package = $user->getCurrentPackage();
+            $maxRouters = $package ? $package->max_routers : 0;
+            $availableSlots = max(0, $maxRouters - $currentRouters);
+
+            if ($newRoutersToCreate > $availableSlots) {
+                $this->error(
+                    title: 'Router Limit Exceeded',
+                    description: "You are trying to import {$newRoutersToCreate} routers, but you only have {$availableSlots} available slots out of {$maxRouters} allowed by your {$package->name} package. Please upgrade your subscription or reduce the number of routers to import.",
+                    redirectTo: route('subscription.index')
+                );
+                return;
+            }
         }
 
         $created = 0;
@@ -89,7 +139,8 @@ class Import extends Component
                     'name' => $item['name'],
                     'username' => $item['username'],
                     'password' => Crypt::encryptString($item['password']),
-                    'note' => $item['note'] ?? null,
+                    'login_address' => $item['login_address'] ?? null,
+                    'note' => $item['ssid'] ?? null,
                     'app_key' => bin2hex(random_bytes(16)),
                     'user_id' => Auth::id(),
                 ]
@@ -106,6 +157,24 @@ class Import extends Component
 
         $this->reset(['configFile', 'parsed', 'parsedReady']);
         $this->skipExisting = true;
+    }
+
+    protected function calculateNewRoutersCount(): int
+    {
+        $newRoutersToCreate = 0;
+
+        foreach ($this->parsed as $item) {
+            $exists = Router::query()
+                ->where('address', $item['address'])
+                ->where('port', $item['port'])
+                ->exists();
+
+            if (!$exists || !$this->skipExisting) {
+                $newRoutersToCreate++;
+            }
+        }
+
+        return $newRoutersToCreate;
     }
 
     protected function parseMikhmonConfig(string $contents): array
@@ -139,7 +208,8 @@ class Import extends Component
             $port = null;
             $username = null;
             $passwordRaw = null;
-            $noteParts = [];
+            $ssid = null;
+            $loginAddress = null;
 
             foreach ($values as $v) {
                 if (str_contains($v, '!') && str_contains($v, ':') && $host === null) {
@@ -175,9 +245,8 @@ class Import extends Component
                     [, $ssid] = explode('%', $v, 2);
                     $ssid = trim($ssid);
                     if ($ssid !== '') {
-                        $noteParts[] = "SSID: {$ssid}";
+                        $ssid = $ssid;
                     }
-
                     continue;
                 }
 
@@ -185,7 +254,7 @@ class Import extends Component
                     [, $domain] = explode('^', $v, 2);
                     $domain = trim($domain);
                     if ($domain !== '') {
-                        $noteParts[] = "Domain: {$domain}";
+                        $loginAddress = $domain;
                     }
 
                     continue;
@@ -200,7 +269,8 @@ class Import extends Component
                     'username' => $username,
                     // ✅ JSON-safe: UI স্টেটে base64
                     'password' => $this->decryptPassword($passwordRaw),
-                    'note' => implode(' | ', $noteParts),
+                    'login_address' => $loginAddress,
+                    'ssid' => $ssid,
                 ];
             }
         }

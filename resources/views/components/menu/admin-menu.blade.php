@@ -9,7 +9,7 @@
         <x-mary-menu-sub title="Routers" icon="o-server-stack">
             <x-mary-menu-item title="All Routers" icon="o-list-bullet" link="/routers" />
             <x-mary-menu-item title="Add New Router" icon="o-plus-circle" link="/router/add" />
-            {{-- <x-mary-menu-item title="Import Routers" icon="o-plus-circle" link="/router/import" /> --}}
+            <x-mary-menu-item title="Import Routers" icon="o-plus-circle" link="/router/import" />
         </x-mary-menu-sub>
 
         {{-- PROFILE MANAGEMENT --}}

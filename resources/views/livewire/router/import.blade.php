@@ -43,7 +43,7 @@
                                             <th>{{ __('Address') }}</th>
                                             <th>{{ __('Port') }}</th>
                                             <th>{{ __('Username') }}</th>
-                                            <th>{{ __('Note') }}</th>
+                                            <th>{{ __('Login Address') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -55,8 +55,8 @@
                                                 <td class="whitespace-nowrap">{{ $r['username'] }}</td>
                                                 <td class="max-w-[280px]">
                                                     <span class="truncate inline-block align-middle"
-                                                        title="{{ $r['note'] ?? '' }}">
-                                                        {{ $r['note'] ?? '—' }}
+                                                        title="{{ $r['login_address'] ?? '' }}">
+                                                        {{ $r['login_address'] ?? '—' }}
                                                     </span>
                                                 </td>
                                             </tr>

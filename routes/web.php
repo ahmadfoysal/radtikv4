@@ -107,6 +107,9 @@ Route::middleware(['auth', 'check.suspended'])->group(function () {
         Route::get('/subscription', App\Livewire\Subscription\Index::class)->name('subscription.index');
         Route::get('/subscription/history', App\Livewire\Subscription\History::class)->name('subscription.history');
 
+        Route::get('/router/import', App\Livewire\Router\Import::class)->name('routers.import');
+
+
         // Billing
         Route::get('/billing/add-balance', App\Livewire\Billing\AddBalance::class)->name('billing.add-balance');
     });
@@ -118,7 +121,6 @@ Route::middleware(['auth', 'check.suspended'])->group(function () {
         // Router Management
         Route::get('/routers', App\Livewire\Router\Index::class)->name('routers.index');
         Route::get('/router/add', App\Livewire\Router\Create::class)->name('routers.create');
-        // Route::get('/router/import', App\Livewire\Router\Import::class)->name('routers.import');
         Route::get('/router/{router}/edit', App\Livewire\Router\Edit::class)->name('routers.edit');
         Route::get('/router/{router}', App\Livewire\Router\Show::class)->name('routers.show');
 
