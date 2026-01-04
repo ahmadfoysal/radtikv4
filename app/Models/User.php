@@ -460,6 +460,30 @@ class User extends Authenticatable
         return $routerCount < $package->max_routers;
     }
 
+    /**
+     * Check if user can add multiple routers
+     * Only admins can add routers, and must have active subscription with available slots
+     */
+    public function canAddRouters(int $count = 1): bool
+    {
+        if (!$this->hasRole('admin')) {
+            return false;
+        }
+
+        $subscription = $this->activeSubscription();
+
+        if (!$subscription) {
+            return false;
+        }
+
+        $package = $subscription->package;
+        $currentRouters = $this->routers()->count();
+        $maxRouters = $package->max_routers;
+        $availableSlots = max(0, $maxRouters - $currentRouters);
+
+        return $count <= $availableSlots;
+    }
+
     public function getCurrentSubscriptionCost(): float
     {
         $subscription = $this->activeSubscription();

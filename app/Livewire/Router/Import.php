@@ -52,22 +52,14 @@ class Import extends Component
         }
 
         $user = Auth::user();
+        $newRoutersToCreate = $this->calculateNewRoutersCount();
 
-        // Show warning if user is admin and will exceed router limit
-        if ($user->hasRole('admin') && $user->hasActiveSubscription()) {
-            $package = $user->getCurrentPackage();
-            $currentRouters = $user->routers()->count();
-            $maxRouters = $package ? $package->max_routers : 0;
-            $availableSlots = max(0, $maxRouters - $currentRouters);
-
-            $newRoutersToCreate = $this->calculateNewRoutersCount();
-
-            if ($newRoutersToCreate > $availableSlots) {
-                $this->warning(
-                    title: 'Router Limit Warning',
-                    description: "This file contains {$newRoutersToCreate} new routers, but you only have {$availableSlots} available slots. Import will fail unless you upgrade your subscription."
-                );
-            }
+        if (!$user->canAddRouters($newRoutersToCreate)) {
+            $availableSlots = $user->getRemainingRouterSlots();
+            $this->warning(
+                title: 'Router Limit Warning',
+                description: "This file contains {$newRoutersToCreate} new routers, but you only have {$availableSlots} available slots. Import will fail unless you upgrade your subscription."
+            );
         }
 
         $this->parsedReady = true;
@@ -86,37 +78,32 @@ class Import extends Component
         }
 
         $user = Auth::user();
+        $newRoutersToCreate = $this->calculateNewRoutersCount();
 
-        // Check subscription for admins
-        if ($user->hasRole('admin')) {
+        if (!$user->canAddRouters($newRoutersToCreate)) {
+            $package = $user->getCurrentPackage();
+            $availableSlots = $user->getRemainingRouterSlots();
+
             if (!$user->hasActiveSubscription()) {
                 $this->error(
                     title: 'No Active Subscription',
                     description: 'You need an active subscription to import routers.',
                     redirectTo: route('subscription.index')
                 );
-                return;
-            }
-
-            // Check if user has enough router slots
-            $newRoutersToCreate = $this->calculateNewRoutersCount();
-            $currentRouters = $user->routers()->count();
-            $package = $user->getCurrentPackage();
-            $maxRouters = $package ? $package->max_routers : 0;
-            $availableSlots = max(0, $maxRouters - $currentRouters);
-
-            if ($newRoutersToCreate > $availableSlots) {
+            } else {
                 $this->error(
                     title: 'Router Limit Exceeded',
-                    description: "You are trying to import {$newRoutersToCreate} routers, but you only have {$availableSlots} available slots out of {$maxRouters} allowed by your {$package->name} package. Please upgrade your subscription or reduce the number of routers to import.",
+                    description: "You are trying to import {$newRoutersToCreate} routers, but you only have {$availableSlots} available slots out of {$package->max_routers} allowed by your {$package->name} package. Please upgrade your subscription or reduce the number of routers to import.",
                     redirectTo: route('subscription.index')
                 );
-                return;
             }
+            return;
         }
 
         $created = 0;
         $skipped = 0;
+        $user = Auth::user();
+        $hitLimit = false;
 
         foreach ($this->parsed as $item) {
             $exists = Router::query()
@@ -126,13 +113,25 @@ class Import extends Component
 
             if ($exists && $this->skipExisting) {
                 $skipped++;
-
                 continue;
             }
 
-            // UI তে base64 ছিল → এখানে ডিকোড
-            // $pwd = $this->decryptPassword($item['password_b64']);
+            // If router doesn't exist, it's a NEW router - check limit BEFORE creating
+            if (!$exists) {
+                // Check if user can add this router
+                if (!$user->canAddRouters(1)) {
+                    $package = $user->getCurrentPackage();
+                    $availableSlots = $user->getRemainingRouterSlots();
+                    $this->error(
+                        title: 'Router Limit Exceeded',
+                        description: "Import stopped: You have reached your limit. Created {$created} routers. You have {$availableSlots} available slots out of {$package->max_routers} allowed by your {$package->name} package."
+                    );
+                    $hitLimit = true;
+                    break; // Stop importing more routers
+                }
+            }
 
+            // Create or update the router
             Router::updateOrCreate(
                 ['address' => $item['address'], 'port' => (int) $item['port']],
                 [
@@ -149,14 +148,19 @@ class Import extends Component
             $created++;
         }
 
-        $this->dispatch(
-            'notify',
-            type: 'success',
-            message: "Import successful: created/updated {$created}, skipped {$skipped}."
-        );
+        // Only show success and reset if we didn't hit the limit
+        if (!$hitLimit) {
+            $this->dispatch(
+                'notify',
+                type: 'success',
+                message: "Import successful: created/updated {$created}, skipped {$skipped}."
+            );
 
-        $this->reset(['configFile', 'parsed', 'parsedReady']);
-        $this->skipExisting = true;
+            $this->reset(['configFile', 'parsed', 'parsedReady']);
+            $this->skipExisting = true;
+        }
+
+        return;
     }
 
     protected function calculateNewRoutersCount(): int
@@ -169,7 +173,8 @@ class Import extends Component
                 ->where('port', $item['port'])
                 ->exists();
 
-            if (!$exists || !$this->skipExisting) {
+            // Only count as "new" if it doesn't exist
+            if (!$exists) {
                 $newRoutersToCreate++;
             }
         }
@@ -296,9 +301,10 @@ class Import extends Component
     {
         $this->import();
 
-        $this->redirect(route('routers.index'), navigate: true);
-
-        $this->success('Routers imported successfully.');
+        // Only redirect if import was successful (no errors)
+        if (!$this->getErrorBag()->any()) {
+            $this->redirect(route('routers.index'), navigate: true);
+        }
     }
 
     public function cancel()

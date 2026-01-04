@@ -84,7 +84,7 @@ class MikrotikApiController extends Controller
         // We include both 'active' and 'inactive' status because users might need to login again.
         $vouchers = Voucher::with('profile')
             ->where('router_id', $router->id)
-            ->whereIn('status', ['active', 'inactive'])
+            // ->whereIn('status', ['active', 'inactive'])
             ->get();
 
         // Format: username;password;profile;comment

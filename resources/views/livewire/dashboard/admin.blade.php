@@ -78,111 +78,105 @@
         @endif
     @endif
 
-    {{-- Top Financial Stats Cards --}}
-    <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {{-- Today's Income --}}
+    {{-- Top Operational Stats Cards --}}
+    <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        {{-- Total Routers --}}
+        <x-mary-card class="border border-base-300 bg-gradient-to-br from-info/10 to-base-100">
+            <div class="flex items-start justify-between">
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-2">
+                        <x-mary-icon name="o-server-stack" class="w-5 h-5 text-info" />
+                        <span class="text-sm font-medium text-base-content/70">Total Routers</span>
+                    </div>
+                    <p class="text-3xl font-bold text-info">{{ number_format($routerStats['total']) }}</p>
+                    <p class="text-xs text-base-content/60 mt-1">{{ $routerStats['withZone'] }} with zones</p>
+                </div>
+            </div>
+        </x-mary-card>
+
+        {{-- Total Vouchers --}}
         <x-mary-card class="border border-base-300 bg-gradient-to-br from-success/10 to-base-100">
             <div class="flex items-start justify-between">
                 <div class="flex-1">
                     <div class="flex items-center gap-2 mb-2">
-                        <x-mary-icon name="o-banknotes" class="w-5 h-5 text-success" />
-                        <span class="text-sm font-medium text-base-content/70">Today's Income</span>
+                        <x-mary-icon name="o-ticket" class="w-5 h-5 text-success" />
+                        <span class="text-sm font-medium text-base-content/70">Total Vouchers</span>
                     </div>
-                    <p class="text-3xl font-bold text-success">@userCurrency($billingStats['todayIncome'])</p>
-                    <p class="text-xs text-base-content/60 mt-1">{{ $billingStats['todayActivations'] }} activations
-                        today</p>
+                    <p class="text-3xl font-bold text-success">{{ number_format($voucherStats['total']) }}</p>
+                    <p class="text-xs text-success mt-1">{{ number_format($voucherStats['active']) }} active</p>
                 </div>
             </div>
         </x-mary-card>
 
-        {{-- Monthly Income --}}
+        {{-- Today's Activations --}}
         <x-mary-card class="border border-base-300 bg-gradient-to-br from-primary/10 to-base-100">
             <div class="flex items-start justify-between">
                 <div class="flex-1">
                     <div class="flex items-center gap-2 mb-2">
-                        <x-mary-icon name="o-currency-dollar" class="w-5 h-5 text-primary" />
-                        <span class="text-sm font-medium text-base-content/70">Monthly Income</span>
+                        <x-mary-icon name="o-check-circle" class="w-5 h-5 text-primary" />
+                        <span class="text-sm font-medium text-base-content/70">Today's Activations</span>
                     </div>
-                    <p class="text-3xl font-bold text-primary">@userCurrency($billingStats['monthIncome'])</p>
-                    <p class="text-xs text-base-content/60 mt-1">From voucher activations</p>
+                    <p class="text-3xl font-bold text-primary">{{ number_format($operationalStats['todayActivations']) }}</p>
+                    <p class="text-xs text-base-content/60 mt-1">Active users today</p>
                 </div>
             </div>
         </x-mary-card>
 
-        {{-- Monthly Expense --}}
-        <x-mary-card class="border border-base-300 bg-gradient-to-br from-warning/10 to-base-100">
+        {{-- Monthly Activations --}}
+        <x-mary-card class="border border-base-300 bg-gradient-to-br from-accent/10 to-base-100">
             <div class="flex items-start justify-between">
                 <div class="flex-1">
                     <div class="flex items-center gap-2 mb-2">
-                        <x-mary-icon name="o-arrow-trending-down" class="w-5 h-5 text-warning" />
-                        <span class="text-sm font-medium text-base-content/70">Monthly Expense</span>
+                        <x-mary-icon name="o-chart-bar" class="w-5 h-5 text-accent" />
+                        <span class="text-sm font-medium text-base-content/70">Monthly Activations</span>
                     </div>
-                    <p class="text-3xl font-bold text-warning">@userCurrency($billingStats['monthlyExpense'])</p>
-                    <p class="text-xs text-base-content/60 mt-1">ISP and operational costs</p>
-                </div>
-            </div>
-        </x-mary-card>
-
-        {{-- Net Profit --}}
-        <x-mary-card
-            class="border border-base-300 bg-gradient-to-br {{ $billingStats['netProfit'] >= 0 ? 'from-success/10' : 'from-error/10' }} to-base-100">
-            <div class="flex items-start justify-between">
-                <div class="flex-1">
-                    <div class="flex items-center gap-2 mb-2">
-                        <x-mary-icon name="o-chart-bar"
-                            class="w-5 h-5 {{ $billingStats['netProfit'] >= 0 ? 'text-success' : 'text-error' }}" />
-                        <span class="text-sm font-medium text-base-content/70">Net Profit</span>
-                    </div>
-                    <p
-                        class="text-3xl font-bold {{ $billingStats['netProfit'] >= 0 ? 'text-success' : 'text-error' }}">
-                        @userCurrency($billingStats['netProfit'])</p>
-                    <p class="text-xs text-base-content/60 mt-1">Income - Expenses</p>
+                    <p class="text-3xl font-bold text-accent">{{ number_format($operationalStats['monthActivations']) }}</p>
+                    <p class="text-xs text-base-content/60 mt-1">This month's usage</p>
                 </div>
             </div>
         </x-mary-card>
     </div>
 
     {{-- Secondary Stats --}}
-    <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {{-- Wallet Balance --}}
+    <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        {{-- Active Vouchers --}}
         <x-mary-card class="border border-base-300 bg-base-100">
             <div class="flex items-start justify-between">
                 <div class="flex-1">
                     <div class="flex items-center gap-2 mb-2">
-                        <x-mary-icon name="o-wallet" class="w-5 h-5 text-info" />
-                        <span class="text-sm font-medium text-base-content/70">Wallet Balance</span>
+                        <x-mary-icon name="o-check-badge" class="w-5 h-5 text-success" />
+                        <span class="text-sm font-medium text-base-content/70">Active Vouchers</span>
                     </div>
-                    <p class="text-2xl font-bold">@userCurrency($balance)</p>
-                </div>
-                <x-mary-button icon="o-plus" class="btn-sm btn-circle btn-primary"
-                    href="{{ route('billing.add-balance') }}" wire:navigate />
-            </div>
-        </x-mary-card>
-
-        {{-- Routers --}}
-        <x-mary-card class="border border-base-300 bg-base-100">
-            <div class="flex items-start justify-between">
-                <div class="flex-1">
-                    <div class="flex items-center gap-2 mb-2">
-                        <x-mary-icon name="o-server-stack" class="w-5 h-5 text-info" />
-                        <span class="text-sm font-medium text-base-content/70">Routers</span>
-                    </div>
-                    <p class="text-2xl font-bold">{{ number_format($routerStats['total']) }}</p>
-                    <p class="text-xs text-base-content/60 mt-1">Total active routers</p>
+                    <p class="text-2xl font-bold text-success">{{ number_format($voucherStats['active']) }}</p>
+                    <p class="text-xs text-base-content/60 mt-1">Currently active</p>
                 </div>
             </div>
         </x-mary-card>
 
-        {{-- Vouchers --}}
+        {{-- Expired Today --}}
         <x-mary-card class="border border-base-300 bg-base-100">
             <div class="flex items-start justify-between">
                 <div class="flex-1">
                     <div class="flex items-center gap-2 mb-2">
-                        <x-mary-icon name="o-ticket" class="w-5 h-5 text-success" />
-                        <span class="text-sm font-medium text-base-content/70">Vouchers</span>
+                        <x-mary-icon name="o-clock" class="w-5 h-5 text-warning" />
+                        <span class="text-sm font-medium text-base-content/70">Expired Today</span>
                     </div>
-                    <p class="text-2xl font-bold">{{ number_format($voucherStats['total']) }}</p>
-                    <p class="text-xs text-success mt-1">{{ $voucherStats['active'] }} active</p>
+                    <p class="text-2xl font-bold text-warning">{{ number_format($voucherStats['expiredToday']) }}</p>
+                    <p class="text-xs text-base-content/60 mt-1">Expired vouchers</p>
+                </div>
+            </div>
+        </x-mary-card>
+
+        {{-- Generated Today --}}
+        <x-mary-card class="border border-base-300 bg-base-100">
+            <div class="flex items-start justify-between">
+                <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-2">
+                        <x-mary-icon name="o-plus-circle" class="w-5 h-5 text-info" />
+                        <span class="text-sm font-medium text-base-content/70">Generated Today</span>
+                    </div>
+                    <p class="text-2xl font-bold text-info">{{ number_format($voucherStats['generatedToday']) }}</p>
+                    <p class="text-xs text-base-content/60 mt-1">New vouchers</p>
                 </div>
             </div>
         </x-mary-card>
@@ -219,24 +213,11 @@
 
     {{-- Charts Section --}}
     <div class="grid gap-4 grid-cols-1 lg:grid-cols-2">
-        {{-- Income Trend Chart --}}
-        <x-mary-card class="border border-base-300 bg-base-100">
-            <x-slot name="title">
-                <div class="flex items-center gap-2">
-                    <x-mary-icon name="o-arrow-trending-up" class="w-5 h-5 text-success" />
-                    <span>Income Trend (Last 7 Days)</span>
-                </div>
-            </x-slot>
-            <div class="h-64">
-                <x-mary-chart wire:model="incomeChart" />
-            </div>
-        </x-mary-card>
-
         {{-- Activation Trend Chart --}}
         <x-mary-card class="border border-base-300 bg-base-100">
             <x-slot name="title">
                 <div class="flex items-center gap-2">
-                    <x-mary-icon name="o-ticket" class="w-5 h-5 text-info" />
+                    <x-mary-icon name="o-check-circle" class="w-5 h-5 text-primary" />
                     <span>Voucher Activations (Last 7 Days)</span>
                 </div>
             </x-slot>
@@ -244,16 +225,29 @@
                 <x-mary-chart wire:model="activationChart" />
             </div>
         </x-mary-card>
+
+        {{-- Generation Trend Chart --}}
+        <x-mary-card class="border border-base-300 bg-base-100">
+            <x-slot name="title">
+                <div class="flex items-center gap-2">
+                    <x-mary-icon name="o-ticket" class="w-5 h-5 text-success" />
+                    <span>Vouchers Generated (Last 7 Days)</span>
+                </div>
+            </x-slot>
+            <div class="h-64">
+                <x-mary-chart wire:model="generationChart" />
+            </div>
+        </x-mary-card>
     </div>
 
     {{-- Tables Section --}}
     <div class="grid gap-4 grid-cols-1 lg:grid-cols-2">
-        {{-- Income by Profile Table --}}
+        {{-- Top Profiles by Usage --}}
         <x-mary-card class="border border-base-300 bg-base-100">
             <x-slot name="title">
                 <div class="flex items-center gap-2">
-                    <x-mary-icon name="o-banknotes" class="w-5 h-5 text-success" />
-                    <span>Top Selling Profiles</span>
+                    <x-mary-icon name="o-fire" class="w-5 h-5 text-warning" />
+                    <span>Most Used Profiles</span>
                 </div>
             </x-slot>
             <div class="overflow-x-auto">
@@ -262,19 +256,17 @@
                         <tr>
                             <th>Profile</th>
                             <th class="text-right">Activations</th>
-                            <th class="text-right">Income</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($incomeByProfile as $item)
+                        @forelse($topProfiles as $item)
                             <tr>
                                 <td class="font-medium">{{ $item->profile }}</td>
-                                <td class="text-right">{{ number_format($item->activations) }}</td>
-                                <td class="text-right font-semibold text-success">@userCurrency($item->total_income)</td>
+                                <td class="text-right font-semibold text-primary">{{ number_format($item->total_activations) }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="3" class="text-center text-base-content/60">No activations yet</td>
+                                <td colspan="2" class="text-center text-base-content/60">No activations yet</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -282,12 +274,12 @@
             </div>
         </x-mary-card>
 
-        {{-- Top Routers by Income --}}
+        {{-- Top Routers by Usage --}}
         <x-mary-card class="border border-base-300 bg-base-100">
             <x-slot name="title">
                 <div class="flex items-center gap-2">
                     <x-mary-icon name="o-server-stack" class="w-5 h-5 text-info" />
-                    <span>Top Routers by Income</span>
+                    <span>Most Active Routers</span>
                 </div>
             </x-slot>
             <div class="overflow-x-auto">
@@ -295,14 +287,14 @@
                     <thead>
                         <tr>
                             <th>Router</th>
-                            <th class="text-right">Income</th>
+                            <th class="text-right">Activations</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($topRouters as $router)
+                        @forelse($topRoutersByUsage as $router)
                             <tr>
                                 <td class="font-medium">{{ $router->name }}</td>
-                                <td class="text-right font-semibold text-success">@userCurrency($router->total_income)</td>
+                                <td class="text-right font-semibold text-info">{{ number_format($router->total_activations) }}</td>
                             </tr>
                         @empty
                             <tr>
@@ -333,7 +325,6 @@
                             <th>Username</th>
                             <th>Profile</th>
                             <th>Router</th>
-                            <th class="text-right">Price</th>
                             <th class="text-right">Time</th>
                         </tr>
                     </thead>
@@ -343,14 +334,13 @@
                                 <td class="font-medium">{{ $activation->username }}</td>
                                 <td><span class="badge badge-sm badge-info">{{ $activation->profile }}</span></td>
                                 <td class="text-sm">{{ $activation->router_name }}</td>
-                                <td class="text-right font-semibold text-success">@userCurrency($activation->price)</td>
                                 <td class="text-right text-xs text-base-content/60">
                                     {{ \Carbon\Carbon::parse($activation->created_at)->diffForHumans() }}
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="text-center text-base-content/60">No recent activations</td>
+                                <td colspan="4" class="text-center text-base-content/60">No recent activations</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -360,83 +350,7 @@
     </div>
 
     {{-- Router & Voucher Management --}}
-    <div class="grid gap-4 grid-cols-1 xl:grid-cols-2">
-        {{-- Router Health --}}
-        <x-mary-card class="border border-base-300 bg-base-100">
-            <x-slot name="title">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <x-mary-icon name="o-server-stack" class="w-5 h-5 text-info" />
-                        <span>Router Health</span>
-                    </div>
-                    <x-mary-button icon="o-arrow-right" class="btn-ghost btn-xs" href="{{ route('routers.index') }}"
-                        wire:navigate />
-                </div>
-            </x-slot>
-            <div class="grid grid-cols-2 gap-4">
-                <div class="text-center p-3 bg-base-200">
-                    <p class="text-xs text-base-content/60 mb-1">Total Routers</p>
-                    <p class="text-2xl font-bold">{{ number_format($routerStats['total']) }}</p>
-                </div>
-                <div class="text-center p-3 bg-success/10">
-                    <p class="text-xs text-base-content/60 mb-1">Active Vouchers</p>
-                    <p class="text-2xl font-bold text-success">{{ number_format($voucherStats['active']) }}</p>
-                </div>
-                <div class="text-center p-3 bg-warning/10">
-                    <p class="text-xs text-base-content/60 mb-1">Expired Vouchers</p>
-                    <p class="text-2xl font-bold text-warning">{{ number_format($voucherStats['expired']) }}</p>
-                </div>
-                <div class="text-center p-3 bg-base-200">
-                    <p class="text-xs text-base-content/60 mb-1">Total Vouchers</p>
-                    <p class="text-2xl font-bold">{{ number_format($voucherStats['total']) }}</p>
-                </div>
-            </div>
-            <div class="mt-4 pt-4 border-t border-base-300">
-                <p class="text-xs text-base-content/60">Monthly ISP Cost: <strong
-                        class="text-base-content">@userCurrency($routerStats['monthlyExpense'])</strong></p>
-            </div>
-        </x-mary-card>
-
-        {{-- Voucher Statistics --}}
-        <x-mary-card class="border border-base-300 bg-base-100">
-            <x-slot name="title">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <x-mary-icon name="o-ticket" class="w-5 h-5 text-success" />
-                        <span>Voucher Statistics</span>
-                    </div>
-                    <x-mary-button icon="o-arrow-right" class="btn-ghost btn-xs"
-                        href="{{ route('vouchers.index') }}" wire:navigate />
-                </div>
-            </x-slot>
-            <div class="grid grid-cols-2 gap-4">
-                <div class="text-center p-3 bg-base-200">
-                    <p class="text-xs text-base-content/60 mb-1">Total Vouchers</p>
-                    <p class="text-2xl font-bold">{{ number_format($voucherStats['total']) }}</p>
-                </div>
-                <div class="text-center p-3 bg-success/10">
-                    <p class="text-xs text-base-content/60 mb-1">Active</p>
-                    <p class="text-2xl font-bold text-success">{{ number_format($voucherStats['active']) }}</p>
-                </div>
-                <div class="text-center p-3 bg-warning/10">
-                    <p class="text-xs text-base-content/60 mb-1">Expired</p>
-                    <p class="text-2xl font-bold text-warning">{{ number_format($voucherStats['expired']) }}</p>
-                </div>
-                <div class="text-center p-3 bg-base-200">
-                    <p class="text-xs text-base-content/60 mb-1">Generated Today</p>
-                    <p class="text-2xl font-bold">{{ number_format($voucherStats['generatedToday']) }}</p>
-                </div>
-            </div>
-            <div class="mt-4 pt-4 border-t border-base-300">
-                <p class="text-xs text-base-content/60">This Week: <strong
-                        class="text-base-content">{{ number_format($voucherStats['generatedThisWeek']) }}</strong>
-                    vouchers generated</p>
-            </div>
-        </x-mary-card>
-    </div>
-
-    {{-- Invoice Management & Package Distribution --}}
-    <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
+    <div class="grid gap-4 grid-cols-1 xl:grid-cols-3">
         {{-- Voucher Statistics --}}
         <x-mary-card class="border border-base-300 bg-base-100">
             <x-slot name="title">
@@ -458,11 +372,15 @@
                     <span class="text-sm text-base-content/70">Expired</span>
                     <span class="font-bold text-warning">{{ number_format($voucherStats['expired']) }}</span>
                 </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-base-content/70">Inactive</span>
+                    <span class="font-bold text-base-content/60">{{ number_format($voucherStats['inactive']) }}</span>
+                </div>
                 <div class="pt-3 border-t border-base-300">
                     <div class="flex items-center justify-between">
-                        <span class="text-xs text-base-content/60">Generated Today</span>
+                        <span class="text-xs text-base-content/60">Generated This Week</span>
                         <span
-                            class="text-sm font-semibold text-primary">{{ number_format($voucherStats['generatedToday']) }}</span>
+                            class="text-sm font-semibold text-primary">{{ number_format($voucherStats['generatedThisWeek']) }}</span>
                     </div>
                 </div>
             </div>
@@ -489,7 +407,7 @@
             </div>
         </x-mary-card>
 
-        {{-- Recent Activity Summary --}}
+        {{-- Quick Stats --}}
         <x-mary-card class="border border-base-300 bg-base-100">
             <x-slot name="title">
                 <div class="flex items-center gap-2">
@@ -499,12 +417,12 @@
             </x-slot>
             <div class="space-y-3">
                 <div class="flex items-center justify-between p-2 bg-base-200">
-                    <span class="text-sm text-base-content/70">Today's Activations</span>
-                    <span class="font-bold text-success">{{ number_format($billingStats['todayActivations']) }}</span>
+                    <span class="text-sm text-base-content/70">Activated Today</span>
+                    <span class="font-bold text-primary">{{ number_format($operationalStats['todayActivations']) }}</span>
                 </div>
                 <div class="flex items-center justify-between p-2 bg-base-200">
-                    <span class="text-sm text-base-content/70">Vouchers Generated Today</span>
-                    <span class="font-bold text-primary">{{ number_format($voucherStats['generatedToday']) }}</span>
+                    <span class="text-sm text-base-content/70">Activated This Week</span>
+                    <span class="font-bold text-success">{{ number_format($operationalStats['weekActivations']) }}</span>
                 </div>
                 <div class="flex items-center justify-between p-2 bg-base-200">
                     <span class="text-sm text-base-content/70">Active Resellers</span>
@@ -593,35 +511,36 @@
             </div>
         </x-mary-card>
 
-        {{-- Recent Invoices --}}
+        {{-- Operational Summary --}}
         <x-mary-card class="border border-base-300 bg-base-100">
             <x-slot name="title">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <x-mary-icon name="o-document-text" class="w-5 h-5 text-warning" />
-                        <span>Recent Invoices</span>
-                    </div>
-                    <x-mary-button icon="o-arrow-right" class="btn-ghost btn-xs"
-                        href="{{ route('billing.invoices') }}" wire:navigate />
+                <div class="flex items-center gap-2">
+                    <x-mary-icon name="o-chart-pie" class="w-5 h-5 text-accent" />
+                    <span>Operational Summary</span>
                 </div>
             </x-slot>
             <div class="space-y-3">
-                @forelse ($recentInvoices as $invoice)
-                    <div class="flex items-center justify-between p-3 border border-base-300 bg-base-200/50"
-                        wire:key="invoice-{{ $invoice->id }}">
-                        <div class="flex-1 min-w-0">
-                            <p class="font-semibold text-sm">#{{ $invoice->id }}</p>
-                            <p class="text-xs text-base-content/60 mt-1">{{ ucfirst($invoice->category) }}</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="font-bold text-sm">BDT {{ number_format($invoice->amount, 2) }}</p>
-                            <x-mary-badge value="{{ ucfirst($invoice->status) }}"
-                                class="badge-sm mt-1 {{ $invoice->status === 'completed' ? 'badge-success' : ($invoice->status === 'pending' ? 'badge-warning' : 'badge-error') }}" />
-                        </div>
+                <div class="p-3 bg-success/10 border border-success/20">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-medium text-success">Active Vouchers</span>
+                        <span class="text-2xl font-bold text-success">{{ number_format($voucherStats['active']) }}</span>
                     </div>
-                @empty
-                    <p class="text-sm text-base-content/70 text-center py-4">No invoices yet.</p>
-                @endforelse
+                    <p class="text-xs text-base-content/60 mt-1">Currently running</p>
+                </div>
+                <div class="p-3 bg-warning/10 border border-warning/20">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-medium text-warning">Expired</span>
+                        <span class="text-2xl font-bold text-warning">{{ number_format($voucherStats['expired']) }}</span>
+                    </div>
+                    <p class="text-xs text-base-content/60 mt-1">Total expired</p>
+                </div>
+                <div class="p-3 bg-info/10 border border-info/20">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-medium text-info">Inactive</span>
+                        <span class="text-2xl font-bold text-info">{{ number_format($voucherStats['inactive']) }}</span>
+                    </div>
+                    <p class="text-xs text-base-content/60 mt-1">Not yet activated</p>
+                </div>
             </div>
         </x-mary-card>
     </div>

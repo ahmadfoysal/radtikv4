@@ -134,7 +134,7 @@ class SalesSummary extends Component
         $routers = Router::whereIn('id', $routerIds)->get();
 
         // Calculate total monthly expenses for the period
-        $totalMonthlyExpense = $routers->sum('monthly_expense');
+        $totalMonthlyExpense = $routers->sum('monthly_isp_cost');
 
         // For multi-month periods, calculate proportional expenses
         $monthsInPeriod = max(1, $this->dateRange['start']->diffInMonths($this->dateRange['end']));
@@ -215,7 +215,7 @@ class SalesSummary extends Component
                     'id' => $router->id,
                     'name' => $router->name,
                     'address' => $router->address,
-                    'monthly_expense' => $router->monthly_expense,
+                    'monthly_expense' => $router->monthly_isp_cost,
                     'activations' => $router->activations_count ?? 0,
                     'income' => $router->income_total ?? 0,
                 ];
@@ -344,8 +344,8 @@ class SalesSummary extends Component
     protected function buildExpenseBreakdownChart(array $routerIds): array
     {
         $routers = Router::whereIn('id', $routerIds)
-            ->where('monthly_expense', '>', 0)
-            ->orderByDesc('monthly_expense')
+            ->where('monthly_isp_cost', '>', 0)
+            ->orderByDesc('monthly_isp_cost')
             ->limit(10)
             ->get();
 
@@ -360,7 +360,7 @@ class SalesSummary extends Component
                 'datasets' => [
                     [
                         'label' => 'Monthly Expense (৳)',
-                        'data' => $routers->pluck('monthly_expense')->toArray(),
+                        'data' => $routers->pluck('monthly_isp_cost')->toArray(),
                         'backgroundColor' => 'rgba(239, 68, 68, 0.8)',
                         'borderColor' => 'rgb(239, 68, 68)',
                         'borderWidth' => 1,
@@ -405,7 +405,7 @@ class SalesSummary extends Component
             $income[] = $monthIncome;
 
             // Monthly expenses are constant per month
-            $monthExpense = Router::whereIn('id', $routerIds)->sum('monthly_expense');
+            $monthExpense = Router::whereIn('id', $routerIds)->sum('monthly_isp_cost');
             $expenses[] = $monthExpense;
         }
 

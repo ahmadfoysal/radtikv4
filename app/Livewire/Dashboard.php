@@ -150,7 +150,7 @@ class Dashboard extends Component
     }
 
     /**
-     * Metrics for admins (router owners).
+     * Metrics for admins (router owners) - Operational focus only
      */
     protected function dataForAdmin(User $user): array
     {
@@ -203,6 +203,7 @@ class Dashboard extends Component
             ->withCount([
                 'vouchers as active_vouchers_count' => fn($q) => $q->where('status', 'active'),
                 'vouchers as expired_vouchers_count' => fn($q) => $q->where('status', 'expired'),
+                'vouchers as inactive_vouchers_count' => fn($q) => $q->where('status', 'inactive'),
             ]);
 
         $routers = $routerQuery
@@ -210,7 +211,6 @@ class Dashboard extends Component
                 'routers.id',
                 'routers.name',
                 'routers.address',
-                'routers.monthly_isp_cost',
                 'routers.created_at',
                 'routers.login_address',
                 'routers.zone_id',
@@ -220,52 +220,43 @@ class Dashboard extends Component
 
         $routerStats = [
             'total' => $routers->count(),
-            'expiringWeek' => 0, // No longer tracking router expiry
-            'expiringToday' => 0, // No longer tracking router expiry
-            'withoutPackage' => 0, // No longer tracking router packages
-            'monthlyExpense' => $routers->sum('monthly_isp_cost'),
+            'withZone' => $routers->filter(fn($r) => $r->zone_id !== null)->count(),
+            'withLogin' => $routers->filter(fn($r) => filled($r->login_address))->count(),
         ];
 
-        // Billing & Accounting Metrics from VoucherLog
+        // Operational Metrics from VoucherLog (usage tracking, not billing)
         $voucherLogQuery = DB::table('voucher_logs')
             ->whereIn('router_id', $routerIds)
             ->where('event_type', 'activated');
 
-        // Today's income from activations
-        $todayIncome = (clone $voucherLogQuery)
-            ->whereDate('created_at', $today)
-            ->sum('price');
-
-        // This month's income
-        $monthIncome = (clone $voucherLogQuery)
-            ->where('created_at', '>=', $startOfMonth)
-            ->sum('price');
-
-        // Today's activations count
+        // Today's activations count (user activity metric)
         $todayActivations = (clone $voucherLogQuery)
             ->whereDate('created_at', $today)
             ->count();
 
-        // Monthly expense (ISP costs)
-        $monthlyExpense = $routerStats['monthlyExpense'];
+        // This month's activations count
+        $monthActivations = (clone $voucherLogQuery)
+            ->where('created_at', '>=', $startOfMonth)
+            ->count();
 
-        // Net profit (monthly)
-        $netProfit = $monthIncome - $monthlyExpense;
+        // This week's activations count
+        $weekStart = Carbon::now()->startOfWeek();
+        $weekActivations = (clone $voucherLogQuery)
+            ->where('created_at', '>=', $weekStart)
+            ->count();
 
-        $billingStats = [
-            'todayIncome' => $todayIncome,
-            'monthIncome' => $monthIncome,
+        $operationalStats = [
             'todayActivations' => $todayActivations,
-            'monthlyExpense' => $monthlyExpense,
-            'netProfit' => $netProfit,
+            'weekActivations' => $weekActivations,
+            'monthActivations' => $monthActivations,
         ];
 
-        // Income by profile (top 5)
-        $incomeByProfile = (clone $voucherLogQuery)
+        // Top profiles by usage (not by income)
+        $topProfiles = (clone $voucherLogQuery)
             ->where('created_at', '>=', $startOfMonth)
-            ->select('profile', DB::raw('SUM(price) as total_income'), DB::raw('COUNT(*) as activations'))
+            ->select('profile', DB::raw('COUNT(*) as total_activations'))
             ->groupBy('profile')
-            ->orderByDesc('total_income')
+            ->orderByDesc('total_activations')
             ->limit(5)
             ->get();
 
@@ -285,31 +276,15 @@ class Dashboard extends Component
             ];
         }
 
-        // Income trend (last 7 days)
-        $incomeTrend = [];
-        for ($i = 0; $i < 7; $i++) {
-            $day = $trendStart->copy()->addDays($i);
-            $income = DB::table('voucher_logs')
-                ->whereIn('router_id', $routerIds)
-                ->where('event_type', 'activated')
-                ->whereDate('created_at', $day)
-                ->sum('price');
-
-            $incomeTrend[] = [
-                'label' => $day->format('M d'),
-                'value' => (float) $income,
-            ];
-        }
-
-        // Top routers by income
-        $topRouters = DB::table('voucher_logs')
+        // Top routers by usage (not income)
+        $topRoutersByUsage = DB::table('voucher_logs')
             ->join('routers', 'voucher_logs.router_id', '=', 'routers.id')
             ->whereIn('voucher_logs.router_id', $routerIds)
             ->where('voucher_logs.event_type', 'activated')
             ->where('voucher_logs.created_at', '>=', $startOfMonth)
-            ->select('routers.name', DB::raw('SUM(voucher_logs.price) as total_income'))
+            ->select('routers.name', 'routers.id', DB::raw('COUNT(*) as total_activations'))
             ->groupBy('routers.name', 'routers.id')
-            ->orderByDesc('total_income')
+            ->orderByDesc('total_activations')
             ->limit(5)
             ->get();
 
@@ -336,16 +311,6 @@ class Dashboard extends Component
             'withRouters' => $assignedResellers,
         ];
 
-        $recentInvoices = Invoice::where('user_id', $user->id)
-            ->latest()
-            ->take(5)
-            ->get(['id', 'amount', 'status', 'category', 'created_at']);
-
-        // No router-specific alerts - subscriptions are now at user level
-        $routerAlerts = collect([]);
-
-        $balance = $user->balance ?? 0;
-
         // Voucher Statistics
         $voucherQuery = Voucher::whereIn('router_id', $routerIds);
         $startOfWeek = Carbon::now()->startOfWeek();
@@ -357,6 +322,8 @@ class Dashboard extends Component
             'inactive' => (clone $voucherQuery)->where('status', 'inactive')->count(),
             'generatedToday' => (clone $voucherQuery)->whereDate('created_at', $today)->count(),
             'generatedThisWeek' => (clone $voucherQuery)->whereBetween('created_at', [$startOfWeek, Carbon::now()])->count(),
+            'activatedToday' => $todayActivations,
+            'expiredToday' => (clone $voucherQuery)->whereDate('expires_at', $today)->where('status', 'expired')->count(),
         ];
 
         $recentVouchers = (clone $voucherQuery)
@@ -365,42 +332,13 @@ class Dashboard extends Component
             ->get(['id', 'username', 'status', 'router_id', 'created_at'])
             ->load('router:id,name');
 
-        // Recent activations with income
+        // Recent activations (operational tracking)
         $recentActivations = DB::table('voucher_logs')
             ->whereIn('router_id', $routerIds)
             ->where('event_type', 'activated')
             ->orderByDesc('created_at')
-            ->limit(5)
-            ->get(['username', 'profile', 'price', 'router_name', 'created_at']);
-
-        // Income Trend Chart
-        $incomeChart = [
-            'type' => 'line',
-            'data' => [
-                'labels' => array_column($incomeTrend, 'label'),
-                'datasets' => [[
-                    'label' => 'Income (BDT)',
-                    'data' => array_column($incomeTrend, 'value'),
-                    'borderColor' => '#10b981',
-                    'backgroundColor' => 'rgba(16, 185, 129, 0.1)',
-                    'borderWidth' => 2,
-                    'fill' => true,
-                    'tension' => 0.4,
-                    'pointRadius' => 4,
-                    'pointHoverRadius' => 6,
-                ]],
-            ],
-            'options' => [
-                'responsive' => true,
-                'maintainAspectRatio' => false,
-                'plugins' => [
-                    'legend' => ['display' => true, 'position' => 'top'],
-                ],
-                'scales' => [
-                    'y' => ['beginAtZero' => true],
-                ],
-            ],
-        ];
+            ->limit(10)
+            ->get(['username', 'profile', 'router_name', 'created_at']);
 
         // Activation Trend Chart
         $activationChart = [
@@ -427,92 +365,61 @@ class Dashboard extends Component
             ],
         ];
 
-        // Invoice Statistics
-        $invoiceQuery = Invoice::where('user_id', $user->id);
-        $startOfMonth = Carbon::now()->startOfMonth();
-
-        $invoiceStats = [
-            'total' => (clone $invoiceQuery)->count(),
-            'paid' => (clone $invoiceQuery)->where('status', 'completed')->count(),
-            'pending' => (clone $invoiceQuery)->where('status', 'pending')->count(),
-            'thisMonthRevenue' => (clone $invoiceQuery)
-                ->where('status', 'completed')
-                ->where('created_at', '>=', $startOfMonth)
-                ->sum('amount'),
-            'outstanding' => (clone $invoiceQuery)
-                ->where('status', 'pending')
-                ->sum('amount'),
-        ];
-
-        // Revenue Trend Chart Data (Last 7 days)
-        $trendStart = Carbon::now()->subDays(6)->startOfDay();
-        $revenueTrend = [];
+        // Voucher generation trend chart
+        $generationTrend = [];
         for ($i = 0; $i < 7; $i++) {
             $day = $trendStart->copy()->addDays($i);
-            $revenueTrend[] = [
+            $count = Voucher::whereIn('router_id', $routerIds)
+                ->whereDate('created_at', $day)
+                ->count();
+
+            $generationTrend[] = [
                 'label' => $day->format('M d'),
-                'value' => (float) Invoice::where('user_id', $user->id)
-                    ->where('status', 'completed')
-                    ->whereDate('created_at', $day)
-                    ->sum('amount'),
+                'value' => $count,
             ];
         }
 
-        $revenueChart = [
+        $generationChart = [
             'type' => 'line',
             'data' => [
-                'labels' => array_column($revenueTrend, 'label'),
+                'labels' => array_column($generationTrend, 'label'),
                 'datasets' => [[
-                    'label' => 'Revenue (BDT)',
-                    'data' => array_column($revenueTrend, 'value'),
-                    'borderColor' => '#3b82f6',
-                    'backgroundColor' => 'rgba(59, 130, 246, 0.1)',
+                    'label' => 'Vouchers Generated',
+                    'data' => array_column($generationTrend, 'value'),
+                    'borderColor' => '#10b981',
+                    'backgroundColor' => 'rgba(16, 185, 129, 0.1)',
                     'borderWidth' => 2,
                     'fill' => true,
                     'tension' => 0.4,
                     'pointRadius' => 4,
                     'pointHoverRadius' => 6,
-                    'pointBackgroundColor' => '#3b82f6',
-                    'pointBorderColor' => '#ffffff',
-                    'pointBorderWidth' => 2,
                 ]],
             ],
             'options' => [
                 'responsive' => true,
                 'maintainAspectRatio' => false,
                 'plugins' => [
-                    'legend' => [
-                        'display' => true,
-                        'position' => 'top',
-                    ],
+                    'legend' => ['display' => true, 'position' => 'top'],
                 ],
                 'scales' => [
-                    'y' => [
-                        'beginAtZero' => true,
-                        'ticks' => [
-                            'callback' => 'function(value) { return "BDT " + value.toLocaleString(); }',
-                        ],
-                    ],
+                    'y' => ['beginAtZero' => true],
                 ],
             ],
         ];
 
         return compact(
-            'balance',
-            'billingStats',
+            'operationalStats',
             'routerStats',
             'routerUsage',
             'recentRouters',
             'resellerStats',
-            'recentInvoices',
-            'routerAlerts',
             'voucherStats',
             'recentVouchers',
             'recentActivations',
-            'incomeByProfile',
-            'topRouters',
-            'incomeChart',
+            'topProfiles',
+            'topRoutersByUsage',
             'activationChart',
+            'generationChart',
             'subscriptionAlert'
         );
     }
