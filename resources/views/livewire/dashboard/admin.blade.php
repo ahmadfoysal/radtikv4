@@ -116,7 +116,8 @@
                         <x-mary-icon name="o-check-circle" class="w-5 h-5 text-primary" />
                         <span class="text-sm font-medium text-base-content/70">Today's Activations</span>
                     </div>
-                    <p class="text-3xl font-bold text-primary">{{ number_format($operationalStats['todayActivations']) }}</p>
+                    <p class="text-3xl font-bold text-primary">
+                        {{ number_format($operationalStats['todayActivations']) }}</p>
                     <p class="text-xs text-base-content/60 mt-1">Active users today</p>
                 </div>
             </div>
@@ -130,7 +131,8 @@
                         <x-mary-icon name="o-chart-bar" class="w-5 h-5 text-accent" />
                         <span class="text-sm font-medium text-base-content/70">Monthly Activations</span>
                     </div>
-                    <p class="text-3xl font-bold text-accent">{{ number_format($operationalStats['monthActivations']) }}</p>
+                    <p class="text-3xl font-bold text-accent">
+                        {{ number_format($operationalStats['monthActivations']) }}</p>
                     <p class="text-xs text-base-content/60 mt-1">This month's usage</p>
                 </div>
             </div>
@@ -262,7 +264,8 @@
                         @forelse($topProfiles as $item)
                             <tr>
                                 <td class="font-medium">{{ $item->profile }}</td>
-                                <td class="text-right font-semibold text-primary">{{ number_format($item->total_activations) }}</td>
+                                <td class="text-right font-semibold text-primary">
+                                    {{ number_format($item->total_activations) }}</td>
                             </tr>
                         @empty
                             <tr>
@@ -294,7 +297,8 @@
                         @forelse($topRoutersByUsage as $router)
                             <tr>
                                 <td class="font-medium">{{ $router->name }}</td>
-                                <td class="text-right font-semibold text-info">{{ number_format($router->total_activations) }}</td>
+                                <td class="text-right font-semibold text-info">
+                                    {{ number_format($router->total_activations) }}</td>
                             </tr>
                         @empty
                             <tr>
@@ -418,11 +422,13 @@
             <div class="space-y-3">
                 <div class="flex items-center justify-between p-2 bg-base-200">
                     <span class="text-sm text-base-content/70">Activated Today</span>
-                    <span class="font-bold text-primary">{{ number_format($operationalStats['todayActivations']) }}</span>
+                    <span
+                        class="font-bold text-primary">{{ number_format($operationalStats['todayActivations']) }}</span>
                 </div>
                 <div class="flex items-center justify-between p-2 bg-base-200">
                     <span class="text-sm text-base-content/70">Activated This Week</span>
-                    <span class="font-bold text-success">{{ number_format($operationalStats['weekActivations']) }}</span>
+                    <span
+                        class="font-bold text-success">{{ number_format($operationalStats['weekActivations']) }}</span>
                 </div>
                 <div class="flex items-center justify-between p-2 bg-base-200">
                     <span class="text-sm text-base-content/70">Active Resellers</span>
@@ -523,21 +529,24 @@
                 <div class="p-3 bg-success/10 border border-success/20">
                     <div class="flex items-center justify-between">
                         <span class="text-sm font-medium text-success">Active Vouchers</span>
-                        <span class="text-2xl font-bold text-success">{{ number_format($voucherStats['active']) }}</span>
+                        <span
+                            class="text-2xl font-bold text-success">{{ number_format($voucherStats['active']) }}</span>
                     </div>
                     <p class="text-xs text-base-content/60 mt-1">Currently running</p>
                 </div>
                 <div class="p-3 bg-warning/10 border border-warning/20">
                     <div class="flex items-center justify-between">
                         <span class="text-sm font-medium text-warning">Expired</span>
-                        <span class="text-2xl font-bold text-warning">{{ number_format($voucherStats['expired']) }}</span>
+                        <span
+                            class="text-2xl font-bold text-warning">{{ number_format($voucherStats['expired']) }}</span>
                     </div>
                     <p class="text-xs text-base-content/60 mt-1">Total expired</p>
                 </div>
                 <div class="p-3 bg-info/10 border border-info/20">
                     <div class="flex items-center justify-between">
                         <span class="text-sm font-medium text-info">Inactive</span>
-                        <span class="text-2xl font-bold text-info">{{ number_format($voucherStats['inactive']) }}</span>
+                        <span
+                            class="text-2xl font-bold text-info">{{ number_format($voucherStats['inactive']) }}</span>
                     </div>
                     <p class="text-xs text-base-content/60 mt-1">Not yet activated</p>
                 </div>
