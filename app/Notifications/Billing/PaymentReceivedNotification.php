@@ -18,7 +18,8 @@ class PaymentReceivedNotification extends Notification implements ShouldQueue
     public function __construct(
         public Invoice $invoice,
         public float $amount,
-        public float $balanceAfter
+        public float $balanceAfter,
+        public bool $sendEmail = false
     ) {}
 
     /**
@@ -30,14 +31,8 @@ class PaymentReceivedNotification extends Notification implements ShouldQueue
     {
         $channels = ['database'];
 
-        // Check user's notification preferences
-        $prefs = $notifiable->notificationPreferences;
-
-        // Add email if user has email notifications enabled
-        if ($prefs?->email_enabled && $prefs?->payment_received) {
-            $channels[] = 'mail';
-        } elseif (!$prefs && $notifiable->email_notifications) {
-            // Fallback to user's general email notification setting
+        // Add email channel only if explicitly requested
+        if ($this->sendEmail) {
             $channels[] = 'mail';
         }
 
@@ -79,6 +74,7 @@ class PaymentReceivedNotification extends Notification implements ShouldQueue
             'amount' => $this->amount,
             'balance_after' => $this->balanceAfter,
             'invoice_id' => $this->invoice->id,
+            'invoice_number' => $this->invoice->invoice_number,
             'transaction_id' => $this->invoice->transaction_id,
             'icon' => 'o-check-circle',
             'color' => 'success',

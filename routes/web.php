@@ -41,6 +41,9 @@ Route::middleware(['auth', 'check.suspended'])->group(function () {
     // User Profile & Settings
     Route::get('/settings/profile', App\Livewire\Settings\Profile::class)->name('settings.profile');
 
+    // Notifications
+    Route::get('/notifications', App\Livewire\Components\AllNotifications::class)->name('notifications.index');
+
     /* ========================================
      * SUPERADMIN ONLY
      * ======================================== */

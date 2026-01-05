@@ -16,7 +16,8 @@ class InvoiceGeneratedNotification extends Notification implements ShouldQueue
      * Create a new notification instance.
      */
     public function __construct(
-        public Invoice $invoice
+        public Invoice $invoice,
+        public bool $sendEmail = false
     ) {}
 
     /**
@@ -28,14 +29,8 @@ class InvoiceGeneratedNotification extends Notification implements ShouldQueue
     {
         $channels = ['database'];
 
-        // Check user's notification preferences
-        $prefs = $notifiable->notificationPreferences;
-
-        // Add email if user has email notifications enabled
-        if ($prefs?->email_enabled) {
-            $channels[] = 'mail';
-        } elseif (!$prefs && $notifiable->email_notifications) {
-            // Fallback to user's general email notification setting
+        // Add email channel only if explicitly requested
+        if ($this->sendEmail) {
             $channels[] = 'mail';
         }
 
@@ -91,10 +86,12 @@ class InvoiceGeneratedNotification extends Notification implements ShouldQueue
             'title' => 'Invoice Generated',
             'message' => ucfirst($this->invoice->type) . ' invoice of ৳' . number_format($this->invoice->amount, 2) . ' generated',
             'invoice_id' => $this->invoice->id,
+            'invoice_number' => $this->invoice->invoice_number,
             'invoice_type' => $this->invoice->type,
             'category' => $this->invoice->category,
             'amount' => $this->invoice->amount,
             'balance_after' => $this->invoice->balance_after,
+            'due_date' => $this->invoice->due_date?->format('M d, Y') ?? 'N/A',
             'icon' => $icon,
             'color' => $color,
             'action_url' => route('billing.invoices'),

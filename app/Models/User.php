@@ -408,6 +408,7 @@ class User extends Authenticatable
         ]);
 
         // Create invoice for subscription only if amount is greater than 0 (skip for free packages)
+        $invoice = null;
         if ($finalAmount > 0) {
             $invoice = $this->debit(
                 amount: $finalAmount,
@@ -429,14 +430,14 @@ class User extends Authenticatable
             $subscription->update([
                 'last_invoice_id' => $invoice->id,
             ]);
-
-            // Send subscription notification
-            $this->notify(new \App\Notifications\Billing\SubscriptionRenewalNotification(
-                $subscription,
-                $invoice,
-                false // Not auto-renewal
-            ));
         }
+
+        // Send subscription notification (for both paid and free subscriptions)
+        $this->notify(new \App\Notifications\Billing\SubscriptionRenewalNotification(
+            $subscription,
+            $invoice,
+            false // Not auto-renewal
+        ));
 
         return $subscription->fresh();
     }

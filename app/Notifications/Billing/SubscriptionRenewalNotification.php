@@ -20,8 +20,9 @@ class SubscriptionRenewalNotification extends Notification implements ShouldQueu
      */
     public function __construct(
         public Subscription $subscription,
-        public Invoice $invoice,
-        public bool $isAutoRenewal = false
+        public ?Invoice $invoice = null,
+        public bool $isAutoRenewal = false,
+        public bool $sendEmail = false
     ) {}
 
     /**
@@ -33,14 +34,8 @@ class SubscriptionRenewalNotification extends Notification implements ShouldQueu
     {
         $channels = ['database'];
 
-        // Check user's notification preferences
-        $prefs = $notifiable->notificationPreferences;
-
-        // Add email if user has email notifications enabled
-        if ($prefs?->email_enabled && $prefs?->subscription_renewal) {
-            $channels[] = 'mail';
-        } elseif (!$prefs && $notifiable->email_notifications) {
-            // Fallback to user's general email notification setting
+        // Add email channel only if explicitly requested
+        if ($this->sendEmail) {
             $channels[] = 'mail';
         }
 
@@ -52,8 +47,10 @@ class SubscriptionRenewalNotification extends Notification implements ShouldQueu
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $formattedAmount = number_format($this->invoice->amount, 2);
-        $formattedBalance = number_format($this->invoice->balance_after, 2);
+        $amount = $this->invoice?->amount ?? 0;
+        $balanceAfter = $this->invoice?->balance_after ?? $notifiable->balance;
+        $formattedAmount = number_format($amount, 2);
+        $formattedBalance = number_format($balanceAfter, 2);
         $packageName = $this->subscription->package->name ?? 'Your Package';
         $endDate = Carbon::parse($this->subscription->end_date)->format('M d, Y');
 
@@ -94,19 +91,26 @@ class SubscriptionRenewalNotification extends Notification implements ShouldQueu
     public function toArray(object $notifiable): array
     {
         $packageName = $this->subscription->package->name ?? 'Package';
+        $amount = $this->invoice?->amount ?? 0;
+        $isFree = $amount == 0;
 
         return [
             'type' => 'subscription_renewal',
             'title' => $this->isAutoRenewal ? 'Subscription Auto-Renewed' : 'Subscription Renewed',
-            'message' => "{$packageName} renewed for ৳" . number_format($this->invoice->amount, 2),
+            'message' => $isFree
+                ? "{$packageName} subscription activated"
+                : "{$packageName} renewed for ৳" . number_format($amount, 2),
             'subscription_id' => $this->subscription->id,
-            'invoice_id' => $this->invoice->id,
+            'invoice_id' => $this->invoice?->id,
+            'invoice_number' => $this->invoice?->invoice_number ?? 'N/A',
             'package_name' => $packageName,
-            'amount' => $this->invoice->amount,
-            'balance_after' => $this->invoice->balance_after,
+            'amount' => $amount,
+            'balance_after' => $this->invoice?->balance_after ?? $notifiable->balance,
             'billing_cycle' => $this->subscription->billing_cycle,
             'end_date' => $this->subscription->end_date,
+            'valid_until' => $this->subscription->end_date?->format('M d, Y'),
             'is_auto_renewal' => $this->isAutoRenewal,
+            'is_free' => $isFree,
             'icon' => 'o-arrow-path',
             'color' => 'info',
             'action_url' => route('subscription.index'),
