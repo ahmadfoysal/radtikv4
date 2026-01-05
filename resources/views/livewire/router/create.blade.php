@@ -40,11 +40,7 @@
             </div>
 
             <div>
-                <x-mary-select label="Zone" wire:model.live="zone_id" :options="App\Models\Zone::where('is_active', true)
-                    ->orderBy('name')
-                    ->get()
-                    ->map(fn($z) => ['id' => $z->id, 'name' => $z->name])
-                    ->toArray()" option-label="name"
+                <x-mary-select label="Zone" wire:model.live="zone_id" :options="$zones" option-label="name"
                     option-value="id" placeholder="Select a zone (optional)" />
             </div>
 

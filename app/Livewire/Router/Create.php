@@ -2,11 +2,10 @@
 
 namespace App\Livewire\Router;
 
-use App\Models\Package;
+
 use App\Models\ResellerRouter;
 use App\Models\Router;
 use App\Models\VoucherTemplate;
-use App\Models\Zone;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
@@ -206,10 +205,18 @@ class Create extends Component
 
     public function render()
     {
+        $user = Auth::user();
+
         return view('livewire.router.create', [
             'voucherTemplates' => VoucherTemplate::select('id', 'name')
                 ->orderBy('name')
                 ->get(),
+            'zones' => $user->zones()
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get()
+                ->map(fn($z) => ['id' => $z->id, 'name' => $z->name])
+                ->toArray(),
         ])
             ->title(__('Add Router'));
     }

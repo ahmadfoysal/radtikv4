@@ -6,7 +6,8 @@
 
         {{-- Badge for unread count --}}
         @if ($unreadCount > 0)
-            <span class="absolute -top-1 -right-1 badge badge-sm badge-error">
+            <span
+                class="absolute -top-1.5 -right-1.5 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 text-[10px] font-bold leading-none text-white bg-error shadow-md rounded-md">
                 {{ $unreadCount > 99 ? '99+' : $unreadCount }}
             </span>
         @endif
@@ -17,7 +18,7 @@
         x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
         x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100"
         x-transition:leave-end="opacity-0 scale-95"
-        class="absolute right-0 mt-2 w-96 bg-base-100 rounded-box shadow-xl border border-base-300 z-50"
+        class="absolute right-0 mt-2 w-[32rem] bg-base-100 rounded-2xl shadow-2xl border border-base-300 z-50"
         style="display: none;">
 
         {{-- Header --}}
@@ -55,7 +56,8 @@
                             <div class="flex items-start justify-between gap-2">
                                 <h4 class="font-semibold text-sm">{{ $notification['subject'] }}</h4>
                                 @if (is_null($notification['read_at']))
-                                    <div class="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1"></div>
+                                    <span class="flex-shrink-0 block w-2 h-2 bg-primary mt-1.5 !rounded-full"
+                                        style="border-radius: 50% !important; box-shadow: 0 0 0 2px rgba(var(--p), 0.2);"></span>
                                 @endif
                             </div>
                             <p class="text-sm text-base-content/70 mt-1 line-clamp-2">
