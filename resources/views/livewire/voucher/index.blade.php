@@ -126,8 +126,8 @@
                         </div>
 
                         {{-- Edit --}}
-                        <x-mary-button icon="o-pencil" class="btn-ghost btn-xs !px-2"
-                            href="{{ route('vouchers.edit', $v) }}" wire:navigate />
+                        {{-- <x-mary-button icon="o-pencil" class="btn-ghost btn-xs !px-2"
+                            href="{{ route('vouchers.edit', $v) }}" wire:navigate /> --}}
 
                         {{-- Disable / Enable --}}
                         <x-mary-button icon="o-no-symbol"

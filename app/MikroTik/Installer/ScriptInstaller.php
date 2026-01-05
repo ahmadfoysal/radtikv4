@@ -173,7 +173,7 @@ class ScriptInstaller
             [
                 'name' => 'RADTik-PullInactive',
                 'label' => 'Pull Inactive Users',
-                'interval' => '5m',
+                'interval' => '10m',
                 'on_event' => '/system script run "RADTik-pull-inactive-users"',
             ],
             // [
@@ -185,7 +185,7 @@ class ScriptInstaller
             [
                 'name' => 'RADTik-PushActive',
                 'label' => 'Push Active Users',
-                'interval' => '1m',
+                'interval' => '3m',
                 'on_event' => '/system script run "RADTik-push-active-users"',
             ],
             [
@@ -197,13 +197,13 @@ class ScriptInstaller
             [
                 'name' => 'RADTik-PullProfiles',
                 'label' => 'Pull Profiles',
-                'interval' => '10m',
+                'interval' => '12h',
                 'on_event' => '/system script run "RADTik-pull-profiles"',
             ],
             [
                 'name' => 'RADTik-RemoveOrphanProfiles',
                 'label' => 'Remove Orphan Profiles',
-                'interval' => '1h',
+                'interval' => '12h',
                 'on_event' => '/system script run "RADTik-remove-orphan-profiles"',
             ],
         ];
