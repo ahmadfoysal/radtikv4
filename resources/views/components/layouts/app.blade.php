@@ -110,6 +110,58 @@
     {{-- MAIN --}}
     <x-mary-main with-nav full-width>
         <x-slot:sidebar drawer="main-drawer" collapsible class="bg-base-100 border-r border-base-300 flex flex-col">
+            {{-- User Profile Section at Top --}}
+            @auth
+                <div class="px-4 py-4 border-b border-base-300">
+                    <div class="dropdown dropdown-end w-full">
+                        <div tabindex="0" role="button"
+                            class="flex items-center gap-3 p-2 rounded-lg hover:bg-base-200 cursor-pointer transition-colors w-full">
+                            {{-- Avatar Circle with First Letter or Image --}}
+                            <div class="flex-shrink-0">
+                                @if (auth()->user()->profile_image)
+                                    <img src="{{ Storage::url(auth()->user()->profile_image) }}"
+                                        alt="{{ auth()->user()->name }}" class="w-10 h-10 object-cover !rounded-full"
+                                        style="border-radius: 50% !important;">
+                                @else
+                                    <div class="bg-primary text-primary-content !rounded-full w-10 h-10 flex items-center justify-center font-semibold text-lg"
+                                        style="border-radius: 50% !important;">
+                                        <span>{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span>
+                                    </div>
+                                @endif
+                            </div>
+                            {{-- User Info --}}
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-semibold truncate">{{ auth()->user()->name }}</p>
+                                <p class="text-xs text-base-content/70 truncate">{{ auth()->user()->email }}</p>
+                            </div>
+                            {{-- Dropdown Icon --}}
+                            <x-mary-icon name="o-chevron-down" class="w-4 h-4 flex-shrink-0" />
+                        </div>
+                        <ul tabindex="0"
+                            class="dropdown-content z-[1] menu p-2 shadow-lg bg-base-100 rounded-box w-52 border border-base-300 mt-2">
+                            <li>
+                                <a href="{{ route('settings.profile') }}" class="gap-2">
+                                    <x-mary-icon name="o-user-circle" class="w-5 h-5" />
+                                    <span>Profile Settings</span>
+                                </a>
+                            </li>
+                            <li class="menu-title mt-2">
+                                <span class="text-xs opacity-60">Account</span>
+                            </li>
+                            <li>
+                                <form method="POST" action="{{ route('tyro-login.logout') }}" class="w-full">
+                                    @csrf
+                                    <button type="submit" class="gap-2 text-error w-full justify-start">
+                                        <x-mary-icon name="o-power" class="w-5 h-5" />
+                                        <span>Logout</span>
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            @endauth
+
             <div class="flex-1">
                 @auth
                     @if (auth()->user()->isSuperAdmin())
@@ -121,19 +173,6 @@
                     @endif
                 @endauth
             </div>
-
-            {{-- Logout button at bottom --}}
-            @auth
-                <div class="mt-auto pt-4 border-t border-base-300">
-                    <form method="POST" action="{{ route('tyro-login.logout') }}">
-                        @csrf
-                        <button type="submit" class="btn btn-ghost btn-block justify-start gap-2">
-                            <x-mary-icon name="o-power" class="w-5 h-5" />
-                            <span>Logout</span>
-                        </button>
-                    </form>
-                </div>
-            @endauth
         </x-slot:sidebar>
 
         <x-slot:content>

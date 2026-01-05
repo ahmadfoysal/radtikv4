@@ -108,6 +108,12 @@ class Profile extends Component
 
     public function updateProfile(): void
     {
+        // Prevent updates in demo mode
+        if (env('DEMO_MODE', false)) {
+            $this->warning(title: 'Demo Mode', description: 'Profile updates are disabled in demo mode.');
+            return;
+        }
+
         $this->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore(Auth::id())],
@@ -139,6 +145,12 @@ class Profile extends Component
 
     public function updatePassword(): void
     {
+        // Prevent password updates in demo mode
+        if (env('DEMO_MODE', false)) {
+            $this->warning(title: 'Demo Mode', description: 'Password updates are disabled in demo mode.');
+            return;
+        }
+
         $this->validate([
             'current_password' => ['required', 'string'],
             'new_password' => ['required', 'string', 'min:8'],
@@ -299,6 +311,12 @@ class Profile extends Component
 
     public function updatePreferences(): void
     {
+        // Prevent preference updates in demo mode
+        if (env('DEMO_MODE', false)) {
+            $this->warning(title: 'Demo Mode', description: 'Preference updates are disabled in demo mode.');
+            return;
+        }
+
         $user = Auth::user();
 
         // Note: These fields would need to be added to the users table migration
