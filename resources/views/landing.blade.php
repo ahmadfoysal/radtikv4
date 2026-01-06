@@ -175,19 +175,31 @@
                     billing automation, and multi-tenant administration.
                 </p>
                 <div class="flex flex-wrap gap-4 justify-center opacity-0 animate-fadeInUp delay-200">
-                    <a href="{{ route('tyro-login.register') }}" class="btn btn-primary btn-lg gap-2 shadow-xl">
-                        Get Started Free
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                        </svg>
-                    </a>
+                    @auth
+                        <a href="{{ route('dashboard') }}" class="btn btn-primary btn-lg gap-2 shadow-xl">
+                            Go to Dashboard
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                            </svg>
+                        </a>
+                    @else
+                        <a href="{{ route('tyro-login.register') }}" class="btn btn-primary btn-lg gap-2 shadow-xl">
+                            Get Started Free
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                            </svg>
+                        </a>
+                    @endauth
                     <a href="#features" class="btn btn-outline btn-lg gap-2">
                         Learn More
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 9l-7 7-7-7" />
                         </svg>
                     </a>
                 </div>
@@ -485,174 +497,101 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-                <!-- Starter Plan -->
-                <div class="card bg-base-200 shadow-xl">
-                    <div class="card-body">
-                        <h3 class="card-title text-2xl mb-2">Starter</h3>
-                        <div class="mb-4">
-                            <span class="text-4xl font-bold">$19</span>
-                            <span class="text-base-content/70">/month</span>
-                        </div>
-                        <ul class="space-y-3 mb-6">
-                            <li class="flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-success"
-                                    viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd"
-                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                        clip-rule="evenodd" />
-                                </svg>
-                                Up to 3 Routers
-                            </li>
-                            <li class="flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-success"
-                                    viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd"
-                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                        clip-rule="evenodd" />
-                                </svg>
-                                1,000 Vouchers/month
-                            </li>
-                            <li class="flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-success"
-                                    viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd"
-                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                        clip-rule="evenodd" />
-                                </svg>
-                                Basic Analytics
-                            </li>
-                            <li class="flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-success"
-                                    viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd"
-                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                        clip-rule="evenodd" />
-                                </svg>
-                                Email Support
-                            </li>
-                        </ul>
-                        <a href="{{ route('tyro-login.register') }}" class="btn btn-outline btn-block">Get Started</a>
-                    </div>
-                </div>
+                @forelse ($packages as $package)
+                    <div
+                        class="card bg-base-200 shadow-xl {{ $loop->index === 1 ? 'scale-105 border-4 border-primary bg-primary text-primary-content' : '' }}">
+                        @if ($loop->index === 1)
+                            <div class="badge badge-secondary absolute top-4 right-4">POPULAR</div>
+                        @endif
+                        <div class="card-body">
+                            <h3 class="card-title text-2xl mb-2">{{ $package->name }}</h3>
+                            <div class="mb-4">
+                                @if ($package->price_monthly > 0)
+                                    <span class="text-4xl font-bold">@userCurrency($package->price_monthly)</span>
+                                    <span
+                                        class="{{ $loop->index === 1 ? 'opacity-70' : 'text-base-content/70' }}">/month</span>
+                                @else
+                                    <span class="text-4xl font-bold">Free</span>
+                                @endif
+                            </div>
 
-                <!-- Professional Plan -->
-                <div class="card bg-primary text-primary-content shadow-2xl scale-105 border-4 border-primary">
-                    <div class="badge badge-secondary absolute top-4 right-4">POPULAR</div>
-                    <div class="card-body">
-                        <h3 class="card-title text-2xl mb-2">Professional</h3>
-                        <div class="mb-4">
-                            <span class="text-4xl font-bold">$49</span>
-                            <span class="opacity-70">/month</span>
-                        </div>
-                        <ul class="space-y-3 mb-6">
-                            <li class="flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
-                                    fill="currentColor">
-                                    <path fill-rule="evenodd"
-                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                        clip-rule="evenodd" />
-                                </svg>
-                                Up to 10 Routers
-                            </li>
-                            <li class="flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
-                                    fill="currentColor">
-                                    <path fill-rule="evenodd"
-                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                        clip-rule="evenodd" />
-                                </svg>
-                                10,000 Vouchers/month
-                            </li>
-                            <li class="flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
-                                    fill="currentColor">
-                                    <path fill-rule="evenodd"
-                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                        clip-rule="evenodd" />
-                                </svg>
-                                Advanced Analytics
-                            </li>
-                            <li class="flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
-                                    fill="currentColor">
-                                    <path fill-rule="evenodd"
-                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                        clip-rule="evenodd" />
-                                </svg>
-                                Multi-Tenant Support
-                            </li>
-                            <li class="flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
-                                    fill="currentColor">
-                                    <path fill-rule="evenodd"
-                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                        clip-rule="evenodd" />
-                                </svg>
-                                Priority Support
-                            </li>
-                        </ul>
-                        <a href="{{ route('tyro-login.register') }}" class="btn btn-secondary btn-block">Get
-                            Started</a>
-                    </div>
-                </div>
+                            @if ($package->description)
+                                <p
+                                    class="text-sm {{ $loop->index === 1 ? 'opacity-80' : 'text-base-content/70' }} mb-4">
+                                    {{ $package->description }}
+                                </p>
+                            @endif
 
-                <!-- Enterprise Plan -->
-                <div class="card bg-base-200 shadow-xl">
-                    <div class="card-body">
-                        <h3 class="card-title text-2xl mb-2">Enterprise</h3>
-                        <div class="mb-4">
-                            <span class="text-4xl font-bold">Custom</span>
+                            <ul class="space-y-3 mb-6">
+                                <li class="flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                        class="h-5 w-5 {{ $loop->index === 1 ? '' : 'text-success' }}"
+                                        viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd"
+                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                    {{ $package->max_routers ?? '∞' }}
+                                    {{ $package->max_routers == 1 ? 'Router' : 'Routers' }}
+                                </li>
+                                <li class="flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                        class="h-5 w-5 {{ $loop->index === 1 ? '' : 'text-success' }}"
+                                        viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd"
+                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                    {{ $package->max_users ?? 'Unlimited' }}
+                                    {{ $package->max_users == 1 ? 'User' : 'Users' }}
+                                </li>
+                                <li class="flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                        class="h-5 w-5 {{ $loop->index === 1 ? '' : 'text-success' }}"
+                                        viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd"
+                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                    {{ $package->max_zones ?? 'Unlimited' }}
+                                    {{ $package->max_zones == 1 ? 'Zone' : 'Zones' }}
+                                </li>
+                                <li class="flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                        class="h-5 w-5 {{ $loop->index === 1 ? '' : 'text-success' }}"
+                                        viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd"
+                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                    {{ $package->max_vouchers_per_router ?? 'Unlimited' }} Vouchers/Router
+                                </li>
+                                @if ($package->billing_cycle)
+                                    <li class="flex items-center gap-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                            class="h-5 w-5 {{ $loop->index === 1 ? '' : 'text-success' }}"
+                                            viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd"
+                                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                                clip-rule="evenodd" />
+                                        </svg>
+                                        {{ ucfirst($package->billing_cycle) }} Billing
+                                    </li>
+                                @endif
+                            </ul>
+                            <a href="{{ route('tyro-login.register') }}"
+                                class="btn {{ $loop->index === 1 ? 'btn-secondary' : 'btn-outline' }} btn-block">
+                                Get Started
+                            </a>
                         </div>
-                        <ul class="space-y-3 mb-6">
-                            <li class="flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-success"
-                                    viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd"
-                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                        clip-rule="evenodd" />
-                                </svg>
-                                Unlimited Routers
-                            </li>
-                            <li class="flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-success"
-                                    viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd"
-                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                        clip-rule="evenodd" />
-                                </svg>
-                                Unlimited Vouchers
-                            </li>
-                            <li class="flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-success"
-                                    viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd"
-                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                        clip-rule="evenodd" />
-                                </svg>
-                                Custom Features
-                            </li>
-                            <li class="flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-success"
-                                    viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd"
-                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                        clip-rule="evenodd" />
-                                </svg>
-                                White Label Option
-                            </li>
-                            <li class="flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-success"
-                                    viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd"
-                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                        clip-rule="evenodd" />
-                                </svg>
-                                Dedicated Support
-                            </li>
-                        </ul>
-                        <a href="#contact" class="btn btn-outline btn-block">Contact Us</a>
                     </div>
-                </div>
+                @empty
+                    <div class="col-span-full text-center py-12">
+                        <p class="text-xl text-base-content/70">No packages available at the moment.</p>
+                        <a href="{{ route('tyro-login.register') }}" class="btn btn-primary mt-4">Sign Up for
+                            Updates</a>
+                    </div>
+                @endforelse
             </div>
         </div>
     </section>

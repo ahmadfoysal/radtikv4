@@ -11,11 +11,11 @@ use Illuminate\Support\Facades\Route;
 
 // Landing Page (Public)
 Route::get('/', function () {
-    // If user is authenticated, redirect to dashboard
-    if (auth()->check()) {
-        return redirect()->route('dashboard');
-    }
-    return view('landing');
+    $packages = \App\Models\Package::where('is_active', true)
+        ->orderBy('price_monthly', 'asc')
+        ->get();
+
+    return view('landing', compact('packages'));
 })->name('landing');
 
 // All routes below require login and suspension check
