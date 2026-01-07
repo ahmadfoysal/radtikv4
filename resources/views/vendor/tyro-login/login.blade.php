@@ -179,6 +179,21 @@
     </div>
 
     <style>
+        /* Logo styling */
+        .logo-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .logo-container img {
+            max-width: 200px;
+            max-height: 80px;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto;
+        }
+
         .captcha-group {
             margin-bottom: 1.25rem;
         }
