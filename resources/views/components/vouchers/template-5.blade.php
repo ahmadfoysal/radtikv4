@@ -7,7 +7,11 @@
         <div class="absolute top-1/2 -right-2 w-4 h-4 bg-white border-l border-amber-800"></div>
 
         <div class="text-center border-b border-amber-800/20 pb-3 mb-3">
-            <h2 class="font-serif font-bold text-amber-900 text-xl tracking-wide uppercase">{{ $router->name }}</h2>
+            @if ($router->logo_url)
+                <img src="{{ $router->logo_url }}" class="h-8 mx-auto mb-1 object-contain" alt="{{ $router->name }}">
+            @else
+                <h2 class="font-serif font-bold text-amber-900 text-xl tracking-wide uppercase">{{ $router->name }}</h2>
+            @endif
             <p class="font-serif italic text-amber-700/70 text-xs">Admit One Device</p>
         </div>
 

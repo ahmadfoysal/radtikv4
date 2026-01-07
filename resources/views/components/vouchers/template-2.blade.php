@@ -7,8 +7,8 @@
 
     <div class="relative z-10 text-center">
         <div class="mb-6">
-            @if ($router->logo)
-                <img src="{{ asset('storage/' . $router->logo) }}" class="h-10 mx-auto brightness-0 invert">
+            @if ($router->logo_url)
+                <img src="{{ $router->logo_url }}" class="h-10 mx-auto brightness-0 invert">
             @else
                 <h2 class="text-2xl font-bold tracking-tight">{{ $router->name }}</h2>
             @endif

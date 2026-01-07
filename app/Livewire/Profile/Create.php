@@ -42,7 +42,7 @@ class Create extends Component
     #[Rule(['boolean'])]
     public bool $mac_binding = false;
 
-    #[Rule(['required', 'numeric', 'min:0'])]
+    #[Rule(['nullable', 'numeric', 'min:0'])]
     public $price = 0.00;
 
     #[Rule(['nullable', 'string', 'max:255'])]

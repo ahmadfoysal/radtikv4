@@ -11,7 +11,11 @@
     <!-- Right: Info -->
     <div class="p-4 w-2/3 flex flex-col justify-center">
         <div class="mb-2">
-            <h3 class="font-bold text-base-content leading-tight">{{ $router->name }}</h3>
+            @if ($router->logo_url)
+                <img src="{{ $router->logo_url }}" class="h-6 mb-1 object-contain" alt="{{ $router->name }}">
+            @else
+                <h3 class="font-bold text-base-content leading-tight">{{ $router->name }}</h3>
+            @endif
             <span class="text-[10px] text-base-content/60 uppercase tracking-wide">Scan or enter code</span>
         </div>
 

@@ -157,6 +157,19 @@
                                         class="btn btn-ghost btn-xs" title="Edit">
                                         <x-mary-icon name="o-pencil" class="w-4 h-4" />
                                     </a>
+                                    {{-- Impersonate Button --}}
+                                    @if (!$customer->isSuspended())
+                                        <button wire:click="impersonate({{ $customer->id }})"
+                                            wire:loading.attr="disabled"
+                                            class="text-success hover:text-success/80 transition-colors"
+                                            title="Login as {{ $customer->name }}"
+                                            onclick="return confirm('Are you sure you want to login as {{ $customer->name }}?')">
+                                            <x-mary-icon name="o-arrow-right-on-rectangle" class="w-4 h-4"
+                                                wire:loading.remove wire:target="impersonate({{ $customer->id }})" />
+                                            <x-mary-loading wire:loading wire:target="impersonate({{ $customer->id }})"
+                                                class="w-4 h-4 text-success" />
+                                        </button>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

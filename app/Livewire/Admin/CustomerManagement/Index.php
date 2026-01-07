@@ -125,4 +125,43 @@ class Index extends Component
 
         return $user->is_active ? 'Active' : 'Inactive';
     }
+
+    /** Impersonate user (only for superadmin) */
+    public function impersonate(int $userId): void
+    {
+        $currentUser = auth()->user();
+
+        // Only superadmin can impersonate
+        if (!$currentUser->hasRole('superadmin')) {
+            $this->error(
+                title: 'Access Denied',
+                description: 'You do not have permission to impersonate users.'
+            );
+            return;
+        }
+
+        $userToImpersonate = User::find($userId);
+
+        if (!$userToImpersonate) {
+            $this->error(
+                title: 'User Not Found',
+                description: 'The user you are trying to impersonate does not exist.'
+            );
+            return;
+        }
+
+        // Store the original user ID in session to allow returning
+        session(['impersonator_id' => $currentUser->id]);
+
+        // Log in as the target user
+        auth()->login($userToImpersonate);
+
+        $this->success(
+            title: 'Impersonation Started',
+            description: "You are now logged in as {$userToImpersonate->name}."
+        );
+
+        // Redirect to dashboard
+        redirect()->to('/dashboard');
+    }
 }

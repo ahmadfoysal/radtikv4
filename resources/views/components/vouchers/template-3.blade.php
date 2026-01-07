@@ -3,8 +3,8 @@
 <div
     class="w-full max-w-[300px] bg-base-100 text-base-content p-4 font-mono text-sm break-inside-avoid mx-auto border-x border-dashed border-base-300">
     <div class="text-center pb-4 border-b-2 border-black border-dashed">
-        @if ($router->logo)
-            <img src="{{ asset('storage/' . $router->logo) }}" class="h-12 mx-auto grayscale mb-2">
+        @if ($router->logo_url)
+            <img src="{{ $router->logo_url }}" class="h-12 mx-auto grayscale mb-2">
         @else
             <h2 class="font-bold text-xl uppercase">{{ $router->name }}</h2>
         @endif
