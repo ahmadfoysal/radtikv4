@@ -1,48 +1,92 @@
 @props(['voucher', 'router'])
 
-<div class="w-full max-w-sm bg-amber-50 border-2 border-amber-800 border-dashed p-1 break-inside-avoid">
-    <div class="border border-amber-800/30 rounded p-4 h-full relative">
-        <!-- Ticket Cutout Circles -->
-        <div class="absolute top-1/2 -left-2 w-4 h-4 bg-white border-r border-amber-800"></div>
-        <div class="absolute top-1/2 -right-2 w-4 h-4 bg-white border-l border-amber-800"></div>
+{{-- Template 5: Vintage Ticket Style --}}
+<div class="bg-white border-4 border-black border-double break-inside-avoid overflow-hidden"
+    style="width: 320px; padding: 4px;">
+    <div class="border-2 border-black bg-white relative overflow-hidden" style="padding: 16px; min-height: 380px;">
 
-        <div class="text-center border-b border-amber-800/20 pb-3 mb-3">
-            @if ($router->logo_url)
-                <img src="{{ $router->logo_url }}" class="h-8 mx-auto mb-1 object-contain" alt="{{ $router->name }}">
-            @else
-                <h2 class="font-serif font-bold text-amber-900 text-xl tracking-wide uppercase">{{ $router->name }}</h2>
-            @endif
-            <p class="font-serif italic text-amber-700/70 text-xs">Admit One Device</p>
+        {{-- Perforated Edge Effect --}}
+        <div class="absolute bg-white border-2 border-black rounded-full"
+            style="top: 50%; left: -12px; width: 24px; height: 24px; transform: translateY(-50%);"></div>
+        <div class="absolute bg-white border-2 border-black rounded-full"
+            style="top: 50%; right: -12px; width: 24px; height: 24px; transform: translateY(-50%);"></div>
+
+        {{-- Header --}}
+        <div class="text-center border-b-2 border-black" style="padding-bottom: 10px; margin-bottom: 12px;">
+            <div class="inline-block bg-black text-white" style="padding: 4px 12px;">
+                <h2 class="font-serif font-bold text-white uppercase tracking-wide truncate"
+                    style="font-size: 16px; max-width: 240px;">
+                    {{ Str::limit($router->name, 18, '') }}
+                </h2>
+            </div>
+            <p class="font-serif italic text-gray-700 text-xs" style="margin-top: 8px;">═══ Internet Access Pass ═══</p>
+            <p class="text-[9px] text-gray-500 font-mono" style="margin-top: 4px;">Voucher
+                #{{ str_pad($voucher->id, 6, '0', STR_PAD_LEFT) }}</p>
         </div>
 
-        <div class="flex justify-between items-center gap-4">
-            <div class="text-center flex-1">
-                <span class="block text-[10px] font-bold text-amber-800/50 uppercase mb-1">User Code</span>
-                <span
-                    class="block font-mono text-2xl font-bold text-amber-900 border-2 border-amber-900/10 bg-white/50 rounded py-1">
-                    {{ $voucher->username }}
-                </span>
+        {{-- Main Content --}}
+        <div style="margin-bottom: 12px;">
+            {{-- Access Code --}}
+            <div class="text-center" style="margin-bottom: 10px;">
+                <span class="block text-[10px] font-bold text-gray-600 uppercase tracking-widest"
+                    style="margin-bottom: 4px;">◇ Access Code ◇</span>
+                <div class="border-4 border-black bg-white inline-block" style="padding: 6px 10px; max-width: 260px;">
+                    <span class="block font-mono font-bold text-black tracking-wide break-all"
+                        style="font-size: 20px; word-break: break-all;">
+                        {{ $voucher->username }}
+                    </span>
+                </div>
             </div>
 
             @if ($voucher->password != $voucher->username)
-                <div class="text-center flex-1">
-                    <span class="block text-[10px] font-bold text-amber-800/50 uppercase mb-1">Password</span>
-                    <span class="block font-mono text-xl font-bold text-amber-900 py-1">
+                <div class="text-center" style="margin-top: 10px;">
+                    <span class="block text-[10px] font-bold text-gray-600 uppercase tracking-widest"
+                        style="margin-bottom: 4px;">◇ Password ◇</span>
+                    <span
+                        class="block font-mono font-bold text-black border-2 border-gray-400 border-dashed inline-block break-all"
+                        style="font-size: 16px; padding: 4px 8px; max-width: 260px; word-break: break-all;">
                         {{ $voucher->password }}
                     </span>
                 </div>
             @endif
         </div>
 
-        <div class="mt-4 flex justify-center gap-4 text-xs font-serif text-amber-800">
-            <div class="flex items-center gap-1">
-                <x-mary-icon name="o-star" class="w-3 h-3" />
-                <span>{{ $voucher->profile->name ?? 'Standard' }}</span>
+        {{-- Details Grid --}}
+        <div class="border-t-2 border-b-2 border-black"
+            style="padding-top: 10px; padding-bottom: 10px; margin-top: 10px; margin-bottom: 10px;">
+            <table class="w-full text-xs font-serif">
+                <tr class="border-b border-gray-300">
+                    <td class="font-bold text-gray-700 uppercase text-[10px]"
+                        style="padding-top: 4px; padding-bottom: 4px; width: 35%;">Package:</td>
+                    <td class="text-right font-bold text-black truncate"
+                        style="padding-top: 4px; padding-bottom: 4px; width: 65%;">
+                        {{ Str::limit($voucher->profile->name ?? 'Standard', 14, '') }}</td>
+                </tr>
+                <tr class="border-b border-gray-300">
+                    <td class="font-bold text-gray-700 uppercase text-[10px]"
+                        style="padding-top: 4px; padding-bottom: 4px;">Valid For:</td>
+                    <td class="text-right font-bold text-black" style="padding-top: 4px; padding-bottom: 4px;">
+                        {{ $voucher->profile->validity ?? 'N/A' }}</td>
+                </tr>
+                <tr>
+                    <td class="font-bold text-gray-700 uppercase text-[10px]"
+                        style="padding-top: 4px; padding-bottom: 4px;">Price:</td>
+                    <td class="text-right font-bold text-black" style="padding-top: 4px; padding-bottom: 4px;">
+                        {{ $voucher->profile->price ?? 'Free' }}</td>
+                </tr>
+            </table>
+        </div>
+
+        {{-- Footer --}}
+        <div class="text-center" style="margin-top: 12px;">
+            <div class="text-[10px] font-bold text-gray-600 uppercase tracking-wide" style="margin-bottom: 4px;">Login
+                Portal</div>
+            <div class="font-mono font-semibold text-black bg-gray-100 border border-gray-400 inline-block truncate"
+                style="font-size: 10px; padding: 4px 8px; max-width: 260px;">
+                {{ Str::limit($router->login_address ?? 'hotspot.local', 30, '') }}
             </div>
-            <div class="flex items-center gap-1">
-                <x-mary-icon name="o-clock" class="w-3 h-3" />
-                <span>{{ $voucher->profile->validity ?? 'Unknown' }}</span>
-            </div>
+            <p class="text-[9px] text-gray-500 font-serif italic" style="margin-top: 8px;">Keep this ticket for your
+                records</p>
         </div>
     </div>
 </div>

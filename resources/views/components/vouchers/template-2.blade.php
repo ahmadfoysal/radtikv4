@@ -1,42 +1,48 @@
 @props(['voucher', 'router'])
 
-<div class="w-full max-w-sm bg-base-300 text-base-content break-inside-avoid p-6 relative shadow-lg">
-    <!-- Background Gradient -->
-    <div class="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-secondary blur-3xl opacity-20"></div>
-    <div class="absolute bottom-0 left-0 -ml-8 -mb-8 w-32 h-32 bg-primary blur-3xl opacity-20"></div>
+@php
+    // Build login URL with username and password parameters
+    $loginUrl = rtrim($router->login_address ?? 'http://hotspot.local', '/');
+    $qrData =
+        $loginUrl . '/login?username=' . urlencode($voucher->username) . '&password=' . urlencode($voucher->username);
+@endphp
 
-    <div class="relative z-10 text-center">
-        <div class="mb-6">
-            @if ($router->logo_url)
-                <img src="{{ $router->logo_url }}" class="h-10 mx-auto brightness-0 invert">
-            @else
-                <h2 class="text-2xl font-bold tracking-tight">{{ $router->name }}</h2>
-            @endif
-            <p class="text-base-content/60 text-xs mt-1 uppercase tracking-widest">Premium Internet Access</p>
-        </div>
+{{-- Template 2: Horizontal Card with QR Code - 5 per row --}}
+<div class="bg-white border-2 border-black break-inside-avoid overflow-hidden flex" style="width: 220px; height: 90px;">
 
-        <div class="my-6 space-y-4">
-            <div>
-                <span class="block text-xs text-base-content/60 mb-1">LOGIN CODE</span>
-                <span class="block text-3xl font-black font-mono tracking-widest text-primary">
-                    {{ $voucher->username }}
-                </span>
+    {{-- Left Section: QR Code --}}
+    <div class="border-r-2 border-black flex items-center justify-center bg-white" style="width: 88px; padding: 4px;">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data={{ urlencode($qrData) }}&color=000000&bgcolor=ffffff"
+            style="width: 80px; height: 80px; display: block;" alt="QR">
+    </div>
+
+    {{-- Right Section: Info --}}
+    <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+
+        {{-- Header: Router Name + ID --}}
+        <div class="border-b border-black flex items-center justify-between" style="padding: 3px 6px; height: 20px;">
+            <div class="text-[9px] font-bold text-black truncate" style="max-width: 85px;">
+                {{ $router->name }}
             </div>
-
-            @if ($voucher->password != $voucher->username)
-                <div>
-                    <span class="block text-xs text-base-content/60 mb-1">PASSWORD</span>
-                    <span class="block text-xl font-bold font-mono text-base-content tracking-widest">
-                        {{ $voucher->password }}
-                    </span>
-                </div>
-            @endif
+            <div class="text-[9px] text-black font-bold">[{{ $voucher->id }}]</div>
         </div>
 
-        <div class="flex justify-center items-center gap-2 mt-6">
-            <span class="px-3 py-1 bg-base-200 border border-base-300 text-xs font-mono text-base-content/80">
-                {{ $voucher->profile->name ?? 'Plan' }}
-            </span>
+        {{-- Voucher Code - Center --}}
+        <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 0 6px;">
+            <div class="text-[20px] font-black font-mono text-black leading-none" style="letter-spacing: -0.5px;">
+                {{ $voucher->username }}
+            </div>
+        </div>
+
+        {{-- Footer: Validity + Plan --}}
+        <div class="border-t border-black" style="padding: 3px 6px;">
+            <div class="text-[8px] font-bold text-black leading-tight" style="margin-bottom: 2px;">
+                Validity: {{ $voucher->profile->validity ?? '1d' }}
+            </div>
+            <div class="text-[7px] font-semibold text-black truncate">
+                Plan: {{ Str::limit($voucher->profile->name ?? '1 Day', 14, '') }}
+            </div>
         </div>
     </div>
+
 </div>

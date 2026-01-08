@@ -1,38 +1,33 @@
 @props(['voucher', 'router'])
 
-{{-- Compact WiFi Card (48 per A4 landscape) --}}
-<div class="w-full bg-white border border-black break-inside-avoid relative" style="height: 58px;">
+{{-- Template 1: Compact Grid Style - 48 cards per A4 landscape (6x8) --}}
+<div class="bg-white border border-black break-inside-avoid overflow-hidden" style="width: 165px; height: 90px;">
 
-    {{-- Header: Router Name & Serial --}}
-    <div class="bg-black text-white px-1 py-0.5 flex justify-between items-center">
-        <div class="text-[7px] font-bold uppercase tracking-wide truncate max-w-[85px]">
-            {{ Str::limit($router->name, 20, '') }}
+    {{-- Header: Router Name + ID --}}
+    <div class="border-b border-black flex items-center justify-between" style="padding: 3px 6px; height: 20px;">
+        <div class="text-[10px] font-bold text-black truncate" style="max-width: 120px;">
+            {{ $router->name }}
         </div>
-        <span class="text-[6px] font-mono">{{ str_pad($voucher->id, 5, '0', STR_PAD_LEFT) }}</span>
+        <div class="text-[10px] text-black font-bold">[{{ $voucher->id }}]</div>
     </div>
 
-    {{-- Voucher Code --}}
-    <div class="px-1 py-1 text-center mb-1">
-        <div class="text-[6px] text-gray-500 uppercase tracking-wider font-semibold mb-0.5">CODE</div>
-        <div class="bg-gray-50 border border-black px-1 py-0.5 inline-block">
-            <div class="text-xs font-black font-mono tracking-wider text-black leading-none">
+    {{-- Voucher Code in Rectangle Box + Validity --}}
+    <div class="flex flex-col items-center justify-center" style="height: 50px; padding: 6px;">
+        <div class="border-2 border-black bg-white" style="padding: 3px 6px;">
+            <div class="text-[15px] font-bold font-mono text-black leading-none" style="letter-spacing: -0.3px;">
                 {{ $voucher->username }}
             </div>
         </div>
+        <div class="text-[9px] font-bold text-black mt-1">
+            {{ $voucher->profile->validity ?? '30d' }}
+        </div>
     </div>
 
-    {{-- Footer: Login & Validity --}}
-    <div
-        class="absolute bottom-0 left-0 right-0 bg-black text-white px-1 py-0.5 flex justify-between items-center text-[6px] font-mono">
-        <div class="truncate mr-1">
-            @if ($router->login_address)
-                {{ Str::limit($router->login_address, 18, '') }}
-            @else
-                {{ Str::limit($voucher->profile->name, 15, '') }}
-            @endif
-        </div>
-        <div class="whitespace-nowrap font-bold">
-            {{ $voucher->profile->validity ?? '30d' }}
+    {{-- Footer: Login Address --}}
+    <div class="border-t border-black text-center"
+        style="padding: 3px 6px; height: 20px; display: flex; align-items: center; justify-content: center;">
+        <div class="text-[9px] font-bold text-black leading-none truncate" style="max-width: 100%;">
+            {{ $router->login_address ?? 'hotspot.local' }}
         </div>
     </div>
 

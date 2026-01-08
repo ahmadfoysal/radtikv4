@@ -11,6 +11,17 @@
             ->first(fn($tpl) => View::exists('components.vouchers.' . $tpl)) ?? 'template-1';
 
     $voucherCount = $vouchers->count();
+
+    // Define grid settings per template
+    $templateSettings = [
+        'template-1' => ['columns' => 6, 'width' => '165px', 'gap' => '2mm'],
+        'template-2' => ['columns' => 5, 'width' => '220px', 'gap' => '2mm'],
+        'template-3' => ['columns' => 3, 'width' => '280px', 'gap' => '3mm'],
+        'template-4' => ['columns' => 3, 'width' => '340px', 'gap' => '3mm'],
+        'template-5' => ['columns' => 3, 'width' => '320px', 'gap' => '3mm'],
+    ];
+
+    $settings = $templateSettings[$templateComponent] ?? $templateSettings['template-1'];
 @endphp
 
 <!DOCTYPE html>
@@ -24,7 +35,7 @@
     <style>
         @page {
             size: A4 landscape;
-            margin: 8mm;
+            margin: 5mm;
         }
 
         @media print {
@@ -46,10 +57,12 @@
 
             .voucher-grid {
                 display: grid;
-                grid-template-columns: repeat(8, 1fr);
-                gap: 3px;
-                width: 100%;
-                max-width: 100%;
+                grid-template-columns: repeat({{ $settings['columns'] }}, {{ $settings['width'] }});
+                gap: {{ $settings['gap'] }};
+                width: fit-content;
+                margin: 0 auto;
+                padding: 0;
+                justify-content: center;
             }
 
             .voucher-item {
@@ -60,8 +73,8 @@
 
         .voucher-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-            gap: 12px;
+            grid-template-columns: repeat(auto-fit, minmax({{ $settings['width'] }}, max-content));
+            gap: 15px;
         }
     </style>
 </head>
@@ -74,7 +87,8 @@
         <div>
             <h1 class="text-2xl font-bold text-gray-800">WiFi Vouchers - {{ $voucherCount }} Cards</h1>
             <p class="text-sm text-gray-600 mt-1">{{ $router->name }} •
-                {{ $router->login_address ?? 'No login address' }} • 48 cards per page (A4 Landscape)</p>
+                {{ $router->login_address ?? 'No login address' }} • {{ $settings['columns'] }} cards per row (A4
+                Landscape)</p>
         </div>
         <div class="flex gap-3">
             <button onclick="window.history.back()"
