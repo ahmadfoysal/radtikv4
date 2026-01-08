@@ -38,6 +38,10 @@
             {{-- <x-mary-menu-item title="Sales Summary" icon="o-banknotes" link="/reports/sales" /> --}}
         </x-mary-menu-sub>
 
+        {{-- CONTACT MESSAGES --}}
+        <x-mary-menu-item title="Contact Messages" icon="o-envelope" link="/contact-messages" wire:navigate
+            badge="{{ \App\Models\ContactMessage::count() }}" />
+
         {{-- ADMIN SETTINGS --}}
         <x-mary-menu-sub title="Admin Settings" icon="o-cog-6-tooth">
             <x-mary-menu-item title="General Settings" icon="o-adjustments-horizontal" link="/admin/general-settings"

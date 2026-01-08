@@ -18,6 +18,9 @@ Route::get('/', function () {
     return view('landing', compact('packages'));
 })->name('landing');
 
+// Contact Form Submission (Public)
+Route::post('/contact', [App\Http\Controllers\ContactMessageController::class, 'store'])->name('contact.store');
+
 // All routes below require login and suspension check
 Route::middleware(['auth', 'check.suspended'])->group(function () {
 
@@ -75,6 +78,9 @@ Route::middleware(['auth', 'check.suspended'])->group(function () {
 
         // Log Management
         Route::get('/superadmin/logs', App\Livewire\Admin\LogManagement::class)->name('superadmin.logs');
+
+        // Contact Messages
+        Route::get('/contact-messages', App\Livewire\Admin\ContactMessages::class)->name('contact.messages');
     });
 
     /* ========================================

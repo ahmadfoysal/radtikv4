@@ -78,7 +78,7 @@
 
         /* Gradient text */
         .gradient-text {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #0EA5E9 0%, #06B6D4 50%, #3B82F6 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -496,11 +496,12 @@
                 </p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 max-w-6xl mx-auto">
                 @forelse ($packages as $package)
+                    @php($isPopular = $package->id == 2)
                     <div
-                        class="card bg-base-200 shadow-xl {{ $loop->index === 1 ? 'scale-105 border-4 border-primary bg-primary text-primary-content' : '' }}">
-                        @if ($loop->index === 1)
+                        class="card bg-base-200 shadow-xl {{ $isPopular ? 'scale-105 border-4 border-primary bg-primary text-primary-content' : '' }}">
+                        @if ($isPopular)
                             <div class="badge badge-secondary absolute top-4 right-4">POPULAR</div>
                         @endif
                         <div class="card-body">
@@ -509,15 +510,14 @@
                                 @if ($package->price_monthly > 0)
                                     <span class="text-4xl font-bold">@userCurrency($package->price_monthly)</span>
                                     <span
-                                        class="{{ $loop->index === 1 ? 'opacity-70' : 'text-base-content/70' }}">/month</span>
+                                        class="{{ $isPopular ? 'opacity-70' : 'text-base-content/70' }}">/month</span>
                                 @else
                                     <span class="text-4xl font-bold">Free</span>
                                 @endif
                             </div>
 
                             @if ($package->description)
-                                <p
-                                    class="text-sm {{ $loop->index === 1 ? 'opacity-80' : 'text-base-content/70' }} mb-4">
+                                <p class="text-sm {{ $isPopular ? 'opacity-80' : 'text-base-content/70' }} mb-4">
                                     {{ $package->description }}
                                 </p>
                             @endif
@@ -525,8 +525,8 @@
                             <ul class="space-y-3 mb-6">
                                 <li class="flex items-center gap-2">
                                     <svg xmlns="http://www.w3.org/2000/svg"
-                                        class="h-5 w-5 {{ $loop->index === 1 ? '' : 'text-success' }}"
-                                        viewBox="0 0 20 20" fill="currentColor">
+                                        class="h-5 w-5 {{ $isPopular ? '' : 'text-success' }}" viewBox="0 0 20 20"
+                                        fill="currentColor">
                                         <path fill-rule="evenodd"
                                             d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
                                             clip-rule="evenodd" />
@@ -536,8 +536,8 @@
                                 </li>
                                 <li class="flex items-center gap-2">
                                     <svg xmlns="http://www.w3.org/2000/svg"
-                                        class="h-5 w-5 {{ $loop->index === 1 ? '' : 'text-success' }}"
-                                        viewBox="0 0 20 20" fill="currentColor">
+                                        class="h-5 w-5 {{ $isPopular ? '' : 'text-success' }}" viewBox="0 0 20 20"
+                                        fill="currentColor">
                                         <path fill-rule="evenodd"
                                             d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
                                             clip-rule="evenodd" />
@@ -547,8 +547,8 @@
                                 </li>
                                 <li class="flex items-center gap-2">
                                     <svg xmlns="http://www.w3.org/2000/svg"
-                                        class="h-5 w-5 {{ $loop->index === 1 ? '' : 'text-success' }}"
-                                        viewBox="0 0 20 20" fill="currentColor">
+                                        class="h-5 w-5 {{ $isPopular ? '' : 'text-success' }}" viewBox="0 0 20 20"
+                                        fill="currentColor">
                                         <path fill-rule="evenodd"
                                             d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
                                             clip-rule="evenodd" />
@@ -558,8 +558,8 @@
                                 </li>
                                 <li class="flex items-center gap-2">
                                     <svg xmlns="http://www.w3.org/2000/svg"
-                                        class="h-5 w-5 {{ $loop->index === 1 ? '' : 'text-success' }}"
-                                        viewBox="0 0 20 20" fill="currentColor">
+                                        class="h-5 w-5 {{ $isPopular ? '' : 'text-success' }}" viewBox="0 0 20 20"
+                                        fill="currentColor">
                                         <path fill-rule="evenodd"
                                             d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
                                             clip-rule="evenodd" />
@@ -569,7 +569,7 @@
                                 @if ($package->billing_cycle)
                                     <li class="flex items-center gap-2">
                                         <svg xmlns="http://www.w3.org/2000/svg"
-                                            class="h-5 w-5 {{ $loop->index === 1 ? '' : 'text-success' }}"
+                                            class="h-5 w-5 {{ $isPopular ? '' : 'text-success' }}"
                                             viewBox="0 0 20 20" fill="currentColor">
                                             <path fill-rule="evenodd"
                                                 d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -580,7 +580,7 @@
                                 @endif
                             </ul>
                             <a href="{{ route('tyro-login.register') }}"
-                                class="btn {{ $loop->index === 1 ? 'btn-secondary' : 'btn-outline' }} btn-block">
+                                class="btn {{ $isPopular ? 'btn-secondary' : 'btn-outline' }} btn-block">
                                 Get Started
                             </a>
                         </div>
@@ -628,32 +628,86 @@
 
             <div class="card bg-base-200 shadow-xl">
                 <div class="card-body">
-                    <form class="space-y-4">
+                    @if (session('success'))
+                        <div class="alert alert-success mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6"
+                                fill="none" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>{{ session('success') }}</span>
+                        </div>
+                    @endif
+
+                    <form action="{{ route('contact.store') }}" method="POST" class="space-y-4">
+                        @csrf
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="form-control">
                                 <label class="label">
-                                    <span class="label-text">Name</span>
+                                    <span class="label-text">Name <span class="text-error">*</span></span>
                                 </label>
-                                <input type="text" placeholder="Your name" class="input input-bordered" />
+                                <input type="text" name="name" value="{{ old('name') }}"
+                                    placeholder="Your name"
+                                    class="input input-bordered @error('name') input-error @enderror" required />
+                                @error('name')
+                                    <label class="label">
+                                        <span class="label-text-alt text-error">{{ $message }}</span>
+                                    </label>
+                                @enderror
                             </div>
                             <div class="form-control">
                                 <label class="label">
-                                    <span class="label-text">Email</span>
+                                    <span class="label-text">Email <span class="text-error">*</span></span>
                                 </label>
-                                <input type="email" placeholder="your@email.com" class="input input-bordered" />
+                                <input type="email" name="email" value="{{ old('email') }}"
+                                    placeholder="your@email.com"
+                                    class="input input-bordered @error('email') input-error @enderror" required />
+                                @error('email')
+                                    <label class="label">
+                                        <span class="label-text-alt text-error">{{ $message }}</span>
+                                    </label>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text">WhatsApp Number</span>
+                                </label>
+                                <input type="text" name="whatsapp" value="{{ old('whatsapp') }}"
+                                    placeholder="+1234567890"
+                                    class="input input-bordered @error('whatsapp') input-error @enderror" />
+                                @error('whatsapp')
+                                    <label class="label">
+                                        <span class="label-text-alt text-error">{{ $message }}</span>
+                                    </label>
+                                @enderror
+                            </div>
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text">Subject <span class="text-error">*</span></span>
+                                </label>
+                                <input type="text" name="subject" value="{{ old('subject') }}"
+                                    placeholder="What's this about?"
+                                    class="input input-bordered @error('subject') input-error @enderror" required />
+                                @error('subject')
+                                    <label class="label">
+                                        <span class="label-text-alt text-error">{{ $message }}</span>
+                                    </label>
+                                @enderror
                             </div>
                         </div>
                         <div class="form-control">
                             <label class="label">
-                                <span class="label-text">Subject</span>
+                                <span class="label-text">Message <span class="text-error">*</span></span>
                             </label>
-                            <input type="text" placeholder="What's this about?" class="input input-bordered" />
-                        </div>
-                        <div class="form-control">
-                            <label class="label">
-                                <span class="label-text">Message</span>
-                            </label>
-                            <textarea class="textarea textarea-bordered h-32" placeholder="Your message..."></textarea>
+                            <textarea name="message" class="textarea textarea-bordered h-32 @error('message') textarea-error @enderror"
+                                placeholder="Your message..." required>{{ old('message') }}</textarea>
+                            @error('message')
+                                <label class="label">
+                                    <span class="label-text-alt text-error">{{ $message }}</span>
+                                </label>
+                            @enderror
                         </div>
                         <button type="submit" class="btn btn-primary btn-block btn-lg">
                             Send Message
@@ -668,6 +722,87 @@
             </div>
         </div>
     </section>
+
+    <!-- Floating WhatsApp Button -->
+    <a href="https://wa.me/8801303705753" target="_blank" rel="noopener noreferrer" aria-label="Chat on WhatsApp"
+        class="whatsapp-float">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" width="32" height="32"
+            aria-hidden="true">
+            <path fill="currentColor"
+                d="M380.9 97.1C339-10.7 210.9-32 122.1 39.1 52.3 95.4 31.8 186.8 66.2 264L32 368l107.1-33.7C214.7 370.7 307.6 352 364.9 282.2c71.1-88.8 49.8-216.9-16-255.1zM224 336c-23.7 0-47-6-67.4-17.4l-4.8-2.7-63.9 20.1 20.9-61-2.9-5C85.6 249.7 80 226.3 80 202.6 80 137.2 137.2 80 202.6 80c24.5 0 47.8 7.3 67.6 21.1 19.1 13.3 33.7 31.6 42.3 53.2 8.4 20.9 10.6 43.7 6.3 66.3-4.6 24.1-16.7 46-34.5 63.8C265.8 323.3 245 334.6 224 336zm85.2-93.5c-3.7-1.9-22-10.8-25.4-12-3.4-1.2-5.9-1.9-8.5 1.9-2.5 3.7-9.8 12-12 14.5-2.2 2.4-4.5 2.7-8.2.9-3.7-1.9-15.7-5.8-29.8-18.6-11-9.8-18.4-21.9-20.6-25.6-2.2-3.7-.2-5.7 1.6-7.5 1.6-1.6 3.7-4.5 5.5-6.7 1.9-2.2 2.5-3.7 3.7-6.1 1.2-2.4.6-4.5-.3-6.4-.9-1.9-8.5-20.5-11.7-28.1-3.1-7.4-6.3-6.4-8.5-6.5-2.2-.1-4.5-.1-6.9-.1s-6.4.9-9.8 4.5-12.9 12.6-12.9 30.8 13.2 35.7 15 38.2c1.9 2.5 26 39.8 63.1 55.8 23.4 10.1 32.5 11 44.2 9.3 7.1-1.1 22-9 25.1-17.6 3.1-8.6 3.1-16 2.2-17.6-.8-1.6-3.4-2.5-7.1-4.4z" />
+        </svg>
+    </a>
+
+    <style>
+        .whatsapp-float {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 2147483647;
+            width: 64px;
+            height: 64px;
+            border-radius: 50% !important;
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4), 0 8px 24px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            overflow: visible;
+        }
+
+        .whatsapp-float::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: inherit;
+            animation: whatsapp-pulse 2s ease-out infinite;
+            opacity: 0;
+        }
+
+        .whatsapp-float:hover {
+            transform: scale(1.1) translateY(-2px);
+            box-shadow: 0 6px 16px rgba(37, 211, 102, 0.5), 0 12px 32px rgba(0, 0, 0, 0.2);
+        }
+
+        .whatsapp-float:active {
+            transform: scale(1.05);
+        }
+
+        @keyframes whatsapp-pulse {
+            0% {
+                transform: scale(1);
+                opacity: 0.6;
+            }
+
+            50% {
+                transform: scale(1.3);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .whatsapp-float {
+                width: 56px;
+                height: 56px;
+                bottom: 16px;
+                right: 16px;
+            }
+
+            .whatsapp-float svg {
+                width: 28px;
+                height: 28px;
+            }
+        }
+    </style>
 
     <!-- Footer -->
     <footer class="footer footer-center p-10 bg-base-200 text-base-content">
