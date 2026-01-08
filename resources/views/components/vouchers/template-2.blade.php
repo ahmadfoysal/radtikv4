@@ -18,8 +18,7 @@
         <div class="my-6 space-y-4">
             <div>
                 <span class="block text-xs text-base-content/60 mb-1">LOGIN CODE</span>
-                <span
-                    class="block text-3xl font-black font-mono tracking-widest text-primary">
+                <span class="block text-3xl font-black font-mono tracking-widest text-primary">
                     {{ $voucher->username }}
                 </span>
             </div>

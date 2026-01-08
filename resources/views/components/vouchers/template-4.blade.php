@@ -1,7 +1,6 @@
 @props(['voucher', 'router'])
 
-<div
-    class="w-full max-w-sm bg-base-100 shadow-sm border border-base-300 p-0 break-inside-avoid overflow-hidden flex">
+<div class="w-full max-w-sm bg-base-100 shadow-sm border border-base-300 p-0 break-inside-avoid overflow-hidden flex">
     <!-- Left: QR Code -->
     <div class="bg-base-300 p-4 flex items-center justify-center w-1/3">
         <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ $voucher->username }}&color=ffffff&bgcolor=111827"
