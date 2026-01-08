@@ -19,11 +19,13 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+            'validate.registration.email' => \App\Http\Middleware\ValidateRegistrationEmail::class,
         ]);
 
         // Apply user-specific settings (timezone, etc.) for authenticated users
         $middleware->web(append: [
             \App\Http\Middleware\ApplyUserSettings::class,
+            \App\Http\Middleware\ValidateRegistrationEmail::class,
         ]);
 
         $middleware->redirectGuestsTo('/login');
