@@ -618,7 +618,7 @@
 
     <!-- Contact Section -->
     <section id="contact" class="py-20 px-4 bg-base-100">
-        <div class="container mx-auto max-w-4xl">
+        <div class="container mx-auto max-w-5xl">
             <div class="text-center mb-16">
                 <h2 class="text-4xl md:text-5xl font-bold mb-4">Get In Touch</h2>
                 <p class="text-xl text-base-content/70">
@@ -626,10 +626,10 @@
                 </p>
             </div>
 
-            <div class="card bg-base-200 shadow-xl">
+            <div class="card bg-base-200 shadow-2xl">
                 <div class="card-body">
                     @if (session('success'))
-                        <div class="alert alert-success mb-4">
+                        <div class="alert alert-success mb-6 shadow-lg">
                             <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6"
                                 fill="none" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -639,84 +639,105 @@
                         </div>
                     @endif
 
-                    <form action="{{ route('contact.store') }}" method="POST" class="space-y-4">
+                    <form action="{{ route('contact.store') }}" method="POST" class="space-y-6">
                         @csrf
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="form-control">
-                                <label class="label">
-                                    <span class="label-text">Name <span class="text-error">*</span></span>
+
+                        {{-- Name and Email Row --}}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="form-control w-full">
+                                <label class="label pb-2">
+                                    <span class="label-text font-semibold">Name <span
+                                            class="text-error">*</span></span>
                                 </label>
                                 <input type="text" name="name" value="{{ old('name') }}"
-                                    placeholder="Your name"
-                                    class="input input-bordered @error('name') input-error @enderror" required />
+                                    placeholder="Your full name"
+                                    class="input input-bordered w-full focus:input-primary @error('name') input-error @enderror"
+                                    required />
                                 @error('name')
-                                    <label class="label">
-                                        <span class="label-text-alt text-error">{{ $message }}</span>
+                                    <label class="label pt-2">
+                                        <span class="label-text-alt text-error text-sm">{{ $message }}</span>
                                     </label>
                                 @enderror
                             </div>
-                            <div class="form-control">
-                                <label class="label">
-                                    <span class="label-text">Email <span class="text-error">*</span></span>
+
+                            <div class="form-control w-full">
+                                <label class="label pb-2">
+                                    <span class="label-text font-semibold">Email <span
+                                            class="text-error">*</span></span>
                                 </label>
                                 <input type="email" name="email" value="{{ old('email') }}"
                                     placeholder="your@email.com"
-                                    class="input input-bordered @error('email') input-error @enderror" required />
+                                    class="input input-bordered w-full focus:input-primary @error('email') input-error @enderror"
+                                    required />
                                 @error('email')
-                                    <label class="label">
-                                        <span class="label-text-alt text-error">{{ $message }}</span>
+                                    <label class="label pt-2">
+                                        <span class="label-text-alt text-error text-sm">{{ $message }}</span>
                                     </label>
                                 @enderror
                             </div>
                         </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="form-control">
-                                <label class="label">
-                                    <span class="label-text">WhatsApp Number</span>
+
+                        {{-- WhatsApp and Subject Row --}}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="form-control w-full">
+                                <label class="label pb-2">
+                                    <span class="label-text font-semibold">WhatsApp Number</span>
                                 </label>
                                 <input type="text" name="whatsapp" value="{{ old('whatsapp') }}"
-                                    placeholder="+1234567890"
-                                    class="input input-bordered @error('whatsapp') input-error @enderror" />
+                                    placeholder="+1 (234) 567-8900"
+                                    class="input input-bordered w-full focus:input-primary @error('whatsapp') input-error @enderror" />
                                 @error('whatsapp')
-                                    <label class="label">
-                                        <span class="label-text-alt text-error">{{ $message }}</span>
+                                    <label class="label pt-2">
+                                        <span class="label-text-alt text-error text-sm">{{ $message }}</span>
                                     </label>
                                 @enderror
                             </div>
-                            <div class="form-control">
-                                <label class="label">
-                                    <span class="label-text">Subject <span class="text-error">*</span></span>
+
+                            <div class="form-control w-full">
+                                <label class="label pb-2">
+                                    <span class="label-text font-semibold">Subject <span
+                                            class="text-error">*</span></span>
                                 </label>
                                 <input type="text" name="subject" value="{{ old('subject') }}"
                                     placeholder="What's this about?"
-                                    class="input input-bordered @error('subject') input-error @enderror" required />
+                                    class="input input-bordered w-full focus:input-primary @error('subject') input-error @enderror"
+                                    required />
                                 @error('subject')
-                                    <label class="label">
-                                        <span class="label-text-alt text-error">{{ $message }}</span>
+                                    <label class="label pt-2">
+                                        <span class="label-text-alt text-error text-sm">{{ $message }}</span>
                                     </label>
                                 @enderror
                             </div>
                         </div>
-                        <div class="form-control">
-                            <label class="label">
-                                <span class="label-text">Message <span class="text-error">*</span></span>
+
+                        {{-- Message Row --}}
+                        <div class="form-control w-full">
+                            <label class="label pb-2">
+                                <span class="label-text font-semibold">Message <span
+                                        class="text-error">*</span></span>
                             </label>
-                            <textarea name="message" class="textarea textarea-bordered h-32 @error('message') textarea-error @enderror"
-                                placeholder="Your message..." required>{{ old('message') }}</textarea>
+                            <textarea name="message"
+                                class="textarea textarea-bordered w-full h-32 focus:textarea-primary @error('message') textarea-error @enderror"
+                                placeholder="Tell us more about your inquiry..." required>{{ old('message') }}</textarea>
                             @error('message')
-                                <label class="label">
-                                    <span class="label-text-alt text-error">{{ $message }}</span>
+                                <label class="label pt-2">
+                                    <span class="label-text-alt text-error text-sm">{{ $message }}</span>
                                 </label>
                             @enderror
                         </div>
-                        <button type="submit" class="btn btn-primary btn-block btn-lg">
-                            Send Message
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
-                                fill="currentColor">
-                                <path
-                                    d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-                            </svg>
-                        </button>
+
+                        {{-- Submit Button --}}
+                        <div class="pt-2">
+                            <button type="submit"
+                                class="btn btn-primary btn-lg w-full gap-2 text-lg shadow-lg hover:shadow-xl">
+                                Send Message
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20"
+                                    fill="currentColor">
+                                    <path
+                                        d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                                </svg>
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>

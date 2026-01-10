@@ -21,6 +21,9 @@ class ContactMessages extends Component
     public bool $showDeleteModal = false;
     public ?int $deleteId = null;
 
+    public bool $showDetailModal = false;
+    public ?ContactMessage $selectedMessage = null;
+
     public function mount(): void
     {
         // Only superadmin can access
@@ -30,6 +33,18 @@ class ContactMessages extends Component
     public function updatedSearch(): void
     {
         $this->resetPage();
+    }
+
+    public function viewDetail(int $id): void
+    {
+        $this->selectedMessage = ContactMessage::find($id);
+        $this->showDetailModal = true;
+    }
+
+    public function closeDetailModal(): void
+    {
+        $this->showDetailModal = false;
+        $this->selectedMessage = null;
     }
 
     public function confirmDelete(int $id): void
