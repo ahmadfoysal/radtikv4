@@ -85,6 +85,7 @@ class Index extends Component
         return User::with(['roles', 'routers', 'subscriptions' => function ($query) {
             $query->latest()->limit(1);
         }])
+            ->select('users.*')
             ->whereHas('roles', function (Builder $query) {
                 $query->where('name', 'admin');
             })

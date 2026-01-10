@@ -53,6 +53,7 @@
                             </div>
                         </th>
                         <th>Contact</th>
+                        <th>Email Status</th>
                         <th>Package</th>
                         <th class="cursor-pointer" wire:click="sortBy('balance')">
                             <div class="flex items-center gap-2">
@@ -106,6 +107,19 @@
                                         </div>
                                     @endif
                                 </div>
+                            </td>
+                            <td>
+                                @if ($customer->email_verified_at)
+                                    <div class="flex items-center gap-2">
+                                        <x-mary-badge value="Verified" class="badge-sm badge-success" />
+                                        <span class="text-xs text-base-content/60"
+                                            title="{{ $customer->email_verified_at->format('M d, Y h:i A') }}">
+                                            {{ $customer->email_verified_at->diffForHumans() }}
+                                        </span>
+                                    </div>
+                                @else
+                                    <x-mary-badge value="Not Verified" class="badge-sm badge-warning" />
+                                @endif
                             </td>
                             <td>
                                 @php
@@ -175,7 +189,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="10" class="text-center py-8">
+                            <td colspan="11" class="text-center py-8">
                                 <div class="flex flex-col items-center gap-3">
                                     <x-mary-icon name="o-user-group" class="w-16 h-16 text-base-content/20" />
                                     <div class="text-base-content/60">
