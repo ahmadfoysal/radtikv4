@@ -20,6 +20,9 @@ class Index extends Component
     public string $sortField = 'created_at';
     public string $sortDirection = 'desc';
 
+    public bool $showDeleteModal = false;
+    public ?User $customerToDelete = null;
+
     protected $queryString = [
         'search' => ['except' => ''],
         'status' => ['except' => 'all'],
@@ -164,5 +167,47 @@ class Index extends Component
 
         // Redirect to dashboard
         redirect()->to('/dashboard');
+    }
+
+    /** Confirm delete customer */
+    public function confirmDelete(int $userId): void
+    {
+        $this->customerToDelete = User::with('routers')->withCount('routers')->find($userId);
+        $this->showDeleteModal = true;
+    }
+
+    /** Delete customer */
+    public function deleteCustomer(): void
+    {
+        if (!$this->customerToDelete) {
+            $this->error(
+                title: 'Error',
+                description: 'Customer not found.'
+            );
+            return;
+        }
+
+        try {
+            $customerName = $this->customerToDelete->name;
+
+            // Delete the customer (cascade deletes will handle related data)
+            $this->customerToDelete->delete();
+
+            $this->success(
+                title: 'Customer Deleted',
+                description: "Customer '{$customerName}' has been permanently deleted."
+            );
+
+            $this->showDeleteModal = false;
+            $this->customerToDelete = null;
+
+            // Refresh the page to update the list
+            $this->resetPage();
+        } catch (\Exception $e) {
+            $this->error(
+                title: 'Delete Failed',
+                description: 'An error occurred while deleting the customer. Please try again.'
+            );
+        }
     }
 }

@@ -184,6 +184,11 @@
                                                 class="w-4 h-4 text-success" />
                                         </button>
                                     @endif
+                                    {{-- Delete Button --}}
+                                    <button wire:click="confirmDelete({{ $customer->id }})"
+                                        class="btn btn-ghost btn-xs text-error" title="Delete Customer">
+                                        <x-mary-icon name="o-trash" class="w-4 h-4" />
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -250,4 +255,37 @@
             </div>
         </x-mary-card>
     @endif
+
+    {{-- Delete Confirmation Modal --}}
+    <x-mary-modal wire:model="showDeleteModal" title="Delete Customer"
+        subtitle="Are you sure you want to delete this customer?" separator>
+        @if ($customerToDelete)
+            <div class="space-y-4">
+                <div class="alert alert-warning">
+                    <x-mary-icon name="o-exclamation-triangle" class="w-6 h-6" />
+                    <div>
+                        <h3 class="font-bold">Warning: This action cannot be undone!</h3>
+                        <div class="text-sm">All data associated with this customer will be permanently deleted,
+                            including:</div>
+                    </div>
+                </div>
+                <ul class="list-disc list-inside text-sm space-y-1 ml-4">
+                    <li>Customer account and profile</li>
+                    <li>All routers ({{ $customerToDelete->routers_count }})</li>
+                    <li>Subscriptions and billing history</li>
+                    <li>Generated vouchers</li>
+                    <li>All related data</li>
+                </ul>
+                <div class="bg-base-200 p-4 rounded-lg">
+                    <div class="font-semibold">Customer: {{ $customerToDelete->name }}</div>
+                    <div class="text-sm text-base-content/70">{{ $customerToDelete->email }}</div>
+                </div>
+            </div>
+        @endif
+        <x-slot:actions>
+            <x-mary-button label="Cancel" @click="$wire.showDeleteModal = false" />
+            <x-mary-button label="Delete Customer" class="btn-error" wire:click="deleteCustomer"
+                wire:loading.attr="disabled" />
+        </x-slot:actions>
+    </x-mary-modal>
 </div>
