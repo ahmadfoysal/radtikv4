@@ -82,8 +82,10 @@
                             <td>
                                 <div class="flex items-center gap-3">
                                     <div class="avatar placeholder">
-                                        <div class="bg-primary text-primary-content rounded-full w-10">
-                                            <span class="text-sm">{{ substr($customer->name, 0, 2) }}</span>
+                                        <div
+                                            class="bg-primary text-primary-content rounded-full w-16 h-16 flex items-center justify-center">
+                                            <span
+                                                class="text-base font-semibold">{{ strtoupper(substr($customer->name, 0, 2)) }}</span>
                                         </div>
                                     </div>
                                     <div>

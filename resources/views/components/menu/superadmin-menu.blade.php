@@ -40,7 +40,7 @@
 
         {{-- CONTACT MESSAGES --}}
         <x-mary-menu-item title="Contact Messages" icon="o-envelope" link="/contact-messages" wire:navigate
-            badge="{{ \App\Models\ContactMessage::count() }}" />
+            badge="{{ \App\Models\ContactMessage::count() }}" badge-classes="badge-error" />
 
         {{-- ADMIN SETTINGS --}}
         <x-mary-menu-sub title="Admin Settings" icon="o-cog-6-tooth">
