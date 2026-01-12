@@ -62,6 +62,11 @@
             </div>
 
             <div>
+                <x-mary-toggle label="Featured Package" wire:model.live="is_featured"
+                    hint="Highlight this package in pricing page" />
+            </div>
+
+            <div>
                 <x-mary-toggle label="Active" wire:model.live="is_active" />
             </div>
         </div>

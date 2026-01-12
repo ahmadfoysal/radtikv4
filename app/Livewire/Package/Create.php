@@ -50,6 +50,9 @@ class Create extends Component
     #[Validate('boolean')]
     public bool $is_active = true;
 
+    #[Validate('boolean')]
+    public bool $is_featured = false;
+
     public function save(): void
     {
         $this->validate();
@@ -68,6 +71,7 @@ class Create extends Component
             'auto_renew_allowed' => $this->auto_renew_allowed,
             'description' => $this->description ?: null,
             'is_active' => $this->is_active,
+            'is_featured' => $this->is_featured,
         ]);
 
         $this->success(

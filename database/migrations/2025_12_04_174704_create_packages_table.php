@@ -26,6 +26,7 @@ return new class extends Migration
             $table->integer('early_pay_discount_percent')->nullable();
             $table->boolean('auto_renew_allowed')->default(true);
             $table->json('features')->nullable()->comment('Additional features enabled');
+            $table->boolean('is_featured')->default(false)->comment('Featured package highlighted in pricing');
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });

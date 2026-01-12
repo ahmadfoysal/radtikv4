@@ -24,6 +24,7 @@ class Package extends Model
         'early_pay_discount_percent',
         'auto_renew_allowed',
         'features',
+        'is_featured',
         'is_active',
     ];
 
@@ -41,6 +42,7 @@ class Package extends Model
             'early_pay_discount_percent' => 'integer',
             'auto_renew_allowed' => 'boolean',
             'features' => 'array',
+            'is_featured' => 'boolean',
             'is_active' => 'boolean',
         ];
     }

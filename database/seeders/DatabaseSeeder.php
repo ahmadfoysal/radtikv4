@@ -28,6 +28,7 @@ class DatabaseSeeder extends Seeder
                 PermissionSeed::class,
                 PaymentGatewaySeeder::class,
                 VoucherTemplateSeeder::class,
+                PackageSeeder::class,
                 KnowledgebaseArticleSeeder::class,
                 DocumentationArticleSeeder::class,
             ]);

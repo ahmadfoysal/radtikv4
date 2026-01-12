@@ -66,6 +66,12 @@
                                 <x-mary-icon :name="$this->getSortIcon('grace_period_days')" class="w-4 h-4" />
                             </div>
                         </th>
+                        <th class="px-4 py-3 cursor-pointer text-left" wire:click="sortBy('is_featured')">
+                            <div class="flex items-center gap-2">
+                                Featured
+                                <x-mary-icon :name="$this->getSortIcon('is_featured')" class="w-4 h-4" />
+                            </div>
+                        </th>
                         <th class="px-4 py-3 cursor-pointer text-left" wire:click="sortBy('is_active')">
                             <div class="flex items-center gap-2">
                                 Status
@@ -112,6 +118,13 @@
                             <td class="px-4 py-3">{{ $package->max_users }}</td>
                             <td class="px-4 py-3">{{ $package->grace_period_days }} days</td>
                             <td class="px-4 py-3">
+                                @if ($package->is_featured)
+                                    <x-mary-icon name="o-star" class="w-5 h-5 text-warning" />
+                                @else
+                                    —
+                                @endif
+                            </td>
+                            <td class="px-4 py-3">
                                 @if ($package->is_active)
                                     <span class="badge badge-success">Active</span>
                                 @else
@@ -146,7 +159,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-4 py-10 text-center text-base-content/70">
+                            <td colspan="8" class="px-4 py-10 text-center text-base-content/70">
                                 No packages found.
                             </td>
                         </tr>

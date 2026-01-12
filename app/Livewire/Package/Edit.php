@@ -52,6 +52,9 @@ class Edit extends Component
     #[Validate('boolean')]
     public bool $is_active = true;
 
+    #[Validate('boolean')]
+    public bool $is_featured = false;
+
     public function mount(Package $package): void
     {
         $this->package = $package;
@@ -68,6 +71,7 @@ class Edit extends Component
         $this->auto_renew_allowed = $package->auto_renew_allowed;
         $this->description = $package->description;
         $this->is_active = $package->is_active;
+        $this->is_featured = $package->is_featured;
     }
 
     public function update(): void
@@ -88,6 +92,7 @@ class Edit extends Component
             'auto_renew_allowed' => $this->auto_renew_allowed,
             'description' => $this->description ?: null,
             'is_active' => $this->is_active,
+            'is_featured' => $this->is_featured,
         ]);
 
         $this->success(
