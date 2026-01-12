@@ -4,7 +4,7 @@
             <div class="sm:col-span-2">
                 <x-mary-choices label="Admin User" placeholder="Search admin..." wire:model.live="adminId"
                     :options="$adminOptions" single searchable clearable option-label="name" option-sub-label="email"
-                    option-value="id" />
+                    option-value="id" @search="search" />
             </div>
 
             <div>
