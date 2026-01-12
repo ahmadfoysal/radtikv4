@@ -10,13 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 // Landing Page (Public)
-Route::get('/', function () {
-    $packages = \App\Models\Package::where('is_active', true)
-        ->orderBy('price_monthly', 'asc')
-        ->get();
-
-    return view('landing', compact('packages'));
-})->name('landing');
+Route::get('/', App\Livewire\LandingPage::class)->name('landing');
 
 // Contact Form Submission (Public)
 Route::post('/contact', [App\Http\Controllers\ContactMessageController::class, 'store'])->name('contact.store');

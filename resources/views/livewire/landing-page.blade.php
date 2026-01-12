@@ -1,109 +1,11 @@
-<!DOCTYPE html>
-<html lang="en" data-theme="light">
-
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>RADTik - MikroTik WiFi Hotspot Management System</title>
-
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-
-    <script>
-        // Theme toggle function
-        function toggleTheme() {
-            const html = document.documentElement;
-            const currentTheme = html.getAttribute('data-theme');
-            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-            html.setAttribute('data-theme', newTheme);
-            localStorage.setItem('radtik-theme', newTheme);
-        }
-
-        // Initialize theme on load
-        document.addEventListener('DOMContentLoaded', function() {
-            const savedTheme = localStorage.getItem('radtik-theme') || 'light';
-            document.documentElement.setAttribute('data-theme', savedTheme);
-        });
-    </script>
-
-    <style>
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-
-            to {
-                opacity: 1;
-            }
-        }
-
-        .animate-fadeInUp {
-            animation: fadeInUp 0.8s ease-out forwards;
-        }
-
-        .animate-fadeIn {
-            animation: fadeIn 1s ease-out forwards;
-        }
-
-        .delay-100 {
-            animation-delay: 0.1s;
-        }
-
-        .delay-200 {
-            animation-delay: 0.2s;
-        }
-
-        .delay-300 {
-            animation-delay: 0.3s;
-        }
-
-        .delay-400 {
-            animation-delay: 0.4s;
-        }
-
-        .opacity-0 {
-            opacity: 0;
-        }
-
-        /* Gradient text */
-        .gradient-text {
-            background: linear-gradient(135deg, #0EA5E9 0%, #06B6D4 50%, #3B82F6 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        /* Feature card hover effect */
-        .feature-card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-5px);
-        }
-    </style>
-</head>
-
-<body class="min-h-screen bg-base-100">
-
+<div>
     <!-- Navigation -->
     <div class="navbar bg-base-100 shadow-lg sticky top-0 z-50 backdrop-blur-lg bg-opacity-90">
         <div class="navbar-start">
             <a href="/"
                 class="btn btn-ghost normal-case text-5xl md:text-6xl font-bold gradient-text flex items-center gap-4 py-2 px-4">
-                <img src="{{ asset('logo_color.png') }}" alt="RADTik Logo"
-                    class="h-24 w-24 aspect-square object-contain" style="max-width:96px;max-height:96px;" />
+                <img src="{{ asset('logo_color.png') }}" alt="RADTik Logo" class="h-24 w-24 aspect-square object-contain"
+                    style="max-width:96px;max-height:96px;" />
             </a>
         </div>
         <div class="navbar-center hidden lg:flex">
@@ -628,24 +530,21 @@
 
             <div class="card bg-base-200 shadow-2xl">
                 <div class="card-body">
-                    @if (session('success'))
+                    @if ($showSuccess)
                         <div class="alert alert-success mb-6 shadow-lg">
                             <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6"
                                 fill="none" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            <span>{{ session('success') }}</span>
+                            <span>Your message has been sent successfully! We'll get back to you soon.</span>
                         </div>
                     @endif
 
-                    <form action="{{ route('contact.store') }}" method="POST" class="space-y-6">
-                        @csrf
-
+                    <form wire:submit="submitContact" class="space-y-6">
                         {{-- Honeypot field - hidden from real users, bots will fill it --}}
-                        <input type="text" name="website" value=""
-                            style="position: absolute; left: -5000px;" tabindex="-1" autocomplete="off"
-                            aria-hidden="true" />
+                        <input type="text" wire:model="website" style="position: absolute; left: -5000px;"
+                            tabindex="-1" autocomplete="off" aria-hidden="true" />
 
                         {{-- Name and Email Row --}}
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -654,10 +553,8 @@
                                     <span class="label-text font-semibold">Name <span
                                             class="text-error">*</span></span>
                                 </label>
-                                <input type="text" name="name" value="{{ old('name') }}"
-                                    placeholder="Your full name"
-                                    class="input input-bordered w-full focus:input-primary @error('name') input-error @enderror"
-                                    required />
+                                <input type="text" wire:model="name" placeholder="Your full name"
+                                    class="input input-bordered w-full focus:input-primary @error('name') input-error @enderror" />
                                 @error('name')
                                     <label class="label pt-2">
                                         <span class="label-text-alt text-error text-sm">{{ $message }}</span>
@@ -670,10 +567,8 @@
                                     <span class="label-text font-semibold">Email <span
                                             class="text-error">*</span></span>
                                 </label>
-                                <input type="email" name="email" value="{{ old('email') }}"
-                                    placeholder="your@email.com"
-                                    class="input input-bordered w-full focus:input-primary @error('email') input-error @enderror"
-                                    required />
+                                <input type="email" wire:model="email" placeholder="your@email.com"
+                                    class="input input-bordered w-full focus:input-primary @error('email') input-error @enderror" />
                                 @error('email')
                                     <label class="label pt-2">
                                         <span class="label-text-alt text-error text-sm">{{ $message }}</span>
@@ -688,8 +583,7 @@
                                 <label class="label pb-2">
                                     <span class="label-text font-semibold">WhatsApp Number</span>
                                 </label>
-                                <input type="text" name="whatsapp" value="{{ old('whatsapp') }}"
-                                    placeholder="+1 (234) 567-8900"
+                                <input type="text" wire:model="whatsapp" placeholder="+1 (234) 567-8900"
                                     class="input input-bordered w-full focus:input-primary @error('whatsapp') input-error @enderror" />
                                 @error('whatsapp')
                                     <label class="label pt-2">
@@ -703,10 +597,8 @@
                                     <span class="label-text font-semibold">Subject <span
                                             class="text-error">*</span></span>
                                 </label>
-                                <input type="text" name="subject" value="{{ old('subject') }}"
-                                    placeholder="What's this about?"
-                                    class="input input-bordered w-full focus:input-primary @error('subject') input-error @enderror"
-                                    required />
+                                <input type="text" wire:model="subject" placeholder="What's this about?"
+                                    class="input input-bordered w-full focus:input-primary @error('subject') input-error @enderror" />
                                 @error('subject')
                                     <label class="label pt-2">
                                         <span class="label-text-alt text-error text-sm">{{ $message }}</span>
@@ -721,9 +613,9 @@
                                 <span class="label-text font-semibold">Message <span
                                         class="text-error">*</span></span>
                             </label>
-                            <textarea name="message"
+                            <textarea wire:model="message"
                                 class="textarea textarea-bordered w-full h-32 focus:textarea-primary @error('message') textarea-error @enderror"
-                                placeholder="Tell us more about your inquiry..." required>{{ old('message') }}</textarea>
+                                placeholder="Tell us more about your inquiry..."></textarea>
                             @error('message')
                                 <label class="label pt-2">
                                     <span class="label-text-alt text-error text-sm">{{ $message }}</span>
@@ -734,13 +626,16 @@
                         {{-- Submit Button --}}
                         <div class="pt-2">
                             <button type="submit"
-                                class="btn btn-primary btn-lg w-full gap-2 text-lg shadow-lg hover:shadow-xl">
-                                Send Message
+                                class="btn btn-primary btn-lg w-full gap-2 text-lg shadow-lg hover:shadow-xl"
+                                wire:loading.attr="disabled">
+                                <span wire:loading.remove>Send Message</span>
+                                <span wire:loading>Sending...</span>
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20"
-                                    fill="currentColor">
+                                    fill="currentColor" wire:loading.remove>
                                     <path
                                         d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
                                 </svg>
+                                <span class="loading loading-spinner loading-sm" wire:loading></span>
                             </button>
                         </div>
                     </form>
@@ -873,7 +768,4 @@
             <p>Copyright © {{ date('Y') }} RADTik - All rights reserved</p>
         </div>
     </footer>
-
-</body>
-
-</html>
+</div>
