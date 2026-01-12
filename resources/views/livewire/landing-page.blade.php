@@ -410,7 +410,8 @@
                             <h3 class="card-title text-2xl mb-2">{{ $package->name }}</h3>
                             <div class="mb-4">
                                 @if ($package->price_monthly > 0)
-                                    <span class="text-4xl font-bold">@userCurrency($package->price_monthly)</span>
+                                    <span class="text-4xl font-bold">BDT
+                                        {{ number_format($package->price_monthly, 0) }}</span>
                                     <span
                                         class="{{ $isFeatured ? 'opacity-70' : 'text-base-content/70' }}">/month</span>
                                 @else
