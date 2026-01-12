@@ -60,10 +60,10 @@ class LandingPage extends Component
             $lastReset = now()->timestamp;
         }
 
-        // if ($contactCount >= 2) {
-        //     $this->addError('message', 'You have reached the maximum number of messages (2) per hour. Please try again later.');
-        //     return;
-        // }
+        if ($contactCount >= 2) {
+            $this->addError('message', 'You have reached the maximum number of messages (2) per hour. Please try again later.');
+            return;
+        }
 
         // Validate form
         $this->validate();
