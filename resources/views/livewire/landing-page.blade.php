@@ -400,11 +400,11 @@
 
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8 max-w-6xl mx-auto">
                 @forelse ($packages as $package)
-                    @php($isPopular = $package->id == 2)
+                    @php($isFeatured = $package->is_featured)
                     <div
-                        class="card bg-base-200 shadow-xl {{ $isPopular ? 'scale-105 border-4 border-primary bg-primary text-primary-content' : '' }}">
-                        @if ($isPopular)
-                            <div class="badge badge-secondary absolute top-4 right-4">POPULAR</div>
+                        class="card bg-base-200 shadow-xl {{ $isFeatured ? 'scale-105 border-4 border-primary bg-primary text-primary-content' : '' }}">
+                        @if ($isFeatured)
+                            <div class="badge badge-secondary absolute top-4 right-4">FEATURED</div>
                         @endif
                         <div class="card-body">
                             <h3 class="card-title text-2xl mb-2">{{ $package->name }}</h3>
@@ -412,14 +412,14 @@
                                 @if ($package->price_monthly > 0)
                                     <span class="text-4xl font-bold">@userCurrency($package->price_monthly)</span>
                                     <span
-                                        class="{{ $isPopular ? 'opacity-70' : 'text-base-content/70' }}">/month</span>
+                                        class="{{ $isFeatured ? 'opacity-70' : 'text-base-content/70' }}">/month</span>
                                 @else
                                     <span class="text-4xl font-bold">Free</span>
                                 @endif
                             </div>
 
                             @if ($package->description)
-                                <p class="text-sm {{ $isPopular ? 'opacity-80' : 'text-base-content/70' }} mb-4">
+                                <p class="text-sm {{ $isFeatured ? 'opacity-80' : 'text-base-content/70' }} mb-4">
                                     {{ $package->description }}
                                 </p>
                             @endif
@@ -427,7 +427,7 @@
                             <ul class="space-y-3 mb-6">
                                 <li class="flex items-center gap-2">
                                     <svg xmlns="http://www.w3.org/2000/svg"
-                                        class="h-5 w-5 {{ $isPopular ? '' : 'text-success' }}" viewBox="0 0 20 20"
+                                        class="h-5 w-5 {{ $isFeatured ? '' : 'text-success' }}" viewBox="0 0 20 20"
                                         fill="currentColor">
                                         <path fill-rule="evenodd"
                                             d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -438,7 +438,7 @@
                                 </li>
                                 <li class="flex items-center gap-2">
                                     <svg xmlns="http://www.w3.org/2000/svg"
-                                        class="h-5 w-5 {{ $isPopular ? '' : 'text-success' }}" viewBox="0 0 20 20"
+                                        class="h-5 w-5 {{ $isFeatured ? '' : 'text-success' }}" viewBox="0 0 20 20"
                                         fill="currentColor">
                                         <path fill-rule="evenodd"
                                             d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -449,7 +449,7 @@
                                 </li>
                                 <li class="flex items-center gap-2">
                                     <svg xmlns="http://www.w3.org/2000/svg"
-                                        class="h-5 w-5 {{ $isPopular ? '' : 'text-success' }}" viewBox="0 0 20 20"
+                                        class="h-5 w-5 {{ $isFeatured ? '' : 'text-success' }}" viewBox="0 0 20 20"
                                         fill="currentColor">
                                         <path fill-rule="evenodd"
                                             d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -460,7 +460,7 @@
                                 </li>
                                 <li class="flex items-center gap-2">
                                     <svg xmlns="http://www.w3.org/2000/svg"
-                                        class="h-5 w-5 {{ $isPopular ? '' : 'text-success' }}" viewBox="0 0 20 20"
+                                        class="h-5 w-5 {{ $isFeatured ? '' : 'text-success' }}" viewBox="0 0 20 20"
                                         fill="currentColor">
                                         <path fill-rule="evenodd"
                                             d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -471,7 +471,7 @@
                                 @if ($package->billing_cycle)
                                     <li class="flex items-center gap-2">
                                         <svg xmlns="http://www.w3.org/2000/svg"
-                                            class="h-5 w-5 {{ $isPopular ? '' : 'text-success' }}"
+                                            class="h-5 w-5 {{ $isFeatured ? '' : 'text-success' }}"
                                             viewBox="0 0 20 20" fill="currentColor">
                                             <path fill-rule="evenodd"
                                                 d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -482,7 +482,7 @@
                                 @endif
                             </ul>
                             <a href="{{ route('tyro-login.register') }}"
-                                class="btn {{ $isPopular ? 'btn-secondary' : 'btn-outline' }} btn-block">
+                                class="btn {{ $isFeatured ? 'btn-secondary' : 'btn-outline' }} btn-block">
                                 Get Started
                             </a>
                         </div>
