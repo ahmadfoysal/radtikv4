@@ -24,6 +24,8 @@ This will create:
     -   ⚠️ **Change the password immediately after first login!**
 -   **Payment Gateways**: Cryptomus and PayStation (inactive by default)
 -   **Voucher Templates**: 5 print templates for WiFi vouchers
+-   **Knowledgebase Articles**: 5 help articles for users
+-   **Documentation Articles**: 5 technical documentation articles
 
 ## Demo/Testing Seeding
 
@@ -54,8 +56,10 @@ This runs `ComprehensiveDemoSeeder` which creates:
 1. **PermissionSeed** - Production essentials (roles, permissions, superadmin)
 2. **PaymentGatewaySeeder** - Payment gateway configurations
 3. **VoucherTemplateSeeder** - Voucher print templates
-4. **ComprehensiveDemoSeeder** - Complete demo data for testing
-5. **DatabaseSeeder** - Main seeder that orchestrates the others
+4. **KnowledgebaseArticleSeeder** - Help articles for users
+5. **DocumentationArticleSeeder** - Technical documentation
+6. **ComprehensiveDemoSeeder** - Complete demo data for testing
+7. **DatabaseSeeder** - Main seeder that orchestrates the others
 
 ## Environment Variables
 

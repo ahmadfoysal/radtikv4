@@ -28,6 +28,8 @@ class DatabaseSeeder extends Seeder
                 PermissionSeed::class,
                 PaymentGatewaySeeder::class,
                 VoucherTemplateSeeder::class,
+                KnowledgebaseArticleSeeder::class,
+                DocumentationArticleSeeder::class,
             ]);
         }
 
