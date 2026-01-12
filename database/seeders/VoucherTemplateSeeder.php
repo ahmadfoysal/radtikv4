@@ -9,77 +9,47 @@ class VoucherTemplateSeeder extends Seeder
 {
     /**
      * Run the database seeds.
+     * Creates default voucher print templates.
      */
     public function run(): void
     {
+        $this->command->info('🎫 Creating voucher templates...');
+
         $templates = [
             [
-                'name' => 'Classic Simple',
+                'name' => 'Classic Template (Default)',
                 'component' => 'template-1',
-                'preview_image' => 'templates/preview-1.png',
                 'is_active' => true,
             ],
             [
-                'name' => 'Modern Dark',
+                'name' => 'Modern Template',
                 'component' => 'template-2',
-                'preview_image' => 'templates/preview-2.png',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Minimal Template',
+                'component' => 'template-3',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Professional Template',
+                'component' => 'template-4',
                 'is_active' => true,
             ],
             [
                 'name' => 'Thermal Receipt (80mm)',
-                'component' => 'template-3',
-                'preview_image' => 'templates/preview-3.png',
-                'is_active' => true,
-            ],
-            [
-                'name' => 'Minimalist White',
-                'component' => 'template-4',
-                'preview_image' => 'templates/preview-4.png',
-                'is_active' => true,
-            ],
-            [
-                'name' => 'Gradient Blue',
                 'component' => 'template-5',
-                'preview_image' => 'templates/preview-5.png',
-                'is_active' => true,
-            ],
-            [
-                'name' => 'QR Code Focus',
-                'component' => 'template-6',
-                'preview_image' => 'templates/preview-6.png',
-                'is_active' => true,
-            ],
-            [
-                'name' => 'Corporate Professional',
-                'component' => 'template-7',
-                'preview_image' => 'templates/preview-7.png',
-                'is_active' => true,
-            ],
-            [
-                'name' => 'Retro Style',
-                'component' => 'template-8',
-                'preview_image' => 'templates/preview-8.png',
-                'is_active' => true,
-            ],
-            [
-                'name' => 'Compact Strip',
-                'component' => 'template-9',
-                'preview_image' => 'templates/preview-9.png',
-                'is_active' => true,
-            ],
-            [
-                'name' => 'Festive Event',
-                'component' => 'template-10',
-                'preview_image' => 'templates/preview-10.png',
                 'is_active' => true,
             ],
         ];
 
         foreach ($templates as $template) {
-            VoucherTemplate::updateOrCreate(
-                ['component' => $template['component']], // Check duplicates by component name
+            VoucherTemplate::firstOrCreate(
+                ['component' => $template['component']],
                 $template
             );
         }
+
+        $this->command->info('✅ Voucher templates created');
     }
 }

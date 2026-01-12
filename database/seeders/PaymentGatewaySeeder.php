@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Gateway\CryptomusGateway;
+use App\Gateway\PayStationGateway;
 use App\Models\PaymentGateway;
 use Illuminate\Database\Seeder;
 
@@ -9,16 +11,20 @@ class PaymentGatewaySeeder extends Seeder
 {
     /**
      * Run the database seeds.
+     * Creates payment gateway entries with placeholder credentials.
      */
     public function run(): void
     {
-        PaymentGateway::updateOrCreate(
+        $this->command->info('💳 Creating payment gateways...');
+
+        // Cryptomus Gateway
+        PaymentGateway::firstOrCreate(
             ['name' => 'Cryptomus'],
             [
-                'class' => \App\Gateway\CryptomusGateway::class,
+                'class' => CryptomusGateway::class,
                 'data' => [
-                    'merchant_id' => 'test_merchant',
-                    'api_key' => 'test_api_key',
+                    'merchant_id' => '',
+                    'api_key' => '',
                     'network' => 'USDT_TRC20',
                     'test_mode' => true,
                 ],
@@ -26,18 +32,21 @@ class PaymentGatewaySeeder extends Seeder
             ]
         );
 
-        PaymentGateway::updateOrCreate(
+        // PayStation Gateway
+        PaymentGateway::firstOrCreate(
             ['name' => 'PayStation'],
             [
-                'class' => \App\Gateway\PayStationGateway::class,
+                'class' => PayStationGateway::class,
                 'data' => [
-                    'merchant_id' => '1234-xxxx',
-                    'password' => 'secret',
-                    'base_url' => 'https://www.paystation.com.bd',
-                    'test_mode' => true,
+                    'merchant_id' => '',
+                    'password' => '',
+                    'base_url' => 'https://api.paystation.com.bd',
                 ],
                 'is_active' => false, // Disabled by default until configured
             ]
         );
+
+        $this->command->info('✅ Payment gateways created (inactive by default)');
+        $this->command->warn('⚠️  Configure gateway credentials in admin panel to activate');
     }
 }

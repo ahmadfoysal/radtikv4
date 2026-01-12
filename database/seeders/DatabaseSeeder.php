@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -15,32 +14,20 @@ class DatabaseSeeder extends Seeder
         $this->command->info('🌱 Starting Database Seeding...');
         $this->command->newLine();
 
-        // Determine seeding mode
-        $useComprehensive = $this->shouldUseComprehensiveSeeder();
+        // Check if comprehensive demo mode is enabled
+        $useDemoData = $this->shouldUseDemoSeeder();
 
-        if ($useComprehensive) {
-            $this->command->info('📦 Using Comprehensive Demo Seeder...');
+        if ($useDemoData) {
+            $this->command->info('📦 Using Demo Data Seeder...');
             $this->call([
                 ComprehensiveDemoSeeder::class,
-                PaymentGatewaySeeder::class,
-                EmailSettingSeeder::class,
-                KnowledgebaseArticleSeeder::class,
-                DocumentationArticleSeeder::class,
             ]);
         } else {
-            $this->command->info('📦 Using Basic Seeders...');
+            $this->command->info('📦 Creating production essentials...');
             $this->call([
                 PermissionSeed::class,
-                UserSeed::class,
-                ZoneSeeder::class,
-                VoucherTemplateSeeder::class,
-                PackageSeeder::class,
-                RouterSeeder::class,
-                VoucherSeeder::class,
                 PaymentGatewaySeeder::class,
-                EmailSettingSeeder::class,
-                KnowledgebaseArticleSeeder::class,
-                DocumentationArticleSeeder::class,
+                VoucherTemplateSeeder::class,
             ]);
         }
 
@@ -49,21 +36,21 @@ class DatabaseSeeder extends Seeder
     }
 
     /**
-     * Determine if comprehensive seeder should be used.
+     * Determine if demo seeder should be used.
      * Priority: ENV variable > Interactive prompt
-     * Default: Basic seeders (false)
+     * Default: Production mode (false)
      */
-    private function shouldUseComprehensiveSeeder(): bool
+    private function shouldUseDemoSeeder(): bool
     {
         // 1. Check environment variable (highest priority)
-        if (env('USE_COMPREHENSIVE_SEEDER') !== null) {
-            return filter_var(env('USE_COMPREHENSIVE_SEEDER'), FILTER_VALIDATE_BOOLEAN);
+        if (env('USE_DEMO_SEEDER') !== null) {
+            return filter_var(env('USE_DEMO_SEEDER'), FILTER_VALIDATE_BOOLEAN);
         }
 
-        // 2. Interactive prompt (defaults to basic seeders)
+        // 2. Interactive prompt (defaults to production mode)
         return $this->command->confirm(
-            'Do you want to create comprehensive demo data with realistic content?',
-            false // Default to "no" - uses basic seeders
+            'Do you want to seed with demo data? (Use for testing/demo only)',
+            false
         );
     }
 }

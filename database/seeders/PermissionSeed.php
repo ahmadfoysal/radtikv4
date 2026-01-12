@@ -2,7 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -10,14 +12,20 @@ class PermissionSeed extends Seeder
 {
     /**
      * Run the database seeds.
+     * Creates roles, permissions, and a superadmin user for production.
      */
     public function run(): void
     {
+        $this->command->info('👥 Creating roles...');
+
+        // Create roles
         Role::firstOrCreate(['name' => 'superadmin']);
         Role::firstOrCreate(['name' => 'admin']);
         Role::firstOrCreate(['name' => 'reseller']);
 
-        // create permissions
+        $this->command->info('🔐 Creating permissions...');
+
+        // Create permissions
         $permissions = [
             // Router Management
             'add_router',
@@ -63,5 +71,33 @@ class PermissionSeed extends Seeder
         foreach ($permissions as $permission) {
             Permission::firstOrCreate(['name' => $permission]);
         }
+
+        $this->command->info('👤 Creating superadmin user...');
+
+        // Create superadmin user
+        $superadmin = User::firstOrCreate(
+            ['email' => 'superadmin@example.com'],
+            [
+                'name' => 'System Administrator',
+                'password' => Hash::make('password'),
+                'phone' => '+1234567890',
+                'address' => 'Head Office',
+                'country' => 'Bangladesh',
+                'balance' => 0,
+                'commission' => 0,
+                'is_active' => true,
+                'is_phone_verified' => true,
+                'email_verified_at' => now(),
+                'last_login_at' => now(),
+            ]
+        );
+
+        $superadmin->syncRoles(['superadmin']);
+
+        $this->command->newLine();
+        $this->command->info('✅ Production essentials created successfully!');
+        $this->command->warn('📧 Superadmin Email: superadmin@example.com');
+        $this->command->warn('🔑 Superadmin Password: password');
+        $this->command->warn('⚠️  Please change the password after first login!');
     }
 }
