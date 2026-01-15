@@ -36,7 +36,7 @@ class Edit extends Component
     #[Rule(['required', 'numeric', 'min:0', 'max:100'])]
     public float $commission = 0;
 
-    #[Rule(['required', 'string', 'max:500'])]
+    #[Rule(['nullable', 'string', 'max:500'])]
     public string $suspension_reason = '';
 
     public bool $showSuspendModal = false;
