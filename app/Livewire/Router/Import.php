@@ -190,13 +190,17 @@ class Import extends Component
             }
 
             try {
-                // Create or update the router
+                // Password comes base64-encoded from parseMikhmonConfig (plain text that was base64 encoded)
+                // Decode it back to plain text, then encrypt with Laravel's Crypt for database storage
+                $plainPassword = base64_decode($item['password']);
+
+                // Create or update the router with Laravel-encrypted password
                 $router = Router::updateOrCreate(
                     ['address' => $item['address'], 'port' => (int) $item['port']],
                     [
                         'name' => $item['name'],
                         'username' => $item['username'],
-                        'password' => Crypt::encryptString(base64_decode($item['password'])), // Decode then encrypt
+                        'password' => Crypt::encryptString($plainPassword),
                         'login_address' => $item['login_address'] ?? null,
                         'note' => $item['ssid'] ?? null,
                         'app_key' => bin2hex(random_bytes(16)),
@@ -304,7 +308,7 @@ class Import extends Component
 
                 if (str_contains($v, '#|#') && $passwordRaw === null) {
                     [, $pwd] = explode('#|#', $v, 2);
-                    $passwordRaw = trim($pwd); // UI স্টেটে এখনই ডিকোড নয়
+                    $passwordRaw = trim($pwd);
 
                     continue;
                 }
@@ -346,9 +350,10 @@ class Import extends Component
                     continue;
                 }
 
-                // Decrypt Mikhmon password and encode for safe JSON serialization
+                // Decrypt Mikhmon password using their algorithm, then base64 encode for safe transport
+                // Flow: Mikhmon encrypted -> decryptPassword() -> plain text -> base64_encode() -> safe storage
                 $decryptedPassword = $this->decryptPassword($passwordRaw);
-                $safePassword = base64_encode($decryptedPassword); // Safe for JSON
+                $safePassword = base64_encode($decryptedPassword); // Encoded plain text for safe JSON transport
 
                 $routers[] = [
                     'name' => $this->sanitizeInput($name),
@@ -398,30 +403,36 @@ class Import extends Component
         return $value;
     }
 
+    /**
+     * Decrypt Mikhmon password using exact same algorithm as Mikhmon
+     * Matches: function decrypt($string, $key=128) from Mikhmon
+     */
     public function decryptPassword($string, $key = 128): string
     {
         $result = '';
+        $key = (string) $key; // Convert key to string (128 becomes "128")
+
+        // Base64 decode the encrypted string
         $decoded = base64_decode($string, true);
 
-        // Validate base64 decoding
         if ($decoded === false) {
             return ''; // Invalid base64
         }
 
-        $key = (string) $key; // Ensure key is string
         $keyLen = strlen($key);
-
         if ($keyLen === 0) {
-            return $decoded; // Fallback if no key
+            return $decoded;
         }
 
+        // Decrypt character by character - EXACT Mikhmon logic
         for ($i = 0, $k = strlen($decoded); $i < $k; $i++) {
             $char = $decoded[$i];
-            $keyIdx = ($i % $keyLen);
-            if ($keyIdx > 0) {
-                $keyIdx--; // Original logic: -1 offset
-            }
-            $keychar = $key[$keyIdx];
+
+            // Get key character using Mikhmon's exact formula: ($i % strlen($key))-1
+            $keyIndex = ($i % $keyLen) - 1;
+            $keychar = substr($key, $keyIndex, 1);
+
+            // Subtract key character's ASCII value from encrypted character
             $char = chr(ord($char) - ord($keychar));
             $result .= $char;
         }
