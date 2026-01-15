@@ -200,12 +200,12 @@ class ScriptInstaller
                 'interval' => '12h',
                 'on_event' => '/system script run "RADTik-pull-profiles"',
             ],
-            [
-                'name' => 'RADTik-RemoveOrphanProfiles',
-                'label' => 'Remove Orphan Profiles',
-                'interval' => '12h',
-                'on_event' => '/system script run "RADTik-remove-orphan-profiles"',
-            ],
+            // [
+            //     'name' => 'RADTik-RemoveOrphanProfiles',
+            //     'label' => 'Remove Orphan Profiles',
+            //     'interval' => '12h',
+            //     'on_event' => '/system script run "RADTik-remove-orphan-profiles"',
+            // ],
         ];
     }
 }
