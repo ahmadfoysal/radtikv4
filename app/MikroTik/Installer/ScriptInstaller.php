@@ -22,7 +22,7 @@ class ScriptInstaller
         Router $router,
         string $name,
         string $source,
-        string $policy = 'read,write,policy,test'
+        string $policy = 'read,write,test'
     ): array {
         $ros = $this->client->make($router);
 
