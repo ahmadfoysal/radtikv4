@@ -152,21 +152,25 @@ Route::middleware(['auth', 'check.suspended'])->group(function () {
     });
 });
 
-/* Hotspot User sync */
+/* MikroTik API Routes - Subscription Required */
+// Hotspot User sync
 Route::get('/mikrotik/api/pull-inactive-users', [MikrotikApiController::class, 'pullInactiveUsers'])
-    ->name('mikrotik.pullInactiveUsers')->middleware('check.router.subscription');
+    ->name('mikrotik.pullInactiveUsers');
 Route::get('/mikrotik/api/pull-active-users', [MikrotikApiController::class, 'pullActiveUsers'])
-    ->name('mikrotik.pullActiveUsers')->middleware('check.router.subscription');
+    ->name('mikrotik.pullActiveUsers');
 Route::post('/mikrotik/api/push-active-users', [MikrotikApiController::class, 'pushActiveUsers'])
-    ->name('mikrotik.pushActiveUsers')->withoutMiddleware([VerifyCsrfToken::class])->middleware('check.router.subscription');
+    ->name('mikrotik.pushActiveUsers')
+    ->withoutMiddleware([VerifyCsrfToken::class]);
 Route::post('/mikrotik/api/sync-orphans', [MikrotikApiController::class, 'syncOrphans'])
-    ->name('mikrotik.syncOrphans')->withoutMiddleware([VerifyCsrfToken::class])->middleware('check.router.subscription');
+    ->name('mikrotik.syncOrphans')
+    ->withoutMiddleware([VerifyCsrfToken::class]);
 
-/* Hotspot profile sync */
+// Hotspot profile sync
 Route::get('/mikrotik/api/pull-profiles', [MikrotikApiController::class, 'pullProfiles'])
-    ->name('mikrotik.pullProfiles')->middleware('check.router.subscription');
+    ->name('mikrotik.pullProfiles');
 Route::get('/mikrotik/api/pull-updated-profiles', [MikrotikApiController::class, 'pullUpdatedProfiles'])
-    ->name('mikrotik.pullUpdatedProfiles')->middleware('check.router.subscription');
+    ->name('mikrotik.pullUpdatedProfiles');
+
 
 /* Payment Gateway Callbacks (without CSRF) */
 Route::post('/payment/cryptomus/callback', [App\Http\Controllers\PaymentCallbackController::class, 'cryptomus'])

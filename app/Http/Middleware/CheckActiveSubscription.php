@@ -45,12 +45,12 @@ class CheckActiveSubscription
         $now = now();
         $endDate = $subscription->end_date;
         $gracePeriodDays = $subscription->package->grace_period_days ?? 0;
-        
+
         if ($now->gt($endDate)) {
             // Subscription expired - block feature access immediately
             $gracePeriodEndDate = $endDate->copy()->addDays($gracePeriodDays);
             $daysRemaining = max(0, (int) $now->diffInDays($gracePeriodEndDate));
-            
+
             if ($request->expectsJson()) {
                 return response()->json([
                     'error' => 'Subscription expired',
@@ -64,3 +64,9 @@ class CheckActiveSubscription
             return redirect()
                 ->route('subscription.index')
                 ->with('error', "Your subscription has expired. You cannot add routers or generate vouchers during the grace period. Please renew within {$daysRemaining} day(s) to restore full access.");
+        }
+
+        // Subscription is active or within grace period - allow access
+        return $next($request);
+    }
+}
