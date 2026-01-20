@@ -17,218 +17,230 @@ class KnowledgebaseArticleSeeder extends Seeder
 
         $articles = [
             [
-                'title' => 'How to Connect Your MikroTik Router',
+                'title' => 'How do I add my first router?',
                 'category' => 'Getting Started',
                 'content' => <<<'MD'
-# How to Connect Your MikroTik Router
+To add your first router to RADTik, ensure your MikroTik router has API enabled on port 8728. Navigate to Dashboard → Routers → "Add Router". Enter your router name, IP address, admin username, and password. Select a voucher template and zone (optional). Click "Save Router" and RADTik will connect to your MikroTik device. The router will appear in your router list immediately.
 
-## Prerequisites
-- MikroTik router with RouterOS installed
-- Network access to the router
-- Admin credentials for the router
+**Quick checklist:**
+- API enabled on router (`/ip service enable api`)
+- Firewall allows port 8728
+- Correct admin credentials
+- Router is reachable from RADTik server
 
-## Steps to Connect
-
-1. **Login to RADTik**
-   - Navigate to the Routers section
-   - Click "Add Router" button
-
-2. **Enter Router Details**
-   - Router Name: Give it a descriptive name
-   - Host/IP Address: Enter your router's IP address
-   - Username: Usually "admin"
-   - Password: Your router's admin password
-   - API Port: Default is 8728
-
-3. **Test Connection**
-   - Click the "Test Connection" button
-   - If successful, save the router
-
-4. **Configure Hotspot**
-   - Ensure your router has Hotspot configured
-   - Set up user profiles matching your voucher templates
-
-## Troubleshooting
-- Ensure API is enabled on your MikroTik router
-- Check firewall rules allow API access
-- Verify credentials are correct
+If connection fails, verify your router is online and API service is running. Check the error message for specific issues like authentication failures or timeout errors.
 MD,
                 'is_active' => true,
             ],
             [
-                'title' => 'Understanding WiFi Vouchers',
-                'category' => 'Vouchers',
-                'content' => <<<'MD'
-# Understanding WiFi Vouchers
-
-## What are WiFi Vouchers?
-WiFi vouchers are access codes that provide temporary internet access through your hotspot network.
-
-## Voucher Components
-- **Username**: Unique identifier for the voucher
-- **Password**: Access code (can be same as username)
-- **Profile**: Defines speed, duration, and limits
-- **Validity**: Time period the voucher is valid for
-
-## Voucher Lifecycle
-
-1. **Generated**: Voucher is created but not yet used
-2. **Active**: User has logged in and is using the voucher
-3. **Expired**: Voucher time limit has been reached
-4. **Used**: Voucher has been fully consumed
-
-## Best Practices
-- Print vouchers on thermal paper for durability
-- Include WiFi name and connection instructions
-- Set appropriate validity periods
-- Monitor active sessions regularly
-MD,
-                'is_active' => true,
-            ],
-            [
-                'title' => 'Managing Hotspot Users',
+                'title' => 'What is the difference between vouchers and single users?',
                 'category' => 'Users',
                 'content' => <<<'MD'
-# Managing Hotspot Users
+**Vouchers** are temporary access codes generated in bulk for guests, customers, or short-term users. They are anonymous, have expiry dates, and are ideal for cafes, hotels, or daily WiFi access. You can generate hundreds at once and print them for distribution.
 
-## User Types
+**Single users** are permanent individual accounts created with specific usernames and passwords. They are perfect for staff, VIP customers, or long-term contracts. Single users don't expire automatically and can be tracked by name. Use them when you need accountability and personalized access.
 
-### Single Users
-- Created individually through the interface
-- Custom usernames and passwords
-- Ideal for permanent access accounts
+**When to use vouchers:** Guest WiFi, daily passes, temporary access
+**When to use single users:** Employees, monthly subscriptions, named accounts
 
-### Voucher Users
-- Generated in bulk
-- Temporary access
-- Pre-defined profiles
-
-## User Management Tasks
-
-### Creating Single Users
-1. Go to Hotspot Users section
-2. Click "Create Single User"
-3. Enter username, password, and select profile
-4. Assign to specific router
-
-### Viewing Active Sessions
-- See who's currently connected
-- Monitor bandwidth usage
-- Disconnect users if needed
-
-### Managing User Profiles
-- Each profile defines speed limits
-- Set time limits and data quotas
-- Configure shared users settings
-
-## Tips
-- Use descriptive usernames for single users
-- Regularly clean up expired voucher users
-- Monitor active sessions for unusual activity
+Both types use the same profiles for speed and time limits.
 MD,
                 'is_active' => true,
             ],
             [
-                'title' => 'Payment Gateway Setup',
+                'title' => 'Why can\'t I add more routers?',
+                'category' => 'Packages',
+                'content' => <<<'MD'
+You have reached your package limit for routers. Each subscription package has a maximum number of routers allowed. Check your current package details on the dashboard to see your limit.
+
+**To add more routers:**
+1. View your current package: Dashboard → Subscription
+2. See max routers allowed vs your current usage
+3. Upgrade to a higher package: Subscription → Upgrade
+4. Select a package with more router slots
+5. Complete payment
+6. Immediately add more routers
+
+Your current routers and all data remain intact when you upgrade. The upgrade takes effect instantly with no downtime. Some packages offer unlimited routers for enterprise users.
+
+If you temporarily need to add a router, you can delete an unused router to free up a slot, then add the new one.
+MD,
+                'is_active' => true,
+            ],
+            [
+                'title' => 'How do I create profiles with different speeds?',
+                'category' => 'Configuration',
+                'content' => <<<'MD'
+Profiles control bandwidth speed, time limits, and access rules for WiFi users. To create speed-limited profiles:
+
+1. Navigate to Dashboard → Profiles → "Add User Profile"
+2. **Profile Name:** Use format like "10M-1Day" or "5Mbps-Hourly"
+3. **Rate Limit:** Enter speed in format RX/TX
+   - `5M` = 5 Mbps both directions
+   - `10M/20M` = 10 Mbps upload, 20 Mbps download
+   - `512k/2M` = 512 Kbps upload, 2 Mbps download
+4. **Validity:** Set expiry time like `1h`, `1d`, `7d`, `30d`
+5. **Shared Users:** Number of simultaneous devices allowed
+6. **Price:** Optional for tracking/display
+7. Click "Save Profile"
+
+**Common profiles:**
+- Quick Access: 5M / 1 hour
+- Daily Pass: 10M / 1 day
+- Weekly: 20M / 7 days
+- Monthly: 50M / 30 days
+
+Profiles can be assigned when generating vouchers or creating single users.
+MD,
+                'is_active' => true,
+            ],
+            [
+                'title' => 'How does the grace period work?',
                 'category' => 'Billing',
                 'content' => <<<'MD'
-# Payment Gateway Setup
+The grace period is a buffer time after your subscription expires, allowing you to renew without immediate service interruption.
 
-## Available Payment Gateways
+**How it works:**
+- Your subscription expires on the due date
+- System enters grace period (usually 3-7 days based on your package)
+- You can still login and view your dashboard
+- Existing users continue to work normally
+- **You cannot create new resources:** No new routers, vouchers, or users
+- **You can still edit** existing resources
 
-### Cryptomus (Cryptocurrency)
-- Supports multiple cryptocurrencies
-- USDT, BTC, ETH, and more
-- International payments
+**During grace period:**
+- Large warning banner appears
+- Days remaining countdown shown
+- Email reminders sent
+- Add balance and renew subscription to restore full access
 
-### PayStation (Bangladesh)
-- Local payment gateway
-- Bkash, Nagad, cards supported
-- BDT currency
+**After grace period ends:**
+- Account becomes suspended
+- View-only access
+- Cannot manage anything
+- Existing users still work (no disruption to your customers)
+- Renew anytime to restore access
 
-## Configuration Steps
-
-1. **Navigate to Payment Settings**
-   - Access admin panel
-   - Go to Payment Gateway section
-
-2. **Configure Credentials**
-   - Enter Merchant ID
-   - Add API Key/Password
-   - Set base URL if required
-
-3. **Test Mode**
-   - Enable test mode for testing
-   - Use sandbox credentials
-   - Test payment flow
-
-4. **Activate Gateway**
-   - Once tested, toggle active status
-   - Gateway will appear at checkout
-
-## Security
-- Keep credentials secure
-- Use environment variables in production
-- Regularly check transaction logs
-- Enable webhook verification
+**Best practice:** Enable auto-renewal to avoid grace period entirely. Keep sufficient balance in your account for automatic renewals.
 MD,
                 'is_active' => true,
             ],
             [
-                'title' => 'Troubleshooting Router Connection Issues',
+                'title' => 'Can I print vouchers in custom formats?',
+                'category' => 'Vouchers',
+                'content' => <<<'MD'
+Yes! RADTik includes 5 professional voucher templates optimized for different printing scenarios:
+
+**Template 1 - Compact Grid:** 48 vouchers per A4 page, perfect for cardstock cutting
+**Template 2 - Business Card:** Standard card size with large code display
+**Template 3 - Thermal Receipt:** 80mm thermal printer format
+**Template 4 - QR Code Style:** Includes scannable QR codes
+**Template 5 - Vintage Ticket:** Decorative ticket-style design
+
+**To select template:**
+1. Edit your router settings
+2. Choose voucher template from dropdown
+3. Template applies to all vouchers for that router
+
+**To print:**
+1. Generate or view existing vouchers
+2. Select vouchers to print (or print all)
+3. Click "Print" button
+4. Print dialog opens with chosen template
+5. Adjust printer settings as needed
+
+Each template includes router name, login code, validity period, profile name, and login address. Templates are print-optimized with proper sizing, borders, and color adjustments for best quality.
+
+For bulk printing, select your template before generating vouchers. You can print hundreds at once efficiently.
+MD,
+                'is_active' => true,
+            ],
+            [
+                'title' => 'Why is my router showing as offline?',
                 'category' => 'Troubleshooting',
                 'content' => <<<'MD'
-# Troubleshooting Router Connection Issues
+If your router shows offline status, RADTik cannot connect to the MikroTik API. Check these common causes:
 
-## Common Issues and Solutions
+**1. Router is actually offline**
+- Power failure or reboot
+- Network disconnected
+- Wait for router to come back online
 
-### Cannot Connect to Router
-
-**Check API is Enabled**
+**2. API service disabled**
+Connect via WinBox and check:
 ```
 /ip service print
+```
+If API shows "disabled", enable it:
+```
 /ip service enable api
 ```
 
-**Verify API Port**
-- Default port: 8728
-- Check if port is open
-- Verify firewall rules
-
-### Authentication Failed
-
-**Verify Credentials**
-- Double-check username and password
-- Ensure account has API access
-- Try connecting via WinBox first
-
-**User Permissions**
-- User needs API permissions
-- Check user group settings
-
-### Connection Timeout
-
-**Network Issues**
-- Ping the router IP
-- Check network connectivity
-- Verify correct IP address
-
-**Firewall Rules**
+**3. Firewall blocking API port**
+Check if port 8728 is allowed:
 ```
-/ip firewall filter
-add chain=input protocol=tcp dst-port=8728 action=accept
+/ip firewall filter print
+```
+Add rule to allow API:
+```
+/ip firewall filter add chain=input protocol=tcp dst-port=8728 action=accept
 ```
 
-### SSL Certificate Errors
-- Update RouterOS to latest version
-- Check SSL certificate validity
-- Disable SSL verification (not recommended for production)
+**4. IP address changed**
+- Router got new IP from DHCP
+- Update router IP in RADTik settings
+- Edit router → Update address → Save
 
-## Need More Help?
-Contact support with:
-- Router model and RouterOS version
-- Error messages
-- Screenshot of connection attempt
+**5. Credentials changed**
+- Router password was changed
+- Edit router in RADTik
+- Update username/password
+- Save changes
+
+**6. Network connectivity**
+- VPN disconnected
+- ISP issue
+- Ping router IP from RADTik server
+- Check network path
+
+**Quick test:** Try connecting to router via WinBox from same network as RADTik. If WinBox works but RADTik doesn't, issue is likely credentials or firewall.
+MD,
+                'is_active' => true,
+            ],
+            [
+                'title' => 'How do I organize routers with zones?',
+                'category' => 'Organization',
+                'content' => <<<'MD'
+Zones are location-based groups for organizing multiple routers. They are perfect for ISPs with coverage areas, businesses with multiple branches, or hotels with different buildings.
+
+**Creating zones:**
+1. Go to Dashboard → Zones
+2. Enter zone name (e.g., "Downtown Branch", "North Coverage Area")
+3. Add description (optional, like coverage details)
+4. Pick a color for visual identification
+5. Click "Create Zone"
+
+**Assigning routers to zones:**
+- When adding new router: Select zone from dropdown
+- For existing routers: Edit router → Select zone → Update
+
+**Benefits of zones:**
+- **Visual organization:** Color-coded router lists
+- **Easy filtering:** View routers by location
+- **Reports by zone:** Track performance per area
+- **Quick navigation:** Find routers by branch/location
+- **Team management:** Assign resellers to specific zones
+
+**Example use cases:**
+- **ISP:** North Zone, South Zone, East Zone, West Zone
+- **Hotel Chain:** Hotel A, Hotel B, Hotel C
+- **Multi-branch cafe:** Downtown, Uptown, Suburb 1, Suburb 2
+- **Campus network:** Building A, Building B, Library, Dorms
+
+**Zone limits:**
+Your subscription package may limit total zones. Check Subscription → Package Details. Some packages offer unlimited zones.
+
+**Best practice:** Plan your zone structure before adding many routers. Consistent naming helps with scaling and reporting.
 MD,
                 'is_active' => true,
             ],
