@@ -10,8 +10,8 @@ use Throwable;
 class RouterClient
 {
     public function __construct(
-        private int $timeout = 4,  // connect timeout (s)
-        private int $socketTimeout = 3,  // read timeout (s)
+        private int $timeout = 30,  // connect timeout (s)
+        private int $socketTimeout = 20,  // read timeout (s)
         private int $attempts = 1,  // reconnect attempts
         private int $retryDelay = 0,  // seconds
     ) {}
