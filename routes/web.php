@@ -106,6 +106,11 @@ Route::middleware(['auth', 'check.suspended'])->group(function () {
         // Zone Management
         Route::get('/zones', App\Livewire\Zone\Index::class)->name('zones.index');
 
+        // RADIUS Server Management
+        Route::get('/radius', App\Livewire\Radius\Index::class)->name('radius.index');
+        Route::get('/radius/create', App\Livewire\Radius\Create::class)->name('radius.create');
+        Route::get('/radius/{server}/edit', App\Livewire\Radius\Edit::class)->name('radius.edit');
+
         // Subscription Management
         Route::get('/subscription', App\Livewire\Subscription\Index::class)->name('subscription.index');
         Route::get('/subscription/history', App\Livewire\Subscription\History::class)->name('subscription.history');

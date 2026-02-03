@@ -39,4 +39,8 @@ return [
         'token' => env('GITHUB_TOKEN'),
     ],
 
+    'linode' => [
+        'api_token' => env('LINODE_API_TOKEN'),
+    ],
+
 ];

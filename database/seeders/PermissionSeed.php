@@ -94,6 +94,30 @@ class PermissionSeed extends Seeder
 
         $superadmin->syncRoles(['superadmin']);
 
+        // Create admin user
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@example.com'],
+            [
+                'name' => 'Administrator',
+                'password' => Hash::make('password'),
+                'phone' => '+1234567891',
+                'address' => 'Head Office',
+                'country' => 'Bangladesh',
+                'balance' => 0,
+                'commission' => 0,
+                'is_active' => true,
+                'is_phone_verified' => true,
+                'email_verified_at' => now(),
+                'last_login_at' => now(),
+            ]
+        );
+
+
+        $admin->syncRoles(['admin']);
+
+        //assign all permissions to admin
+        $admin->givePermissionTo(Permission::all());
+
         $this->command->newLine();
         $this->command->info('✅ Production essentials created successfully!');
         $this->command->warn('📧 Superadmin Email: superadmin@example.com');

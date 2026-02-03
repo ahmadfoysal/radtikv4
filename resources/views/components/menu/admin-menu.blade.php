@@ -70,6 +70,7 @@
             <x-mary-menu-item title="Notification & Email" icon="o-envelope-open" link="/settings/email" /> --}}
             <x-mary-menu-item title="Profile & Security" icon="o-shield-check" link="/settings/profile" wire:navigate />
             <x-mary-menu-item title="Zone Management" icon="o-globe-alt" link="/zones" />
+            <x-mary-menu-item title="RADIUS Servers" icon="o-server" link="/radius" />
         </x-mary-menu-sub>
         {{-- SYSTEM LOGS --}}
         <x-mary-menu-item title="System Logs" icon="o-document-text" link="/reports/logs" />
