@@ -59,48 +59,15 @@ class Create extends Component
     #[Rule(['boolean'])]
     public bool $auto_provision = true;
 
-    #[Rule(['required', 'string'])]
-    public string $linode_region = 'us-east';
-
-    #[Rule(['required', 'string'])]
+    // Fixed Linode configuration (not user-editable)
+    public string $linode_region = 'ap-south';
     public string $linode_plan = 'g6-nanode-1';
-
-    #[Rule(['required', 'string'])]
     public string $linode_image = 'linode/ubuntu22.04';
-
-    public array $regions = [];
-    public array $plans = [];
-    public array $images = [];
 
     public function mount(): void
     {
         $this->authorize('add_router');
-
-        // Load Linode options
-        $this->regions = [
-            'us-east' => 'US East (Newark)',
-            'us-west' => 'US West (Fremont)',
-            'us-central' => 'US Central (Dallas)',
-            'us-southeast' => 'US Southeast (Atlanta)',
-            'eu-west' => 'EU West (London)',
-            'eu-central' => 'EU Central (Frankfurt)',
-            'ap-south' => 'Asia Pacific (Singapore)',
-            'ap-northeast' => 'Asia Pacific (Tokyo)',
-        ];
-
-        $this->plans = [
-            'g6-nanode-1' => 'Nanode 1GB (1 vCPU, 1GB RAM)',
-            'g6-standard-1' => 'Linode 2GB (1 vCPU, 2GB RAM)',
-            'g6-standard-2' => 'Linode 4GB (2 vCPU, 4GB RAM)',
-            'g6-standard-4' => 'Linode 8GB (4 vCPU, 8GB RAM)',
-        ];
-
-        $this->images = [
-            'linode/ubuntu22.04' => 'Ubuntu 22.04 LTS',
-            'linode/ubuntu20.04' => 'Ubuntu 20.04 LTS',
-            'linode/debian11' => 'Debian 11',
-            'linode/debian12' => 'Debian 12',
-        ];
+        // Linode configuration is set to defaults (ap-south, g6-nanode-1, ubuntu22.04)
     }
 
     public function save(): void

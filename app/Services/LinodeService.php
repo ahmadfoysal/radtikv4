@@ -34,7 +34,7 @@ class LinodeService
             ]);
 
             // Generate random root password for Linode instance
-            $rootPassword = $this->generateSecurePassword();
+         //   $rootPassword = $this->generateSecurePassword();
 
             // Create Linode instance
             $linodeData = $this->createLinodeInstance([
@@ -42,7 +42,7 @@ class LinodeService
                 'region' => $server->linode_region,
                 'type' => $server->linode_plan,
                 'image' => $server->linode_image,
-                'root_pass' => $rootPassword,
+                'root_pass' => $server->ssh_password,
                 'authorized_keys' => [], // Can add SSH keys here
                 'backups_enabled' => false,
                 'private_ip' => false,
@@ -54,7 +54,7 @@ class LinodeService
                 'linode_ipv4' => $linodeData['ipv4'][0] ?? null,
                 'linode_ipv6' => $linodeData['ipv6'] ?? null,
                 'host' => $linodeData['ipv4'][0] ?? null,
-                'ssh_password' => $rootPassword,
+                'ssh_password' => $server->ssh_password,
                 'installation_status' => 'installing',
                 'installation_log' => "Linode instance created. ID: {$linodeData['id']}, IP: {$linodeData['ipv4'][0]}\nWaiting for instance to boot...",
             ]);

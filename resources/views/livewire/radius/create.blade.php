@@ -47,24 +47,9 @@
                     <x-mary-icon name="o-cloud" class="w-5 h-5 text-primary" />
                     Linode Configuration
                 </h3>
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                        <x-mary-select label="Region" wire:model.live="linode_region" 
-                            :options="collect($regions)->map(fn($name, $id) => ['id' => $id, 'name' => $name])->values()->toArray()"
-                            option-label="name" option-value="id" />
-                    </div>
-
-                    <div>
-                        <x-mary-select label="Plan" wire:model.live="linode_plan"
-                            :options="collect($plans)->map(fn($name, $id) => ['id' => $id, 'name' => $name])->values()->toArray()"
-                            option-label="name" option-value="id" />
-                    </div>
-
-                    <div class="sm:col-span-2">
-                        <x-mary-select label="OS Image" wire:model.live="linode_image"
-                            :options="collect($images)->map(fn($name, $id) => ['id' => $id, 'name' => $name])->values()->toArray()"
-                            option-label="name" option-value="id" />
-                    </div>
+                <div class="alert alert-info">
+                    <x-mary-icon name="o-information-circle" class="w-5 h-5" />
+                    <span>Server will be provisioned in <strong>Asia Pacific (Singapore)</strong> with <strong>1GB Shared ($5/month)</strong> running <strong>Ubuntu 22.04 LTS</strong></span>
                 </div>
             </div>
         @endif
