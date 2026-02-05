@@ -15,49 +15,38 @@ class Create extends Component
 {
     use AuthorizesRequests, Toast;
 
-    #[Rule(['required', 'string', 'max:255'])]
-    public string $name = '';
-
-    #[Rule(['nullable', 'string', 'max:255', 'regex:/^(([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}|(\d{1,3}\.){3}\d{1,3})$/'])]
-    public string $host = '';
-
-    #[Rule(['required', 'integer', 'between:1,65535'])]
-    public int $auth_port = 1812;
-
-    #[Rule(['required', 'integer', 'between:1,65535'])]
-    public int $acct_port = 1813;
-
-    #[Rule(['required', 'string', 'min:8'])]
-    public string $secret = '';
-
-    #[Rule(['required', 'integer', 'min:1', 'max:60'])]
-    public int $timeout = 5;
-
-    #[Rule(['required', 'integer', 'min:1', 'max:10'])]
-    public int $retries = 3;
-
-    #[Rule(['nullable', 'string', 'max:500'])]
-    public ?string $description = null;
-
-    #[Rule(['boolean'])]
-    public bool $is_active = true;
-
-    // SSH Configuration
-    #[Rule(['required', 'integer', 'between:1,65535'])]
-    public int $ssh_port = 22;
-
-    #[Rule(['required', 'string', 'max:100'])]
-    public string $ssh_username = 'root';
-
-    #[Rule(['nullable', 'string'])]
-    public ?string $ssh_password = null;
-
-    #[Rule(['nullable', 'string'])]
-    public ?string $ssh_private_key = null;
-
-    // Linode Configuration
+    // Auto-provision toggle
     #[Rule(['boolean'])]
     public bool $auto_provision = true;
+
+    // Manual mode fields - only required when auto_provision is false
+    #[Rule(['required_if:auto_provision,false', 'nullable', 'string', 'max:255', 'regex:/^(([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}|(\d{1,3}\.){3}\d{1,3})$/'])]
+    public string $host = '';
+
+    #[Rule(['required_if:auto_provision,false', 'nullable', 'string', 'min:8'])]
+    public string $secret = '';
+
+    #[Rule(['required_if:auto_provision,false', 'nullable', 'integer', 'between:1,65535'])]
+    public int $auth_port = 1812;
+
+    #[Rule(['required_if:auto_provision,false', 'nullable', 'integer', 'between:1,65535'])]
+    public int $acct_port = 1813;
+
+    #[Rule(['required_if:auto_provision,false', 'nullable', 'integer', 'min:1', 'max:60'])]
+    public int $timeout = 5;
+
+    #[Rule(['required_if:auto_provision,false', 'nullable', 'integer', 'min:1', 'max:10'])]
+    public int $retries = 3;
+
+    // SSH Configuration - only for manual mode
+    #[Rule(['required_if:auto_provision,false', 'nullable', 'integer', 'between:1,65535'])]
+    public int $ssh_port = 22;
+
+    #[Rule(['required_if:auto_provision,false', 'nullable', 'string', 'max:100'])]
+    public string $ssh_username = 'root';
+
+    #[Rule(['required_if:auto_provision,false', 'nullable', 'string'])]
+    public ?string $ssh_password = null;
 
     // Fixed Linode configuration (not user-editable)
     public string $linode_region = 'ap-south';
@@ -74,27 +63,54 @@ class Create extends Component
     {
         $this->validate();
 
+        $userId = auth()->id();
+        
+        // Auto-generate data for auto-provision mode
+        if ($this->auto_provision) {
+            $name = 'radius-user-' . $userId . '-' . time();
+            $secret = bin2hex(random_bytes(16)); // 32 character hex string
+            $sshPassword = bin2hex(random_bytes(8)); // 16 character hex string
+            $host = null; // Will be set after Linode creation
+            $authPort = 1812;
+            $acctPort = 1813;
+            $timeout = 5;
+            $retries = 3;
+            $sshPort = 22;
+            $sshUsername = 'root';
+        } else {
+            $name = 'radius-user-' . $userId . '-manual-' . time();
+            $secret = $this->secret;
+            $sshPassword = $this->ssh_password;
+            $host = $this->host;
+            $authPort = $this->auth_port;
+            $acctPort = $this->acct_port;
+            $timeout = $this->timeout;
+            $retries = $this->retries;
+            $sshPort = $this->ssh_port;
+            $sshUsername = $this->ssh_username;
+        }
+
         $server = RadiusServer::create([
-            'name' => $this->name,
-            'host' => $this->host,
-            'auth_port' => $this->auth_port,
-            'acct_port' => $this->acct_port,
-            'secret' => $this->secret,
-            'timeout' => $this->timeout,
-            'retries' => $this->retries,
-            'description' => $this->description,
-            'is_active' => $this->is_active,
+            'name' => $name,
+            'host' => $host,
+            'auth_port' => $authPort,
+            'acct_port' => $acctPort,
+            'secret' => $secret,
+            'timeout' => $timeout,
+            'retries' => $retries,
+            'description' => null,
+            'is_active' => true,
             // SSH
-            'ssh_port' => $this->ssh_port,
-            'ssh_username' => $this->ssh_username,
-            'ssh_password' => $this->ssh_password,
-            'ssh_private_key' => $this->ssh_private_key,
+            'ssh_port' => $sshPort,
+            'ssh_username' => $sshUsername,
+            'ssh_password' => $sshPassword,
+            'ssh_private_key' => null,
             // Linode
             'auto_provision' => $this->auto_provision,
             'linode_region' => $this->linode_region,
             'linode_plan' => $this->linode_plan,
             'linode_image' => $this->linode_image,
-            'linode_label' => 'radius-' . strtolower(str_replace(' ', '-', $this->name)),
+            'linode_label' => $name,
             'installation_status' => $this->auto_provision ? 'pending' : 'completed',
         ]);
 

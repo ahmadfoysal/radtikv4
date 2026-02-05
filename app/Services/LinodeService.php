@@ -27,23 +27,33 @@ class LinodeService
     public function provisionServer(RadiusServer $server): void
     {
         try {
+            // Fetch SSH keys from Linode account
+            $sshKeys = $this->getAccountSSHKeys();
+            $keyIds = array_column($sshKeys, 'id');
+            
+            $keyLog = count($keyIds) > 0 
+                ? "\nSSH Keys: Found " . count($keyIds) . " key(s) in account" 
+                : "\nSSH Keys: No keys found in account";
+            
             // Update status to creating
             $server->update([
                 'installation_status' => 'creating',
-                'installation_log' => 'Starting Linode instance creation...',
+                'installation_log' => 'Starting Linode instance creation...' . 
+                    "\nServer: {$server->name}" .
+                    "\nRegion: {$server->linode_region}" .
+                    "\nPlan: {$server->linode_plan}" .
+                    "\nImage: {$server->linode_image}" .
+                    $keyLog,
             ]);
 
-            // Generate random root password for Linode instance
-         //   $rootPassword = $this->generateSecurePassword();
-
-            // Create Linode instance
+            // Create Linode instance with auto-generated data from RadiusServer
             $linodeData = $this->createLinodeInstance([
                 'label' => $server->linode_label,
                 'region' => $server->linode_region,
                 'type' => $server->linode_plan,
                 'image' => $server->linode_image,
-                'root_pass' => $server->ssh_password,
-                'authorized_keys' => [], // Can add SSH keys here
+                'root_pass' => $server->ssh_password, // Auto-generated password
+                'authorized_keys' => $keyIds, // Use SSH keys from account
                 'backups_enabled' => false,
                 'private_ip' => false,
             ]);
@@ -338,6 +348,35 @@ BASH;
             ]);
 
             return false;
+        }
+    }
+
+    /**
+     * Get SSH keys from Linode account
+     */
+    public function getAccountSSHKeys(): array
+    {
+        try {
+            $response = Http::withToken($this->apiToken)
+                ->get("{$this->apiUrl}/profile/sshkeys");
+
+            if ($response->successful()) {
+                $data = $response->json();
+                return $data['data'] ?? [];
+            }
+            
+            Log::warning('Failed to fetch SSH keys from Linode account', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+            
+            return [];
+        } catch (Exception $e) {
+            Log::error('Error fetching Linode SSH keys', [
+                'error' => $e->getMessage(),
+            ]);
+            
+            return [];
         }
     }
 
