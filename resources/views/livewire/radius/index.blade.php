@@ -12,6 +12,8 @@
                     input-class="input-sm" wire:model.live.debounce.400ms="q" />
 
                 <div class="flex items-center gap-2 sm:justify-end">
+                    <x-mary-button icon="o-book-open" label="Setup Guide" class="btn-sm btn-ghost"
+                        href="{{ route('radius.setup-guide') }}" wire:navigate />
                     <x-mary-button icon="o-plus" label="Add Server" class="btn-sm btn-primary"
                         href="{{ route('radius.create') }}" wire:navigate />
                 </div>

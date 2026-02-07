@@ -1,4 +1,8 @@
 <x-mary-card title="Add RADIUS Server" separator class="max-w-4xl mx-auto bg-base-100">
+    <x-slot:menu>
+        <x-mary-button label="Setup Guide" icon="o-book-open" link="/radius/setup-guide" wire:navigate class="btn-ghost btn-sm" />
+    </x-slot:menu>
+
     <x-mary-form wire:submit="save">
         {{-- Auto-Provision Toggle --}}
         <div class="mb-6">
