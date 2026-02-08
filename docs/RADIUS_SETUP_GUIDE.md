@@ -1,31 +1,74 @@
-# FreeRADIUS + SQLite Setup Guide for RadTik (Ubuntu 22.04)
+# FreeRADIUS + SQLite Setup Guide for RadTik
 
-This guide installs and configures **FreeRADIUS** with **SQLite** backend for use with **RadTik**.
+**Production-Ready Configuration for Ubuntu 22.04**
 
-It includes:
+This guide provides a complete, tested setup for FreeRADIUS with SQLite backend, optimized for RadTik voucher authentication with zero lock issues.
 
-* FreeRADIUS installation
-* SQLite database setup
-* SQL module configuration
-* Client configuration
-* Disable radpostauth logging
-* Disable accounting (optional)
-* Test authentication
+---
+
+## 📋 Table of Contents
+
+1. [Requirements](#requirements)
+2. [Quick Setup (Automated Script)](#quick-setup)
+3. [Manual Setup Steps](#manual-setup)
+4. [Testing & Verification](#testing--verification)
+5. [Integration with RadTik](#integration-with-radtik)
+6. [Troubleshooting](#troubleshooting)
 
 ---
 
 ## Requirements
 
-* Ubuntu 22.04 server
-* Root or sudo access
+Before starting, ensure you have:
+
+- **Ubuntu 22.04 LTS** (clean installation recommended)
+- **Root or sudo access**
+- **Internet connection** for package downloads
 
 ---
 
-# 1️⃣ Install FreeRADIUS + Tools
+## Quick Setup
+
+### One-Command Installation
+
+Download and run the automated setup script:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ahmadfoysal/radtik-radius-setup/main/radius-setup.sh | sudo bash
+```
+
+Or download first, review, then execute:
+
+```bash
+wget https://raw.githubusercontent.com/ahmadfoysal/radtik-radius-setup/main/radius-setup.sh
+chmod +x radius-setup.sh
+sudo ./radius-setup.sh
+```
+
+The script will:
+- ✅ Install FreeRADIUS and dependencies
+- ✅ Create and configure SQLite database
+- ✅ Set proper permissions
+- ✅ Enable WAL mode for concurrency
+- ✅ Configure RadTik client access
+- ✅ Create test user
+- ✅ Verify installation
+
+**Setup completes in ~2 minutes.**
+
+---
+
+## Manual Setup
+
+If you prefer manual installation or need to customize:
+
+### Step 1: Install FreeRADIUS
+
+Update system and install required packages:
 
 ```bash
 sudo apt update
-sudo apt install freeradius freeradius-utils sqlite3
+sudo apt install -y freeradius freeradius-utils sqlite3
 ```
 
 Verify installation:
@@ -34,9 +77,11 @@ Verify installation:
 freeradius -v
 ```
 
+Expected output: `FreeRADIUS Version 3.0.x`
+
 ---
 
-# 2️⃣ Create SQLite Database
+### Step 2: Create SQLite Database
 
 Create database directory:
 
@@ -44,180 +89,448 @@ Create database directory:
 sudo mkdir -p /etc/freeradius/3.0/sqlite
 ```
 
-Create DB:
+Initialize database file:
 
 ```bash
-sudo sqlite3 /etc/freeradius/3.0/sqlite/radius.db
-.quit
+sudo sqlite3 /etc/freeradius/3.0/sqlite/radius.db ".quit"
+```
+
+Import FreeRADIUS schema:
+
+```bash
+sudo sqlite3 /etc/freeradius/3.0/sqlite/radius.db < /etc/freeradius/3.0/mods-config/sql/main/sqlite/schema.sql
 ```
 
 ---
 
-# 3️⃣ Import FreeRADIUS SQLite Schema
+### Step 3: Configure Database Permissions (CRITICAL)
+
+**This step prevents "database locked" errors:**
 
 ```bash
-sudo sqlite3 /etc/freeradius/3.0/sqlite/radius.db \
-< /etc/freeradius/3.0/mods-config/sql/main/sqlite/schema.sql
-```
-
----
-
-# 4️⃣ Fix Database Permissions
-
-```bash
-sudo chown freerad:freerad /etc/freeradius/3.0/sqlite/radius.db
+sudo chown -R freerad:freerad /etc/freeradius/3.0/sqlite
+sudo chmod 775 /etc/freeradius/3.0/sqlite
 sudo chmod 664 /etc/freeradius/3.0/sqlite/radius.db
 ```
 
+Verify ownership:
+
+```bash
+ls -la /etc/freeradius/3.0/sqlite/
+```
+
+Output should show `freerad freerad` as owner.
+
 ---
 
-# 5️⃣ Configure SQL Module
+### Step 4: Enable SQLite WAL Mode
 
-Open SQL config:
+Write-Ahead Logging prevents lock contention:
+
+```bash
+sudo sqlite3 /etc/freeradius/3.0/sqlite/radius.db "PRAGMA journal_mode=WAL;"
+sudo sqlite3 /etc/freeradius/3.0/sqlite/radius.db "PRAGMA busy_timeout=30000;"
+```
+
+Verify WAL mode:
+
+```bash
+sudo sqlite3 /etc/freeradius/3.0/sqlite/radius.db "PRAGMA journal_mode;"
+```
+
+Expected output: `wal`
+
+---
+
+### Step 5: Configure SQL Module
+
+Edit SQL module configuration:
 
 ```bash
 sudo nano /etc/freeradius/3.0/mods-available/sql
 ```
 
-Set:
+Find and set these values:
 
-```
-driver = rlm_sql_sqlite
-dialect = sqlite
-```
+```conf
+driver = "rlm_sql_sqlite"
+dialect = "sqlite"
 
-Find sqlite block:
-
-```
 sqlite {
-    filename = /etc/freeradius/3.0/sqlite/radius.db
+    filename = "/etc/freeradius/3.0/sqlite/radius.db"
+    busy_timeout = 30000
 }
 ```
 
-Save & exit.
+Save and exit (`Ctrl+X`, `Y`, `Enter`).
 
 ---
 
-# 6️⃣ Enable SQL Module
+### Step 6: Enable SQL Module
+
+Create symbolic link:
 
 ```bash
-sudo ln -s /etc/freeradius/3.0/mods-available/sql \
-/etc/freeradius/3.0/mods-enabled/sql
+sudo ln -s /etc/freeradius/3.0/mods-available/sql /etc/freeradius/3.0/mods-enabled/sql
 ```
 
 ---
 
-# 7️⃣ Allow RadTik / Clients
+### Step 7: Configure Client Access
 
-Edit:
+Edit client configuration:
 
 ```bash
 sudo nano /etc/freeradius/3.0/clients.conf
 ```
 
-Add:
+Add RadTik client (append at end of file):
 
-```
+```conf
 client radtik {
     ipaddr = 0.0.0.0/0
-    secret = testing123
+    secret = ChangeThisSecretInProduction123
     require_message_authenticator = no
+    nastype = other
 }
 ```
 
-> ⚠ Replace secret in production.
+**⚠️ Security Note:** Change `secret` to a strong random password in production!
 
 ---
 
-# 8️⃣ Disable radpostauth Logging (Important)
+### Step 8: Optimize SQLite Configuration (Optional)
 
-Edit:
+Edit default site to disable unnecessary logging:
 
 ```bash
 sudo nano /etc/freeradius/3.0/sites-enabled/default
 ```
 
-Remove/comment `sql` inside:
+Comment out `sql` in these sections to reduce writes:
 
-```
-post-auth { }
-Post-Auth-Type REJECT { }
-Post-Auth-Type Challenge { }
-```
+```conf
+post-auth {
+    # sql  # ← Comment this line
+}
 
-This prevents SQLite lock errors.
-
----
-
-# 9️⃣ Disable Accounting (Optional)
-
-Inside same file:
-
-```
-accounting { }
+Post-Auth-Type REJECT {
+    # sql  # ← Comment this line
+}
 ```
 
 ---
 
-# 🔟 Restart FreeRADIUS
+### Step 9: Configure Firewall
+
+Allow RADIUS ports:
+
+```bash
+sudo ufw allow 1812/udp comment "RADIUS Authentication"
+sudo ufw allow 1813/udp comment "RADIUS Accounting"
+```
+
+---
+
+### Step 10: Restart FreeRADIUS
+
+Apply all changes:
 
 ```bash
 sudo systemctl restart freeradius
+sudo systemctl enable freeradius
 ```
 
-Check status:
+Check service status:
 
 ```bash
 sudo systemctl status freeradius
 ```
 
+Expected: `active (running)` in green.
+
 ---
 
-# 1️⃣1️⃣ Add Test User
+## Testing & Verification
+
+### Create Test User
+
+Add a test account to database:
 
 ```bash
 sudo sqlite3 /etc/freeradius/3.0/sqlite/radius.db \
-"INSERT INTO radcheck (username, attribute, op, value)
-VALUES ('testuser','Cleartext-Password',':=','testpass');"
+"INSERT INTO radcheck (username, attribute, op, value) VALUES ('testuser','Cleartext-Password',':=','testpass');"
 ```
 
 ---
 
-# 1️⃣2️⃣ Test Authentication
+### Test Authentication
 
-Run:
+Test from localhost:
 
 ```bash
-radtest testuser testpass 127.0.0.1 0 testing123
+radtest testuser testpass 127.0.0.1 0 ChangeThisSecretInProduction123
 ```
 
-Expected result:
+**Expected successful output:**
 
 ```
-Access-Accept
+Sent Access-Request Id 123 from 0.0.0.0:12345 to 127.0.0.1:1812 length 73
+Received Access-Accept Id 123 from 127.0.0.1:1812 to 127.0.0.1:12345 length 20
+```
+
+Test from remote server:
+
+```bash
+radtest testuser testpass <RADIUS_SERVER_IP> 0 ChangeThisSecretInProduction123
 ```
 
 ---
 
-# Debug Mode (Optional)
+### Debug Mode
+
+If authentication fails, run FreeRADIUS in debug mode:
 
 ```bash
+sudo systemctl stop freeradius
 sudo freeradius -X
 ```
 
-Shows live authentication logs.
+Press `Ctrl+C` to stop, then restart service:
+
+```bash
+sudo systemctl start freeradius
+```
 
 ---
 
-# Notes for RadTik
+## Integration with RadTik
 
-* RadTik uses `radcheck` for user authentication
-* SQLite is fine for small/medium deployments
-* Disable radpostauth logging to avoid DB locks
-* Use strong secrets in production
+### Database Structure
+
+RadTik uses these tables:
+
+**radcheck** - User credentials
+```sql
+username | attribute          | op | value
+---------|-------------------|----|---------
+user001  | Cleartext-Password | := | pass123
+```
+
+**radreply** - User attributes (optional)
+```sql
+username | attribute       | op | value
+---------|----------------|----|---------
+user001  | Session-Timeout | := | 3600
+```
 
 ---
 
-# Done ✅
+### Python Sync Script
 
-FreeRADIUS is now configured for RadTik authentication.
+Your Python script should:
+
+1. Query RadTik main database for active vouchers
+2. Insert/update users in RADIUS `radcheck` table
+3. Remove expired/deleted vouchers
+4. Run every 1-5 minutes via cron
+
+**Sample sync query:**
+
+```python
+# Get active vouchers from RadTik
+active_vouchers = db.query("""
+    SELECT username, password 
+    FROM vouchers 
+    WHERE status = 'active' 
+    AND (expires_at IS NULL OR expires_at > NOW())
+""")
+
+# Sync to RADIUS
+for voucher in active_vouchers:
+    radius_db.execute("""
+        INSERT OR REPLACE INTO radcheck 
+        (username, attribute, op, value)
+        VALUES (?, 'Cleartext-Password', ':=', ?)
+    """, (voucher.username, voucher.password))
+```
+
+---
+
+### Capturing First Login
+
+To track activation time, use one of these methods:
+
+**Option A: API Callback (Recommended)**
+- Configure FreeRADIUS post-auth exec module
+- Call RadTik API on successful auth
+- Update `activated_at` timestamp
+
+**Option B: Read radpostauth Table**
+- Enable SQL logging in post-auth section
+- Python script reads and processes new logins
+- Updates RadTik main database
+
+---
+
+## Troubleshooting
+
+### "database is locked" Error
+
+**Cause:** Incorrect permissions or WAL mode not enabled
+
+**Solution:**
+```bash
+sudo chown -R freerad:freerad /etc/freeradius/3.0/sqlite
+sudo chmod 775 /etc/freeradius/3.0/sqlite
+sudo sqlite3 /etc/freeradius/3.0/sqlite/radius.db "PRAGMA journal_mode=WAL;"
+sudo systemctl restart freeradius
+```
+
+---
+
+### "Access-Reject" Response
+
+**Cause:** Wrong password or user not in database
+
+**Solution:**
+```bash
+# Check if user exists
+sudo sqlite3 /etc/freeradius/3.0/sqlite/radius.db \
+"SELECT * FROM radcheck WHERE username='testuser';"
+
+# Verify secret matches
+grep "secret" /etc/freeradius/3.0/clients.conf
+```
+
+---
+
+### Service Won't Start
+
+**Check logs:**
+```bash
+sudo journalctl -u freeradius -n 50 --no-pager
+```
+
+**Common issues:**
+- Syntax error in config files
+- SQL module not properly enabled
+- Database file permissions
+
+---
+
+### High CPU Usage
+
+**Cause:** Too many SQL writes (post-auth logging)
+
+**Solution:** Disable radpostauth logging (see Step 8)
+
+---
+
+## Security Best Practices
+
+1. **Change default secret** in `/etc/freeradius/3.0/clients.conf`
+2. **Restrict client IP** - Replace `0.0.0.0/0` with specific IPs
+3. **Enable firewall** - Only allow RADIUS ports from trusted sources
+4. **Use SSL/TLS** for API callbacks
+5. **Regular backups** of SQLite database
+6. **Monitor logs** for suspicious activity
+
+---
+
+## Performance Tuning
+
+For high-traffic deployments:
+
+### Increase Connection Pool
+
+Edit `/etc/freeradius/3.0/mods-available/sql`:
+
+```conf
+pool {
+    start = 5
+    min = 4
+    max = 20
+    spare = 3
+}
+```
+
+### Consider MySQL/PostgreSQL
+
+SQLite is suitable for:
+- ✅ < 1000 concurrent users
+- ✅ < 100 auth requests/second
+
+For larger deployments, migrate to MySQL or PostgreSQL.
+
+---
+
+## Maintenance
+
+### Backup Database
+
+```bash
+sudo sqlite3 /etc/freeradius/3.0/sqlite/radius.db ".backup /backup/radius-$(date +%Y%m%d).db"
+```
+
+### Cleanup Old Logs
+
+```bash
+sudo sqlite3 /etc/freeradius/3.0/sqlite/radius.db "DELETE FROM radpostauth WHERE authdate < datetime('now', '-30 days');"
+sudo sqlite3 /etc/freeradius/3.0/sqlite/radius.db "VACUUM;"
+```
+
+### View Database Size
+
+```bash
+du -h /etc/freeradius/3.0/sqlite/radius.db*
+```
+
+---
+
+## Additional Resources
+
+- [FreeRADIUS Documentation](https://freeradius.org/documentation/)
+- [SQLite WAL Mode](https://www.sqlite.org/wal.html)
+- [RadTik Documentation](https://docs.radtik.com)
+
+---
+
+## Support
+
+If you encounter issues:
+
+1. Check [Troubleshooting](#troubleshooting) section
+2. Run debug mode: `sudo freeradius -X`
+3. Review logs: `sudo journalctl -u freeradius`
+4. Open issue on [GitHub](https://github.com/ahmadfoysal/radtik-radius-setup/issues)
+
+---
+
+**Setup Complete!** 🎉
+
+Your FreeRADIUS server is now ready for RadTik authentication.
+
+## Useful Commands
+
+Restart service:
+
+```bash
+sudo systemctl restart freeradius
+```
+
+Open database:
+
+```bash
+sqlite3 /etc/freeradius/3.0/sqlite/radius.db
+```
+
+View users:
+
+```sql
+SELECT * FROM radcheck;
+```
+
+---
+
+End of guide.

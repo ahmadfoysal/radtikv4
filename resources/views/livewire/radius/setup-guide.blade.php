@@ -16,6 +16,41 @@
                 </div>
             </div>
 
+            {{-- Quick Setup Option --}}
+            <div class="bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20 rounded-lg p-5 mb-6">
+                <div class="flex items-start gap-4">
+                    <div class="p-3 bg-primary rounded-full">
+                        <x-mary-icon name="o-bolt" class="w-6 h-6 text-white" />
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-bold text-lg mb-2">⚡ Quick Setup (Automated Script)</h3>
+                        <p class="text-sm mb-3">Save time! Use our automated bash script to complete the entire setup in 2-3 minutes.</p>
+                        <x-command-block code="curl -fsSL https://raw.githubusercontent.com/ahmadfoysal/radtik-radius-setup/main/radius-setup.sh | sudo bash" language="bash" />
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            <a href="https://github.com/ahmadfoysal/radtik-radius-setup/blob/main/radius-setup.sh" target="_blank" class="btn btn-primary btn-sm gap-2">
+                                <x-mary-icon name="o-code-bracket" class="w-4 h-4" />
+                                View Script
+                            </a>
+                            <a href="https://github.com/ahmadfoysal/radtik-radius-setup/blob/main/README.md" target="_blank" class="btn btn-ghost btn-sm gap-2">
+                                <x-mary-icon name="o-document-text" class="w-4 h-4" />
+                                Script Documentation
+                            </a>
+                        </div>
+                        <div class="alert alert-warning mt-3 py-2">
+                            <x-mary-icon name="o-information-circle" class="w-4 h-4" />
+                            <span class="text-xs">The script is safe and tested. Review it before running if you prefer manual control.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Manual Setup Divider --}}
+            <div class="flex items-center gap-4 my-8">
+                <div class="flex-1 border-t border-base-300"></div>
+                <span class="text-sm font-semibold text-base-content/60">OR FOLLOW MANUAL STEPS BELOW</span>
+                <div class="flex-1 border-t border-base-300"></div>
+            </div>
+
             {{-- Requirements --}}
             <div class="bg-base-200 rounded-lg p-4 mb-6 border border-base-300">
                 <h3 class="text-lg font-bold mb-3 flex items-center gap-2">
