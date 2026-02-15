@@ -45,6 +45,11 @@
             </div>
 
             <div>
+                <x-mary-select label="RADIUS Server" wire:model.live="radius_server_id" :options="$radiusServers" 
+                    option-label="name" option-value="id" placeholder="Select RADIUS server (optional)" />
+            </div>
+
+            <div>
                 <x-mary-file label="Logo" wire:model="logo" accept="image/*" />
                 @error('logo')
                     <div class="text-error text-sm mt-1">{{ $message }}</div>

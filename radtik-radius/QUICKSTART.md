@@ -25,8 +25,8 @@ This guide walks you through setting up FreeRADIUS with automatic Laravel synchr
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/radtik.git
-cd radtik/radtik-radius
+git clone https://github.com/ahmadfoysal/radtik-radius.git
+cd radtik-radius
 
 # Run the installer
 sudo bash install.sh

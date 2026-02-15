@@ -130,14 +130,22 @@ echo ""
 ###############################################################################
 echo -e "${YELLOW}[7/10] Applying SQLite optimizations and schema updates...${NC}"
 
+# Note: The database template (sqlite/radius.db) already includes:
+# - RadTik-specific columns (calling_station_id, nas_identifier, processed)
+# - Performance indexes
+# - WAL mode enabled
+# These steps ensure settings are applied regardless of template state
+
 echo "  → Enabling WAL mode"
 sqlite3 "$FREERADIUS_DIR/sqlite/radius.db" "PRAGMA journal_mode=WAL;" > /dev/null
 
 echo "  → Setting busy_timeout to 30000ms"
 sqlite3 "$FREERADIUS_DIR/sqlite/radius.db" "PRAGMA busy_timeout=30000;" > /dev/null
 
-echo "  → Adding 'processed' column to radpostauth table"
-sqlite3 "$FREERADIUS_DIR/sqlite/radius.db" "ALTER TABLE radpostauth ADD COLUMN processed INTEGER DEFAULT 0;" 2>/dev/null || echo "    (Column may already exist, skipping)"
+echo "  → Verifying RadTik columns in radpostauth table"
+sqlite3 "$FREERADIUS_DIR/sqlite/radius.db" "ALTER TABLE radpostauth ADD COLUMN calling_station_id varchar(50) DEFAULT NULL;" 2>/dev/null || echo "    (calling_station_id already exists)"
+sqlite3 "$FREERADIUS_DIR/sqlite/radius.db" "ALTER TABLE radpostauth ADD COLUMN nas_identifier varchar(64) DEFAULT NULL;" 2>/dev/null || echo "    (nas_identifier already exists)"
+sqlite3 "$FREERADIUS_DIR/sqlite/radius.db" "ALTER TABLE radpostauth ADD COLUMN processed INTEGER DEFAULT 0;" 2>/dev/null || echo "    (processed already exists)"
 
 echo "  → Creating indexes for performance"
 sqlite3 "$FREERADIUS_DIR/sqlite/radius.db" "CREATE INDEX IF NOT EXISTS idx_radpostauth_processed ON radpostauth(processed, authdate);" > /dev/null
@@ -154,14 +162,14 @@ SYNC_DIR="/opt/radtik-sync"
 echo "  → Creating $SYNC_DIR directory"
 mkdir -p "$SYNC_DIR"
 
-# Copy Python scripts
+# Copy Python scripts from scripts folder
 echo "  → Copying synchronization scripts"
-cp "$SCRIPT_DIR/sync-vouchers.py" "$SYNC_DIR/"
-cp "$SCRIPT_DIR/check-activations.py" "$SYNC_DIR/"
-cp "$SCRIPT_DIR/sync-deleted.py" "$SYNC_DIR/"
+cp "$SCRIPT_DIR/scripts/sync-vouchers.py" "$SYNC_DIR/"
+cp "$SCRIPT_DIR/scripts/check-activations.py" "$SYNC_DIR/"
+cp "$SCRIPT_DIR/scripts/sync-deleted.py" "$SYNC_DIR/"
 
 # Copy config example
-cp "$SCRIPT_DIR/config.ini.example" "$SYNC_DIR/"
+cp "$SCRIPT_DIR/scripts/config.ini.example" "$SYNC_DIR/"
 
 # Create config.ini if it doesn't exist
 if [ ! -f "$SYNC_DIR/config.ini" ]; then

@@ -1,6 +1,44 @@
 # RadTik FreeRADIUS + SQLite Installer
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Ubuntu](https://img.shields.io/badge/Ubuntu-22.04%20LTS-orange.svg)](https://ubuntu.com/)
+[![FreeRADIUS](https://img.shields.io/badge/FreeRADIUS-3.0-blue.svg)](https://freeradius.org/)
+[![Python](https://img.shields.io/badge/Python-3.6%2B-green.svg)](https://www.python.org/)
+
 A one-command installer for setting up FreeRADIUS with SQLite backend on Ubuntu 22.04 LTS, pre-configured for RadTik hotspot authentication.
+
+## Repository Structure
+
+```
+radtik-radius/
+├── install.sh                  # Main installation script
+├── validate.sh                 # Installation validation script
+├── README.md                   # This file
+├── QUICKSTART.md              # Quick start guide
+├── CONTRIBUTING.md            # Contribution guidelines
+├── LICENSE                    # MIT License
+├── CHANGELOG.md               # Version history
+├── VERSION                    # Current version number
+├── requirements.txt           # Python dependencies
+├── .gitignore                 # Git ignore rules
+├── clients.conf               # RADIUS clients configuration
+├── scripts/                   # Python synchronization scripts
+│   ├── sync-vouchers.py       # Voucher sync from Laravel
+│   ├── check-activations.py   # Activation monitoring
+│   ├── sync-deleted.py        # Deleted users cleanup
+│   ├── config.ini.example     # Configuration template
+│   └── README.md              # Scripts documentation
+├── mods-available/
+│   └── sql                    # SQL module configuration
+├── mods-config/
+│   └── sql/main/sqlite/
+│       └── queries.conf       # SQL queries
+├── sites-enabled/
+│   └── default                # Virtual server config
+└── sqlite/
+    ├── radius.db              # Pre-initialized clean database ⭐
+    └── DATABASE.md            # Database documentation
+```
 
 ## What This Installer Does
 
@@ -8,11 +46,18 @@ This repository contains a complete FreeRADIUS configuration bundle that:
 
 - ✅ Installs FreeRADIUS 3.0 with SQLite support
 - ✅ Configures SQL module for user authentication
-- ✅ Sets up SQLite database with proper schema (radcheck, radreply, radacct, radpostauth)
+- ✅ Sets up production-ready SQLite database with RadTik enhancements:
+  - Clean template (no test data)
+  - MAC address tracking columns
+  - Sync processing flags
+  - WAL mode enabled
+  - Performance indexes
 - ✅ Configures clients for MikroTik/RadTik integration
-- ✅ Applies SQLite optimizations (WAL mode, busy timeout)
+- ✅ Installs Python synchronization scripts for Laravel
+- ✅ Sets up automated cron jobs
+- ✅ Applies SQLite optimizations (WAL mode, busy timeout, indexes)
 - ✅ Sets correct permissions for freerad user
-- ✅ Stores authentication logs including MAC address and NAS identity
+- ✅ Validates installation with comprehensive checks
 
 ## Quick Installation
 
@@ -26,7 +71,7 @@ This repository contains a complete FreeRADIUS configuration bundle that:
 
 ```bash
 # 1. Clone this repository
-git clone https://github.com/yourusername/radtik-radius.git
+git clone https://github.com/ahmadfoysal/radtik-radius.git
 cd radtik-radius
 
 # 2. Run the installer
@@ -41,6 +86,40 @@ That's it! The installer will:
 - Enable SQL module
 - Optimize SQLite
 - Restart FreeRADIUS
+
+## Validating Installation
+
+After installation, run the validation script to verify everything is configured correctly:
+
+```bash
+sudo bash validate.sh
+```
+
+The validator will check:
+- ✅ FreeRADIUS service status
+- ✅ Configuration files
+- ✅ Database setup and permissions
+- ✅ Python environment and dependencies
+- ✅ Synchronization scripts
+- ✅ Cron jobs
+- ✅ Log files
+- ✅ RADIUS ports (1812, 1813)
+- ⚠️ Security warnings (default secrets, open IPs)
+
+**Sample output:**
+```
+===== RadTik FreeRADIUS Installation Validator =====
+
+[1/10] Checking FreeRADIUS installation...
+✓ FreeRADIUS is installed
+✓ FreeRADIUS service is running
+✓ FreeRADIUS service is enabled on boot
+
+...
+
+===== Validation Summary =====
+✓ All checks passed! Installation is complete and healthy.
+```
 
 ## Testing After Installation
 

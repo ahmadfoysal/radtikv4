@@ -48,6 +48,9 @@ class Edit extends Component
     #[Rule(['nullable', 'integer', 'exists:zones,id'])]
     public ?int $zone_id = null;
 
+    #[Rule(['nullable', 'integer', 'exists:radius_servers,id'])]
+    public ?int $radius_server_id = null;
+
     #[Rule(['nullable', 'image', 'max:2048', 'mimes:jpg,jpeg,png,svg,webp'])]
     public $logo = null;
 
@@ -66,6 +69,7 @@ class Edit extends Component
         $this->voucher_template_id = $router->voucher_template_id;
         $this->monthly_isp_cost = $router->monthly_isp_cost ?? 0.0;
         $this->zone_id = $router->zone_id;
+        $this->radius_server_id = $router->radius_server_id;
     }
 
     public function update(): void
@@ -83,6 +87,7 @@ class Edit extends Component
             'voucher_template_id' => $this->voucher_template_id,
             'monthly_isp_cost' => $this->monthly_isp_cost,
             'zone_id' => $this->zone_id,
+            'radius_server_id' => $this->radius_server_id,
         ];
 
         // Handle logo upload - replace old logo if new one is uploaded
@@ -113,6 +118,12 @@ class Edit extends Component
             'voucherTemplates' => VoucherTemplate::select('id', 'name')
                 ->orderBy('name')
                 ->get(),
+            'radiusServers' => \App\Models\RadiusServer::query()
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get()
+                ->map(fn($r) => ['id' => $r->id, 'name' => $r->name . ' (' . $r->host . ')'])
+                ->toArray(),
         ])
             ->title(__('Edit Router'));
     }

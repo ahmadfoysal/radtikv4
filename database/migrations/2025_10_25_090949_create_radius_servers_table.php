@@ -52,6 +52,8 @@ return new class extends Migration
             
             // Auto-provisioning flag
             $table->boolean('auto_provision')->default(true); // Auto-create on Linode
+            //table for token-based authentication
+            $table->string('auth_token')->nullable(); // Token for API authentication
             
             $table->timestamps();
         });

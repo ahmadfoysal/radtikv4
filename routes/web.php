@@ -133,6 +133,12 @@ Route::middleware(['auth', 'check.suspended'])->group(function () {
         Route::get('/router/{router}/edit', App\Livewire\Router\Edit::class)->name('routers.edit');
         Route::get('/router/{router}', App\Livewire\Router\Show::class)->name('routers.show');
 
+        // NAS Device Management
+        Route::get('/nas-devices', App\Livewire\NasDevice\Index::class)->name('nas-devices.index');
+        Route::get('/nas-device/add', App\Livewire\NasDevice\Create::class)->name('nas-devices.create');
+        Route::get('/nas-device/{nasDevice}/edit', App\Livewire\NasDevice\Edit::class)->name('nas-devices.edit');
+        Route::get('/nas-device/{nasDevice}', App\Livewire\NasDevice\Show::class)->name('nas-devices.show');
+
         // Profile Management
         Route::get('/profiles', App\Livewire\Profile\Index::class)->name('profiles');
         Route::get('/profile/add', App\Livewire\Profile\Create::class)->name('profiles.create');

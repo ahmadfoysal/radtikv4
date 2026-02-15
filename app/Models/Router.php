@@ -26,10 +26,15 @@ class Router extends Model
         'monthly_isp_cost',
         'logo',
         'voucher_template_id',
+        'nas_identifier',
+        'is_nas_device',
+        'parent_router_id',
+        'radius_server_id',
     ];
 
     protected $casts = [
         'monthly_isp_cost' => 'decimal:2',
+        'is_nas_device' => 'boolean',
     ];
 
     public function decryptedPassword(): string
@@ -93,5 +98,51 @@ class Router extends Model
     public function voucherLogs()
     {
         return $this->hasMany(VoucherLog::class);
+    }
+
+    // NAS Device relationships
+    public function parentRouter()
+    {
+        return $this->belongsTo(Router::class, 'parent_router_id');
+    }
+
+    public function childDevices()
+    {
+        return $this->hasMany(Router::class, 'parent_router_id');
+    }
+
+    public function radiusServer()
+    {
+        return $this->belongsTo(RadiusServer::class);
+    }
+
+    // Helper methods for NAS devices
+    public function isNasDevice(): bool
+    {
+        return $this->is_nas_device ?? false;
+    }
+
+    public function isParentRouter(): bool
+    {
+        return !$this->is_nas_device && $this->childDevices()->exists();
+    }
+
+    public function getEffectiveNasIdentifier(): ?string
+    {
+        if ($this->is_nas_device && $this->parentRouter) {
+            return $this->parentRouter->nas_identifier;
+        }
+        return $this->nas_identifier;
+    }
+
+    // Scope queries
+    public function scopeNasDevices($query)
+    {
+        return $query->where('is_nas_device', true);
+    }
+
+    public function scopeMainRouters($query)
+    {
+        return $query->where('is_nas_device', false);
     }
 }

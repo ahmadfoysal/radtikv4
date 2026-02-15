@@ -12,6 +12,12 @@
             <x-mary-menu-item title="Import Routers" icon="o-plus-circle" link="/router/import" />
         </x-mary-menu-sub>
 
+        {{-- NAS DEVICE MANAGEMENT --}}
+        <x-mary-menu-sub title="NAS Devices" icon="o-server">
+            <x-mary-menu-item title="All NAS Devices" icon="o-list-bullet" link="/nas-devices" />
+            <x-mary-menu-item title="Add NAS Device" icon="o-plus-circle" link="/nas-device/add" />
+        </x-mary-menu-sub>
+
         {{-- PROFILE MANAGEMENT --}}
         <x-mary-menu-sub title="Profile" icon="o-rectangle-group">
             <x-mary-menu-item title="Profile List" icon="o-list-bullet" link="/profiles" />

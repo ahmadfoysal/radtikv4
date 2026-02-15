@@ -46,6 +46,9 @@ class Create extends Component
     #[Rule(['nullable', 'integer', 'exists:zones,id'])]
     public ?int $zone_id = null;
 
+    #[Rule(['nullable', 'integer', 'exists:radius_servers,id'])]
+    public ?int $radius_server_id = null;
+
     #[Rule(['nullable', 'image', 'max:2048', 'mimes:jpg,jpeg,png,svg,webp'])]
     public $logo = null;
 
@@ -153,6 +156,7 @@ class Create extends Component
                 'voucher_template_id' => $voucherTemplateId,
                 'monthly_isp_cost' => $this->monthly_isp_cost,
                 'zone_id' => $this->zone_id,
+                'radius_server_id' => $this->radius_server_id,
                 'logo' => $logoPath,
             ]);
 
@@ -184,6 +188,7 @@ class Create extends Component
             'voucher_template_id',
             'monthly_isp_cost',
             'zone_id',
+            'radius_server_id',
             'logo',
         ]);
         $this->port = 8728;
@@ -216,6 +221,12 @@ class Create extends Component
                 ->orderBy('name')
                 ->get()
                 ->map(fn($z) => ['id' => $z->id, 'name' => $z->name])
+                ->toArray(),
+            'radiusServers' => \App\Models\RadiusServer::query()
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get()
+                ->map(fn($r) => ['id' => $r->id, 'name' => $r->name . ' (' . $r->host . ')'])
                 ->toArray(),
         ])
             ->title(__('Add Router'));
