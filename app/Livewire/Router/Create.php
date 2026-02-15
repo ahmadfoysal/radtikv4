@@ -10,6 +10,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -87,6 +88,28 @@ class Create extends Component
         }
     }
 
+    /**
+     * Generate a unique NAS identifier using router name in kebab-case with timestamp
+     */
+    private function generateUniqueNasIdentifier(string $routerName): string
+    {
+        // Convert router name to kebab-case
+        $prefix = Str::slug($routerName);
+
+        // Generate unique identifier with timestamp
+        $timestamp = now()->format('YmdHis');
+        $nasIdentifier = "{$prefix}-{$timestamp}";
+
+        // Ensure uniqueness (in case of simultaneous creation)
+        $counter = 1;
+        while (Router::where('nas_identifier', $nasIdentifier)->exists()) {
+            $nasIdentifier = "{$prefix}-{$timestamp}-{$counter}";
+            $counter++;
+        }
+
+        return $nasIdentifier;
+    }
+
     public function save()
     {
         $this->authorize('add_router');
@@ -143,6 +166,9 @@ class Create extends Component
         }
 
         try {
+            // Generate unique NAS identifier using router name in kebab-case + timestamp
+            $nasIdentifier = $this->generateUniqueNasIdentifier($this->name);
+
             // Create router directly - no per-router billing anymore
             $router = Router::create([
                 'name' => $this->name,
@@ -158,6 +184,7 @@ class Create extends Component
                 'zone_id' => $this->zone_id,
                 'radius_server_id' => $this->radius_server_id,
                 'logo' => $logoPath,
+                'nas_identifier' => $nasIdentifier,
             ]);
 
             // If reseller created the router, automatically assign it to them

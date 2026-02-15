@@ -19,8 +19,12 @@ class RouterFactory extends Factory
      */
     public function definition(): array
     {
+        $name = fake()->company() . ' Router';
+        $kebabName = Str::slug($name);
+        $timestamp = now()->format('YmdHis') . fake()->randomNumber(3);
+
         return [
-            'name' => fake()->company() . ' Router',
+            'name' => $name,
             'address' => fake()->ipv4(),
             'login_address' => fake()->ipv4(),
             'port' => '8728',
@@ -35,6 +39,7 @@ class RouterFactory extends Factory
             'logo' => null,
             'voucher_template_id' => null,
             'package' => null,
+            'nas_identifier' => "{$kebabName}-{$timestamp}",
         ];
     }
 }

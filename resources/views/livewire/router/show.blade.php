@@ -71,6 +71,15 @@
                             {{ $router->login_address ?? 'N/A' }}
                         </dd>
                     </div>
+                    <div class="flex items-center justify-between gap-3">
+                        <dt class="flex items-center gap-2 text-[11px] uppercase opacity-60">
+                            <x-mary-icon name="o-identification" class="w-4 h-4" />
+                            NAS ID
+                        </dt>
+                        <dd class="font-mono text-xs font-semibold">
+                            {{ $router->nas_identifier ?? 'N/A' }}
+                        </dd>
+                    </div>
                 </dl>
             </div>
 
@@ -383,16 +392,14 @@
                 <x-mary-icon name="o-exclamation-triangle" class="w-5 h-5 text-error" />
                 <h3 class="text-lg font-semibold text-error">Danger Zone</h3>
             </div>
-            
+
             <div class="space-y-2">
                 <p class="text-sm text-base-content/70">
-                    Deleting this router will permanently remove it and all associated data. This action cannot be undone.
+                    Deleting this router will permanently remove it and all associated data. This action cannot be
+                    undone.
                 </p>
-                
-                <x-mary-button 
-                    icon="o-trash" 
-                    label="Delete Router" 
-                    class="btn-error"
+
+                <x-mary-button icon="o-trash" label="Delete Router" class="btn-error"
                     wire:click="openDeleteModal" />
             </div>
         </div>
@@ -420,27 +427,16 @@
                 <label class="text-sm font-medium">
                     Type <strong class="text-error">"delete"</strong> to confirm:
                 </label>
-                <x-mary-input 
-                    wire:model="deleteConfirmation"
-                    placeholder="Type 'delete' to confirm"
-                    class="w-full"
+                <x-mary-input wire:model="deleteConfirmation" placeholder="Type 'delete' to confirm" class="w-full"
                     autofocus />
             </div>
         </div>
 
         <x-slot:actions>
-            <x-mary-button 
-                label="Cancel" 
-                class="btn-ghost"
-                wire:click="closeDeleteModal" />
-            
-            <x-mary-button 
-                icon="o-trash" 
-                label="Delete Router" 
-                class="btn-error"
-                wire:click="deleteRouter"
-                spinner="deleteRouter"
-                :disabled="strtolower(trim($deleteConfirmation)) !== 'delete'" />
+            <x-mary-button label="Cancel" class="btn-ghost" wire:click="closeDeleteModal" />
+
+            <x-mary-button icon="o-trash" label="Delete Router" class="btn-error" wire:click="deleteRouter"
+                spinner="deleteRouter" :disabled="strtolower(trim($deleteConfirmation)) !== 'delete'" />
         </x-slot:actions>
     </x-mary-modal>
 
