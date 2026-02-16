@@ -24,11 +24,16 @@ class Voucher extends Model
         'bytes_out',
         'up_time',
         'batch',
+        'radius_sync_status',
+        'radius_synced_at',
+        'radius_sync_error',
     ];
 
     protected $casts = [
         'activated_at' => 'datetime',
         'expires_at' => 'datetime',
+        'radius_synced_at' => 'datetime',
+        'radius_sync_status' => 'string',
     ];
 
     public function user()
@@ -59,5 +64,48 @@ class Voucher extends Model
     public function logs()
     {
         return $this->hasMany(VoucherLog::class);
+    }
+
+    // RADIUS Sync Helper Methods
+    
+    public function isPendingSync(): bool
+    {
+        return $this->radius_sync_status === 'pending';
+    }
+
+    public function isSynced(): bool
+    {
+        return $this->radius_sync_status === 'synced';
+    }
+
+    public function isSyncFailed(): bool
+    {
+        return $this->radius_sync_status === 'failed';
+    }
+
+    public function markAsSynced(): void
+    {
+        $this->update([
+            'radius_sync_status' => 'synced',
+            'radius_synced_at' => now(),
+            'radius_sync_error' => null,
+        ]);
+    }
+
+    public function markAsFailed(string $error): void
+    {
+        $this->update([
+            'radius_sync_status' => 'failed',
+            'radius_sync_error' => $error,
+        ]);
+    }
+
+    public function resetSyncStatus(): void
+    {
+        $this->update([
+            'radius_sync_status' => 'pending',
+            'radius_synced_at' => null,
+            'radius_sync_error' => null,
+        ]);
     }
 }

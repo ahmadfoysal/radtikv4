@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Voucher;
 
+use App\Jobs\SyncVouchersToRadiusJob;
 use App\Models\Router;
 use App\Models\Voucher;
 use Illuminate\Support\Str;
@@ -150,22 +151,26 @@ class Generate extends Component
 
             $codes = $this->generateCodes();
             $rows = $this->buildRows($codes);
+            $batchId = $rows[0]['batch']; // Get batch ID before insert
 
             Voucher::insert($rows);
+
+            // Dispatch job to sync vouchers to RADIUS server
+            SyncVouchersToRadiusJob::dispatch($batchId, $this->router_id);
 
             // Log bulk voucher generation
             \App\Models\ActivityLog::log(
                 'bulk_generated',
-                "Generated {$this->quantity} vouchers in batch {$rows[0]['batch']}",
+                "Generated {$this->quantity} vouchers in batch {$batchId}",
                 [
                     'quantity' => $this->quantity,
-                    'batch' => $rows[0]['batch'],
+                    'batch' => $batchId,
                     'router_id' => $this->router_id,
                     'profile_id' => $this->profile_id,
                 ]
             );
 
-            $this->success('Vouchers generated successfully.');
+            $this->success('Vouchers generated successfully! Syncing to RADIUS server in background...');
             $this->redirect(route('vouchers.index'), navigate: true);
         } catch (\Throwable $e) {
             $this->error('Failed to generate vouchers: ' . $e->getMessage());

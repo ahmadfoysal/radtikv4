@@ -28,6 +28,12 @@ return new class extends Migration
             $table->bigInteger('bytes_out')->default(0);
             $table->string('up_time')->nullable();
             $table->string('batch');
+            
+            // RADIUS Sync Fields
+            $table->enum('radius_sync_status', ['pending', 'synced', 'failed'])->default('pending');
+            $table->timestamp('radius_synced_at')->nullable();
+            $table->text('radius_sync_error')->nullable();
+            
             $table->timestamps();
         });
     }

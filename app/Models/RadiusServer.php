@@ -38,6 +38,8 @@ class RadiusServer extends Model
         'installation_log',
         'installed_at',
         'auto_provision',
+        // API Authentication
+        'auth_token',
     ];
 
     protected $casts = [
@@ -97,6 +99,39 @@ class RadiusServer extends Model
     public function setSshPrivateKeyAttribute($value): void
     {
         $this->attributes['ssh_private_key'] = $value ? Crypt::encrypt($value) : null;
+    }
+
+    /**
+     * Get the encrypted auth token
+     */
+    public function getAuthTokenAttribute($value): ?string
+    {
+        return $value ? Crypt::decrypt($value) : null;
+    }
+
+    /**
+     * Set the encrypted auth token
+     */
+    public function setAuthTokenAttribute($value): void
+    {
+        $this->attributes['auth_token'] = $value ? Crypt::encrypt($value) : null;
+    }
+
+    /**
+     * Get the API base URL (uses host:5000 by default)
+     */
+    public function getApiUrlAttribute(): string
+    {
+        $host = $this->host ?? $this->linode_ipv4;
+        return $host ? "http://{$host}:5000" : '';
+    }
+
+    /**
+     * Get API endpoint URL for voucher sync
+     */
+    public function getSyncEndpointAttribute(): string
+    {
+        return $this->api_url . '/sync/vouchers';
     }
 
     /**
