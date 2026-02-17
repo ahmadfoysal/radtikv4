@@ -27,8 +27,9 @@ fi
 
 # Get the directory where this script is located
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+INSTALL_DIR="/opt/radtik-radius"
 FREERADIUS_DIR="/etc/freeradius/3.0"
-SCRIPTS_DIR="$SCRIPT_DIR/scripts"
+SCRIPTS_DIR="$INSTALL_DIR/scripts"
 SYNC_DIR="/opt/radtik-sync"
 API_SERVICE_NAME="radtik-radius-api"
 API_SERVICE_FILE="/etc/systemd/system/${API_SERVICE_NAME}.service"
@@ -85,6 +86,25 @@ echo ""
 sleep 2
 
 ###############################################################################
+# PHASE 0: Copy Installation Files
+###############################################################################
+
+print_header "PHASE 0: Preparing Installation Files"
+
+echo -e "${YELLOW}[0/1] Copying files to $INSTALL_DIR...${NC}"
+
+# Create installation directory
+mkdir -p "$INSTALL_DIR"
+
+# Copy all files to installation directory
+cp -r "$SCRIPT_DIR"/* "$INSTALL_DIR/"
+
+print_info "Installation files copied to $INSTALL_DIR"
+echo ""
+
+print_header "✓ Installation Files Ready"
+
+###############################################################################
 # PHASE 1: FreeRADIUS Core Installation
 ###############################################################################
 
@@ -105,7 +125,7 @@ echo ""
 echo -e "${YELLOW}[2/9] Installing Python dependencies...${NC}"
 
 echo "  → Installing Flask, Gunicorn for API server"
-pip3 install -r "$SCRIPT_DIR/requirements.txt" --quiet
+pip3 install -r "$INSTALL_DIR/requirements.txt" --quiet
 
 print_info "Python dependencies installed"
 echo ""
@@ -136,14 +156,14 @@ safe_copy() {
 }
 
 # Copy configuration files
-safe_copy "$SCRIPT_DIR/clients.conf" "$FREERADIUS_DIR/clients.conf"
-safe_copy "$SCRIPT_DIR/mods-available/sql" "$FREERADIUS_DIR/mods-available/sql"
-safe_copy "$SCRIPT_DIR/mods-config/sql/main/sqlite/queries.conf" "$FREERADIUS_DIR/mods-config/sql/main/sqlite/queries.conf"
-safe_copy "$SCRIPT_DIR/sites-enabled/default" "$FREERADIUS_DIR/sites-enabled/default"
+safe_copy "$INSTALL_DIR/clients.conf" "$FREERADIUS_DIR/clients.conf"
+safe_copy "$INSTALL_DIR/mods-available/sql" "$FREERADIUS_DIR/mods-available/sql"
+safe_copy "$INSTALL_DIR/mods-config/sql/main/sqlite/queries.conf" "$FREERADIUS_DIR/mods-config/sql/main/sqlite/queries.conf"
+safe_copy "$INSTALL_DIR/sites-enabled/default" "$FREERADIUS_DIR/sites-enabled/default"
 
 # Copy SQLite database
 mkdir -p "$FREERADIUS_DIR/sqlite"
-safe_copy "$SCRIPT_DIR/sqlite/radius.db" "$FREERADIUS_DIR/sqlite/radius.db"
+safe_copy "$INSTALL_DIR/sqlite/radius.db" "$FREERADIUS_DIR/sqlite/radius.db"
 
 print_info "Configuration files copied"
 echo ""
@@ -298,18 +318,34 @@ print_info "Generated secure token (save this for Laravel)"
 echo ""
 
 ###############################################################################
-# API Step 2: Set permissions
+# API Step 2: Set permissions and create log files
 ###############################################################################
-echo -e "${YELLOW}[API 2/5] Setting permissions...${NC}"
+echo -e "${YELLOW}[API 2/5] Setting permissions and creating log files...${NC}"
 
+# Make Python script executable
 chmod +x "$SCRIPTS_DIR/sync-vouchers.py"
 
-# Set ownership
+# Create log files with proper permissions
+echo "  → Creating log files"
+touch /var/log/radtik-radius-access.log
+touch /var/log/radtik-radius-error.log
+
+# Set installation directory permissions
+echo "  → Setting directory permissions"
+chmod 755 "$INSTALL_DIR"
+chmod 755 "$SCRIPTS_DIR"
+chmod 644 "$SCRIPTS_DIR"/*.py 2>/dev/null || true
+
+# Set ownership for directories and files
 if id "freerad" &>/dev/null; then
-    chown -R freerad:freerad "$SCRIPTS_DIR"
-    print_info "Ownership set to freerad:freerad"
+    echo "  → Setting ownership to freerad:freerad"
+    chown -R freerad:freerad "$INSTALL_DIR"
+    chown freerad:freerad /var/log/radtik-radius-*.log
+    chmod 644 /var/log/radtik-radius-*.log
+    print_info "Permissions and ownership configured"
 else
-    print_warning "freerad user not found, skipping ownership change"
+    print_error "freerad user not found, service will fail to start"
+    exit 1
 fi
 echo ""
 
@@ -318,17 +354,13 @@ echo ""
 ###############################################################################
 echo -e "${YELLOW}[API 3/5] Installing systemd service...${NC}"
 
-if [ ! -f "$SCRIPT_DIR/radtik-radius-api.service" ]; then
-    print_error "Service file not found: $SCRIPT_DIR/radtik-radius-api.service"
+if [ ! -f "$INSTALL_DIR/radtik-radius-api.service" ]; then
+    print_error "Service file not found: $INSTALL_DIR/radtik-radius-api.service"
     exit 1
 fi
 
-# Copy and update service file
-cp "$SCRIPT_DIR/radtik-radius-api.service" "$API_SERVICE_FILE"
-
-# Update paths in service file
-sed -i "s|WorkingDirectory=.*|WorkingDirectory=$SCRIPTS_DIR|" "$API_SERVICE_FILE"
-sed -i "s|sync-vouchers:app|sync-vouchers.py:app|" "$API_SERVICE_FILE"
+# Copy service file (paths are already correct in the file)
+cp "$INSTALL_DIR/radtik-radius-api.service" "$API_SERVICE_FILE"
 
 # Reload systemd
 systemctl daemon-reload
@@ -356,25 +388,44 @@ echo ""
 ###############################################################################
 # API Step 5: Test and enable service
 ###############################################################################
-echo -e "${YELLOW}[API 5/5] Testing and enabling API service...${NC}"
+echo -e "${YELLOW}[API 5/5] Starting and testing API service...${NC}"
 
 # Start service
+echo "  → Starting radtik-radius-api service"
 systemctl start $API_SERVICE_NAME
 
-sleep 3
+# Wait for service to fully start
+sleep 5
 
-# Test health endpoint
-RESPONSE=$(curl -s -H "Authorization: Bearer $API_TOKEN" http://localhost:5000/health 2>/dev/null || echo "failed")
-
-if [[ $RESPONSE == *"healthy"* ]]; then
-    print_info "API server is healthy and responding"
+# Check if service is running
+if systemctl is-active --quiet $API_SERVICE_NAME; then
+    print_info "Service is running"
     
-    # Enable service
-    systemctl enable $API_SERVICE_NAME > /dev/null 2>&1
-    print_info "API service enabled on boot"
+    # Test health endpoint
+    echo "  → Testing API health endpoint"
+    RESPONSE=$(curl -s -H "Authorization: Bearer $API_TOKEN" http://localhost:5000/health 2>/dev/null || echo "failed")
+    
+    if [[ $RESPONSE == *"healthy"* ]]; then
+        print_info "API server is healthy and responding"
+        echo "  → Response: $RESPONSE"
+        
+        # Enable service on boot
+        systemctl enable $API_SERVICE_NAME > /dev/null 2>&1
+        print_info "Service enabled on boot"
+    else
+        print_warning "API health check received unexpected response"
+        echo "  → Response: $RESPONSE"
+        echo "  → Service is running but may have issues"
+    fi
 else
-    print_warning "API server health check failed, but service is running"
-    print_warning "Check logs: sudo journalctl -u $API_SERVICE_NAME -f"
+    print_error "Service failed to start"
+    echo ""
+    echo "Troubleshooting:"
+    echo "  1. Check service status: sudo systemctl status $API_SERVICE_NAME"
+    echo "  2. View error logs: sudo tail -50 /var/log/radtik-radius-error.log"
+    echo "  3. Check permissions: ls -la $SCRIPTS_DIR"
+    echo "  4. Test manually: cd $SCRIPTS_DIR && sudo -u freerad python3 sync-vouchers.py"
+    exit 1
 fi
 echo ""
 
@@ -475,6 +526,55 @@ echo ""
 print_header "✓ Legacy Sync Scripts Installation Complete"
 
 ###############################################################################
+# Final Verification
+###############################################################################
+
+print_header "Final Verification"
+
+echo -e "${YELLOW}Verifying services...${NC}"
+echo ""
+
+# Check FreeRADIUS
+if systemctl is-active --quiet freeradius; then
+    echo -e "${GREEN}✓${NC} FreeRADIUS is running"
+else
+    echo -e "${RED}✗${NC} FreeRADIUS is not running"
+fi
+
+# Check API Server
+if systemctl is-active --quiet $API_SERVICE_NAME; then
+    echo -e "${GREEN}✓${NC} API Server is running"
+    
+    # Test API endpoint
+    API_TEST=$(curl -s -H "Authorization: Bearer $API_TOKEN" http://localhost:5000/health 2>/dev/null || echo "failed")
+    if [[ $API_TEST == *"healthy"* ]]; then
+        echo -e "${GREEN}✓${NC} API health check passed"
+    else
+        echo -e "${YELLOW}⚠${NC} API health check failed (may need time to warm up)"
+    fi
+else
+    echo -e "${RED}✗${NC} API Server is not running"
+fi
+
+# Check database permissions
+if [ -r "$FREERADIUS_DIR/sqlite/radius.db" ]; then
+    echo -e "${GREEN}✓${NC} Database is accessible"
+else
+    echo -e "${RED}✗${NC} Database permission issues"
+fi
+
+# Check port 5000
+if netstat -tuln 2>/dev/null | grep -q ":5000 " || ss -tuln 2>/dev/null | grep -q ":5000 "; then
+    echo -e "${GREEN}✓${NC} Port 5000 is listening"
+else
+    echo -e "${YELLOW}⚠${NC} Port 5000 is not listening"
+fi
+
+echo ""
+
+print_header "✓ Verification Complete"
+
+###############################################################################
 # Final Summary
 ###############################################################################
 
@@ -521,8 +621,9 @@ echo "  • View API stats: curl -H 'Authorization: Bearer $API_TOKEN' http://lo
 
 echo ""
 echo -e "${BLUE}Documentation:${NC}"
-echo "  • API Setup: $SCRIPT_DIR/API_QUICKSTART.md"
-echo "  • Full Guide: $SCRIPT_DIR/README.md"
+echo "  • Installation Directory: $INSTALL_DIR"
+echo "  • API Setup: $INSTALL_DIR/API_QUICKSTART.md"
+echo "  • Full Guide: $INSTALL_DIR/README.md"
 echo "  • Scripts: $SCRIPTS_DIR/README.md"
 echo ""
 
