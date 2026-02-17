@@ -39,7 +39,7 @@ class RadiusApiService
         }
 
         $endpoint = $this->server->sync_endpoint;
-        
+
         if (!$endpoint) {
             throw new Exception('RADIUS server API endpoint is not configured.');
         }
@@ -50,7 +50,7 @@ class RadiusApiService
                 return [
                     'username' => $voucher->username,
                     'password' => $voucher->password,
-                    'mikrotik_rate_limit' => $voucher->profile->rate_limit ?? '512k/512k',
+                    'mikrotik_rate_limit' => $voucher->profile->rate_limit ?? '10M/10M',
                     'nas_identifier' => $router->nas_identifier,
                 ];
             })->toArray(),
@@ -85,23 +85,21 @@ class RadiusApiService
             ]);
 
             return $result;
-
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
             Log::error('RADIUS API connection failed', [
                 'server_id' => $this->server->id,
                 'endpoint' => $endpoint,
                 'error' => $e->getMessage(),
             ]);
-            
+
             throw new Exception('Failed to connect to RADIUS server: ' . $e->getMessage());
-            
         } catch (\Illuminate\Http\Client\RequestException $e) {
             Log::error('RADIUS API request failed', [
                 'server_id' => $this->server->id,
                 'endpoint' => $endpoint,
                 'error' => $e->getMessage(),
             ]);
-            
+
             throw new Exception('RADIUS API request failed: ' . $e->getMessage());
         }
     }
@@ -138,13 +136,12 @@ class RadiusApiService
             }
 
             return $response->json();
-
         } catch (\Exception $e) {
             Log::error('RADIUS voucher deletion failed', [
                 'username' => $username,
                 'error' => $e->getMessage(),
             ]);
-            
+
             throw $e;
         }
     }
@@ -158,19 +155,18 @@ class RadiusApiService
     {
         try {
             $endpoint = $this->server->api_url . '/health';
-            
+
             $response = Http::timeout(5)
                 ->withToken($this->server->auth_token)
                 ->get($endpoint);
 
             return $response->successful();
-            
         } catch (\Exception $e) {
             Log::warning('RADIUS API health check failed', [
                 'server_id' => $this->server->id,
                 'error' => $e->getMessage(),
             ]);
-            
+
             return false;
         }
     }
