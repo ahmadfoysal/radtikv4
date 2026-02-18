@@ -25,7 +25,7 @@
         </div>
     @else
         {{-- Service Status Cards --}}
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             {{-- SSH Connection Status --}}
             <x-mary-card>
                 <div class="flex items-center justify-between">
@@ -40,15 +40,33 @@
                 </div>
             </x-mary-card>
 
+            {{-- Installation Status --}}
+            <x-mary-card>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Installation</p>
+                        <p class="text-2xl font-bold mt-1">
+                            <x-mary-badge :value="ucfirst($server->installation_status)" 
+                                :class="$server->installation_status === 'completed' ? 'badge-success' : 
+                                       ($server->installation_status === 'failed' ? 'badge-error' : 'badge-warning')" />
+                        </p>
+                    </div>
+                    <x-mary-icon name="o-cog-6-tooth" class="w-12 h-12 text-primary opacity-20" />
+                </div>
+            </x-mary-card>
+
             {{-- FreeRADIUS Service Status --}}
             <x-mary-card>
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm text-gray-600">FreeRADIUS Service</p>
                         <p class="text-2xl font-bold mt-1">
-                            <x-mary-badge :value="getStatusText($radiusServiceActive)" 
-                                :class="getStatusBadgeClass($radiusServiceActive)" />
+                            <x-mary-badge :value="$this->getStatusText($radiusServiceActive)" 
+                                :class="$this->getStatusBadgeClass($radiusServiceActive)" />
                         </p>
+                        @if($sshConnected && config('app.debug'))
+                            <p class="text-xs text-gray-500 mt-1">Debug: {{ $radiusServiceActive ? 'true' : 'false' }}</p>
+                        @endif
                     </div>
                     <x-mary-icon name="o-shield-check" class="w-12 h-12 text-primary opacity-20" />
                 </div>
@@ -60,9 +78,12 @@
                     <div>
                         <p class="text-sm text-gray-600">API Service</p>
                         <p class="text-2xl font-bold mt-1">
-                            <x-mary-badge :value="getStatusText($apiServiceActive)" 
-                                :class="getStatusBadgeClass($apiServiceActive)" />
+                            <x-mary-badge :value="$this->getStatusText($apiServiceActive)" 
+                                :class="$this->getStatusBadgeClass($apiServiceActive)" />
                         </p>
+                        @if($sshConnected && config('app.debug'))
+                            <p class="text-xs text-gray-500 mt-1">Debug: {{ $apiServiceActive ? 'true' : 'false' }}</p>
+                        @endif
                     </div>
                     <x-mary-icon name="o-cloud" class="w-12 h-12 text-primary opacity-20" />
                 </div>
@@ -195,19 +216,41 @@
         {{-- Action Buttons --}}
         <x-mary-card title="Actions" separator>
             <div class="flex flex-wrap gap-3">
+                {{-- Connection Test --}}
                 <x-mary-button label="Test Connection" icon="o-wifi" wire:click="testConnection" 
                     class="btn-primary" spinner="testConnection" />
                 
                 @if($sshConnected)
-                    <x-mary-button label="Restart Services" icon="o-arrow-path" wire:click="restartServices" 
-                        class="btn-warning" spinner="restartServices" 
-                        onclick="return confirm('Are you sure you want to restart all services?')" />
-                    
-                    <x-mary-button label="Test RADIUS Auth" icon="o-shield-check" wire:click="testRadiusAuth" 
-                        class="btn-info" spinner="testRadiusAuth" />
+                    {{-- Installation Actions --}}
+                    @if(in_array($server->installation_status, ['pending', 'failed']))
+                        <x-mary-button label="Install RADIUS Server" icon="o-arrow-down-tray" 
+                            wire:click="installRadiusServer" 
+                            class="btn-success" spinner="installRadiusServer"
+                            onclick="return confirm('This will install FreeRADIUS and API server. This takes 5-10 minutes. Continue?')" />
+                    @elseif($server->installation_status === 'installing')
+                        <x-mary-button label="Check Installation Progress" icon="o-magnifying-glass" 
+                            wire:click="checkInstallation" 
+                            class="btn-info" spinner="checkInstallation" />
+                    @else
+                        <x-mary-button label="Reinstall RADIUS Server" icon="o-arrow-path" 
+                            wire:click="installRadiusServer" 
+                            class="btn-warning" spinner="installRadiusServer"
+                            onclick="return confirm('This will reinstall FreeRADIUS and API server. All data will be preserved. Continue?')" />
+                    @endif
+
+                    {{-- Service Management --}}
+                    @if($server->installation_status === 'completed')
+                        <x-mary-button label="Restart Services" icon="o-arrow-path" wire:click="restartServices" 
+                            class="btn-warning" spinner="restartServices" 
+                            onclick="return confirm('Are you sure you want to restart all services?')" />
+                        
+                        <x-mary-button label="Test RADIUS Auth" icon="o-shield-check" wire:click="testRadiusAuth" 
+                            class="btn-info" spinner="testRadiusAuth" />
+                    @endif
                 @endif
 
-                <x-mary-button label="Reconfigure Server" icon="o-cog-6-tooth" wire:click="reconfigureServer" 
+                {{-- Configuration --}}
+                <x-mary-button label="Reconfigure Secrets" icon="o-cog-6-tooth" wire:click="reconfigureServer" 
                     class="btn-error" spinner="reconfigureServer"
                     onclick="return confirm('This will generate new secrets and reconfigure the server. Continue?')" />
             </div>

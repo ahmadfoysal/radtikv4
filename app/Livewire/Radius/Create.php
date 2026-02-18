@@ -57,6 +57,8 @@ class Create extends Component
         $name = 'radius-' . Str::random(8);
         $sharedSecret = Str::random(32); // For MikroTik/NAS devices
         $authToken = Str::random(64); // For Laravel API authentication
+
+      //  dd($authToken);
         
         $server = RadiusServer::create([
             'name' => $name,

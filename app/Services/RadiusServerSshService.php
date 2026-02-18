@@ -184,33 +184,57 @@ class RadiusServerSshService
         try {
             $ssh = $this->connect();
 
-            // Check FreeRADIUS
-            $radiusStatus = trim($this->execute('sudo systemctl is-active freeradius'));
-            $radiusEnabled = trim($this->execute('sudo systemctl is-enabled freeradius'));
+            // Check FreeRADIUS with detailed status
+            $radiusStatus = trim($this->execute('sudo systemctl is-active freeradius 2>&1'));
+            $radiusEnabled = trim($this->execute('sudo systemctl is-enabled freeradius 2>&1'));
+            
+            // Get detailed status output for debugging
+            $radiusDetail = trim($this->execute('sudo systemctl status freeradius --no-pager | head -3'));
 
-            // Check API Server
-            $apiStatus = trim($this->execute('sudo systemctl is-active radtik-radius-api'));
-            $apiEnabled = trim($this->execute('sudo systemctl is-enabled radtik-radius-api'));
+            // Check API Server with detailed status
+            $apiStatus = trim($this->execute('sudo systemctl is-active radtik-radius-api 2>&1'));
+            $apiEnabled = trim($this->execute('sudo systemctl is-enabled radtik-radius-api 2>&1'));
+            
+            // Get detailed status output for debugging
+            $apiDetail = trim($this->execute('sudo systemctl status radtik-radius-api --no-pager | head -3'));
 
             // Check if port 5000 is listening
-            $portCheck = $this->execute('sudo ss -tuln | grep ":5000 "');
+            $portCheck = $this->execute('sudo ss -tuln | grep ":5000 " 2>&1');
             $apiListening = !empty(trim($portCheck));
+
+            Log::debug('RADIUS Service Status Check', [
+                'radius_status' => $radiusStatus,
+                'radius_enabled' => $radiusEnabled,
+                'radius_detail' => $radiusDetail,
+                'api_status' => $apiStatus,
+                'api_enabled' => $apiEnabled,
+                'api_detail' => $apiDetail,
+                'port_5000_listening' => $apiListening,
+            ]);
 
             return [
                 'success' => true,
                 'freeradius' => [
                     'status' => $radiusStatus,
                     'enabled' => $radiusEnabled === 'enabled',
+                    'active' => $radiusStatus === 'active',
                     'running' => $radiusStatus === 'active',
+                    'detail' => $radiusDetail,
                 ],
-                'api_server' => [
+                'api' => [
                     'status' => $apiStatus,
                     'enabled' => $apiEnabled === 'enabled',
+                    'active' => $apiStatus === 'active',
                     'running' => $apiStatus === 'active',
                     'listening' => $apiListening,
+                    'detail' => $apiDetail,
                 ],
             ];
         } catch (Exception $e) {
+            Log::error('Failed to get service status', [
+                'error' => $e->getMessage(),
+            ]);
+            
             return [
                 'success' => false,
                 'error' => $e->getMessage(),
@@ -351,6 +375,94 @@ class RadiusServerSshService
             return [
                 'success' => false,
                 'message' => 'Failed to restart services: ' . $e->getMessage(),
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Install or reinstall FreeRADIUS and API server
+     */
+    public function installRadiusServer(string $repoUrl = 'https://github.com/ahmadfoysal/radtik-radius.git', string $branch = 'main'): array
+    {
+        try {
+            $ssh = $this->connect();
+
+            Log::info('Starting RADIUS server installation', [
+                'server_id' => $this->server->id,
+                'repo_url' => $repoUrl,
+                'branch' => $branch,
+            ]);
+
+            // Download and execute bootstrap installer
+            $installCommand = sprintf(
+                "curl -fsSL '%s/raw/%s/radtik-radius/bootstrap-install.sh' | sudo RADTIK_REPO_URL='%s' RADTIK_BRANCH='%s' bash",
+                $repoUrl,
+                $branch,
+                $repoUrl,
+                $branch
+            );
+
+            // Execute installation in background and return immediately
+            $output = $this->execute($installCommand . ' 2>&1 &');
+
+            Log::info('Installation command executed', [
+                'server_id' => $this->server->id,
+                'output' => $output,
+            ]);
+
+            return [
+                'success' => true,
+                'message' => 'Installation started. This may take 5-10 minutes.',
+                'output' => $output,
+            ];
+        } catch (Exception $e) {
+            Log::error('Failed to install RADIUS server', [
+                'server_id' => $this->server->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Installation failed: ' . $e->getMessage(),
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Check if RADIUS server installation is complete
+     */
+    public function checkInstallationStatus(): array
+    {
+        try {
+            $ssh = $this->connect();
+
+            // Check if FreeRADIUS is installed
+            $radiusInstalled = trim($this->execute('which freeradius')) !== '';
+            
+            // Check if API directory exists
+            $apiDirExists = trim($this->execute('test -d /opt/radtik-radius && echo "exists" || echo "missing"')) === 'exists';
+            
+            // Check service status
+            $serviceStatus = $this->getServiceStatus();
+            
+            $allInstalled = $radiusInstalled && $apiDirExists && 
+                           ($serviceStatus['freeradius']['active'] ?? false) && 
+                           ($serviceStatus['api']['active'] ?? false);
+
+            return [
+                'success' => true,
+                'installed' => $allInstalled,
+                'radius_installed' => $radiusInstalled,
+                'api_dir_exists' => $apiDirExists,
+                'services' => $serviceStatus,
+            ];
+        } catch (Exception $e) {
+            return [
+                'success' => false,
+                'installed' => false,
+                'error' => $e->getMessage(),
             ];
         }
     }

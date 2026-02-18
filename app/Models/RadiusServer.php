@@ -26,18 +26,18 @@ class RadiusServer extends Model
         'ssh_password',
         'ssh_private_key',
         // Linode
-        'linode_node_id',
-        'linode_region',
-        'linode_plan',
-        'linode_image',
-        'linode_label',
-        'linode_ipv4',
-        'linode_ipv6',
+        // 'linode_node_id',
+        // 'linode_region',
+        // 'linode_plan',
+        // 'linode_image',
+        // 'linode_label',
+        // 'linode_ipv4',
+        // 'linode_ipv6',
         // Installation
         'installation_status',
         'installation_log',
         'installed_at',
-        'auto_provision',
+        // 'auto_provision',
         // API Authentication
         'auth_token',
     ];

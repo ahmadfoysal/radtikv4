@@ -46,17 +46,40 @@ class Show extends Component
             $connectionResult = $sshService->testConnection();
             $this->sshConnected = $connectionResult['success'] ?? false;
             
+            \Log::info('RADIUS Show: Connection test', [
+                'server_id' => $this->server->id,
+                'connected' => $this->sshConnected,
+                'connection_result' => $connectionResult,
+            ]);
+            
             if ($this->sshConnected) {
                 // Get Service Status
                 $serviceStatus = $sshService->getServiceStatus();
+                
+                \Log::info('RADIUS Show: Service status retrieved', [
+                    'server_id' => $this->server->id,
+                    'service_status' => $serviceStatus,
+                ]);
+                
                 $this->radiusServiceActive = $serviceStatus['freeradius']['active'] ?? false;
                 $this->apiServiceActive = $serviceStatus['api']['active'] ?? false;
+                
+                \Log::info('RADIUS Show: Active status set', [
+                    'server_id' => $this->server->id,
+                    'radiusServiceActive' => $this->radiusServiceActive,
+                    'apiServiceActive' => $this->apiServiceActive,
+                ]);
                 
                 // Get System Health
                 $this->systemHealth = $sshService->getSystemHealth();
                 
                 // Get Recent Logs
                 $this->recentLogs = $sshService->getRecentLogs(50);
+            } else {
+                \Log::warning('RADIUS Show: SSH connection failed', [
+                    'server_id' => $this->server->id,
+                    'host' => $this->server->host,
+                ]);
             }
             
             // Get User Count from Database
@@ -65,6 +88,11 @@ class Show extends Component
             $this->lastChecked = now()->format('Y-m-d H:i:s');
             
         } catch (\Exception $e) {
+            \Log::error('RADIUS Show: Error during refresh', [
+                'server_id' => $this->server->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
             $this->error('Failed to fetch server status: ' . $e->getMessage());
         } finally {
             $this->loading = false;
@@ -144,6 +172,58 @@ class Show extends Component
             }
         } catch (\Exception $e) {
             $this->error('Auth test failed: ' . $e->getMessage());
+        }
+    }
+
+    public function installRadiusServer(): void
+    {
+        try {
+            $this->server->update(['installation_status' => 'installing']);
+            
+            $sshService = new RadiusServerSshService($this->server);
+            
+            // Get repository URL from config or use default
+            $repoUrl = config('app.radtik_repo_url', 'https://github.com/yourusername/radtikv4.git');
+            $branch = config('app.radtik_branch', 'main');
+            
+            $result = $sshService->installRadiusServer($repoUrl, $branch);
+            
+            if ($result['success']) {
+                $this->success('Installation started! This will take 5-10 minutes. Refresh to check status.');
+                $this->server->update(['installation_status' => 'installing']);
+            } else {
+                $this->error('Installation failed: ' . ($result['message'] ?? 'Unknown error'));
+                $this->server->update(['installation_status' => 'failed']);
+            }
+            
+            $this->refreshStatus();
+            
+        } catch (\Exception $e) {
+            $this->error('Failed to start installation: ' . $e->getMessage());
+            $this->server->update(['installation_status' => 'failed']);
+        }
+    }
+
+    public function checkInstallation(): void
+    {
+        try {
+            $sshService = new RadiusServerSshService($this->server);
+            $result = $sshService->checkInstallationStatus();
+            
+            if ($result['success'] && $result['installed']) {
+                $this->success('RADIUS server is fully installed and running!');
+                $this->server->update([
+                    'installation_status' => 'completed',
+                    'installed_at' => now(),
+                ]);
+            } else {
+                $this->warning('Installation is not complete or services are not running.');
+            }
+            
+            $this->refreshStatus();
+            
+        } catch (\Exception $e) {
+            $this->error('Failed to check installation: ' . $e->getMessage());
         }
     }
 

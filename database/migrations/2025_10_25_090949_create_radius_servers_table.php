@@ -29,19 +29,20 @@ return new class extends Migration
             $table->text('ssh_password')->nullable(); // Encrypted
             $table->text('ssh_private_key')->nullable(); // Encrypted, for key-based auth
             
-            // Linode Integration
-            $table->string('linode_node_id')->nullable(); // Linode instance ID
-            $table->string('linode_region')->default('us-east'); // us-east, us-west, eu-west, etc.
-            $table->string('linode_plan')->default('g6-nanode-1'); // Linode plan type
-            $table->string('linode_image')->default('linode/ubuntu22.04'); // OS image
-            $table->string('linode_label')->nullable(); // Label in Linode dashboard
-            $table->ipAddress('linode_ipv4')->nullable(); // IPv4 address from Linode
-            $table->string('linode_ipv6')->nullable(); // IPv6 address from Linode
+            // // Linode Integration
+            // $table->string('linode_node_id')->nullable(); // Linode instance ID
+            // $table->string('linode_region')->default('us-east'); // us-east, us-west, eu-west, etc.
+            // $table->string('linode_plan')->default('g6-nanode-1'); // Linode plan type
+            // $table->string('linode_image')->default('linode/ubuntu22.04'); // OS image
+            // $table->string('linode_label')->nullable(); // Label in Linode dashboard
+            // $table->ipAddress('linode_ipv4')->nullable(); // IPv4 address from Linode
+            // $table->string('linode_ipv6')->nullable(); // IPv6 address from Linode
             
             // Installation & Status
             $table->enum('installation_status', [
                 'pending',      // Waiting to create
                 'creating',     // Creating Linode node
+                'configuring',  // Configuring via SSH
                 'installing',   // Installing FreeRADIUS
                 'completed',    // Ready to use
                 'failed',       // Installation failed
@@ -50,10 +51,10 @@ return new class extends Migration
             $table->text('installation_log')->nullable(); // Installation logs
             $table->timestamp('installed_at')->nullable(); // When installation completed
             
-            // Auto-provisioning flag
-            $table->boolean('auto_provision')->default(true); // Auto-create on Linode
-            //table for token-based authentication
-            $table->string('auth_token')->nullable(); // Token for API authentication
+            // // Auto-provisioning flag
+            // $table->boolean('auto_provision')->default(true); // Auto-create on Linode
+            // Token for API authentication (encrypted, needs TEXT type)
+            $table->text('auth_token')->nullable();
             
             $table->timestamps();
         });

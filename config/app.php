@@ -84,8 +84,20 @@ return [
 
     'faker_locale' => env('APP_FAKER_LOCALE', 'en_US'),
 
-    /*
+    /*    |--------------------------------------------------------------------------
+    | RADTik RADIUS Repository Configuration
     |--------------------------------------------------------------------------
+    |
+    | Configure the GitHub repository used for automated RADIUS server
+    | installation. This is used by the SSH service to download and
+    | execute the installation script on remote servers.
+    |
+    */
+
+    'radtik_repo_url' => env('RADTIK_REPO_URL', 'https://github.com/ahmadfoysal/radtik-radius.git'),
+    'radtik_branch' => env('RADTIK_BRANCH', 'main'),
+
+    /*    |--------------------------------------------------------------------------
     | Encryption Key
     |--------------------------------------------------------------------------
     |
