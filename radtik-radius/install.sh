@@ -12,6 +12,9 @@
 
 set -e  # Exit on any error
 
+# Set non-interactive mode to prevent prompts during installation
+export DEBIAN_FRONTEND=noninteractive
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -91,15 +94,19 @@ sleep 2
 
 print_header "PHASE 0: Preparing Installation Files"
 
-echo -e "${YELLOW}[0/1] Copying files to $INSTALL_DIR...${NC}"
+echo -e "${YELLOW}[0/1] Checking installation directory...${NC}"
 
-# Create installation directory
+# Create installation directory if it doesn't exist
 mkdir -p "$INSTALL_DIR"
 
-# Copy all files to installation directory
-cp -r "$SCRIPT_DIR"/* "$INSTALL_DIR/"
-
-print_info "Installation files copied to $INSTALL_DIR"
+# Only copy files if we're not already in the install directory
+if [ "$(readlink -f "$SCRIPT_DIR")" != "$(readlink -f "$INSTALL_DIR")" ]; then
+    echo -e "${YELLOW}Copying files to $INSTALL_DIR...${NC}"
+    cp -r "$SCRIPT_DIR"/* "$INSTALL_DIR/"
+    print_info "Installation files copied to $INSTALL_DIR"
+else
+    print_info "Already running from installation directory ($INSTALL_DIR)"
+fi
 echo ""
 
 print_header "✓ Installation Files Ready"
@@ -115,7 +122,7 @@ print_header "PHASE 1: Installing FreeRADIUS Core"
 ###############################################################################
 echo -e "${YELLOW}[1/9] Installing required packages...${NC}"
 apt-get update -qq
-apt-get install -y freeradius freeradius-utils sqlite3 python3 python3-pip curl
+apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" freeradius freeradius-utils sqlite3 python3 python3-pip curl
 print_info "Packages installed"
 echo ""
 
