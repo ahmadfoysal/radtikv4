@@ -3,14 +3,13 @@
 namespace App\Livewire\Radius;
 
 use App\Models\RadiusServer;
-use App\Jobs\ConfigureRadiusServerJob;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
 use Mary\Traits\Toast;
-use Illuminate\Support\Str;
 
 class Create extends Component
 {
@@ -31,6 +30,9 @@ class Create extends Component
 
     #[Rule(['required', 'integer', 'min:1', 'max:10'])]
     public int $retries = 3;
+
+    #[Rule(['nullable', 'string', 'max:500'])]
+    public ?string $description = null;
 
     // SSH Configuration
     #[Rule(['required', 'integer', 'between:1,65535'])]
@@ -53,43 +55,40 @@ class Create extends Component
 
         $userId = Auth::id();
         
-        // Auto-generate name, secret, and auth token
-        $name = 'radius-' . Str::random(8);
-        $sharedSecret = Str::random(32); // For MikroTik/NAS devices
-        $authToken = Str::random(64); // For Laravel API authentication
-
-      //  dd($authToken);
+        // Generate automatic name from host
+        $name = 'radius-' . str_replace('.', '-', $this->host);
+        
+        // Auto-generate credentials
+        $secret = Str::random(32);
+        $authToken = Str::random(64);
         
         $server = RadiusServer::create([
             'name' => $name,
             'host' => $this->host,
             'auth_port' => $this->auth_port,
             'acct_port' => $this->acct_port,
-            'secret' => $sharedSecret, // Will be encrypted by model
+            'secret' => $secret,
+            'auth_token' => $authToken,
             'timeout' => $this->timeout,
             'retries' => $this->retries,
-            'description' => null,
+            'description' => $this->description,
             'is_active' => true,
             // SSH
             'ssh_port' => $this->ssh_port,
             'ssh_username' => $this->ssh_username,
             'ssh_password' => $this->ssh_password, // Will be encrypted by model
             'ssh_private_key' => null,
-            // Linode
+            // Remote server - no auto-provisioning
             'auto_provision' => false,
             'linode_region' => null,
             'linode_plan' => null,
             'linode_image' => null,
             'linode_label' => null,
-            'installation_status' => 'configuring',
-            // API Authentication
-            'auth_token' => $authToken, // Will be encrypted by model
+            'installation_status' => 'completed', // Manual installation assumed complete
+            'installed_at' => now(),
         ]);
-
-        // Dispatch job to configure secrets on RADIUS server
-        ConfigureRadiusServerJob::dispatch($server, $sharedSecret, $authToken);
         
-        $this->success('RADIUS server created! Configuration is in progress.', redirectTo: route('radius.index'));
+        $this->success('RADIUS server added successfully!', redirectTo: route('radius.index'));
     }
 
     public function render(): View

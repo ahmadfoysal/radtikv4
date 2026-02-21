@@ -4,9 +4,8 @@ namespace App\Livewire\Radius;
 
 use App\Models\RadiusServer;
 use App\Services\RadiusServerSshService;
-use App\Jobs\ConfigureRadiusServerJob;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 use Livewire\Attributes\On;
 use Mary\Traits\Toast;
@@ -46,7 +45,7 @@ class Show extends Component
             $connectionResult = $sshService->testConnection();
             $this->sshConnected = $connectionResult['success'] ?? false;
             
-            \Log::info('RADIUS Show: Connection test', [
+            Log::info('RADIUS Show: Connection test', [
                 'server_id' => $this->server->id,
                 'connected' => $this->sshConnected,
                 'connection_result' => $connectionResult,
@@ -56,7 +55,7 @@ class Show extends Component
                 // Get Service Status
                 $serviceStatus = $sshService->getServiceStatus();
                 
-                \Log::info('RADIUS Show: Service status retrieved', [
+                Log::info('RADIUS Show: Service status retrieved', [
                     'server_id' => $this->server->id,
                     'service_status' => $serviceStatus,
                 ]);
@@ -64,7 +63,7 @@ class Show extends Component
                 $this->radiusServiceActive = $serviceStatus['freeradius']['active'] ?? false;
                 $this->apiServiceActive = $serviceStatus['api']['active'] ?? false;
                 
-                \Log::info('RADIUS Show: Active status set', [
+                Log::info('RADIUS Show: Active status set', [
                     'server_id' => $this->server->id,
                     'radiusServiceActive' => $this->radiusServiceActive,
                     'apiServiceActive' => $this->apiServiceActive,
@@ -76,7 +75,7 @@ class Show extends Component
                 // Get Recent Logs
                 $this->recentLogs = $sshService->getRecentLogs(50);
             } else {
-                \Log::warning('RADIUS Show: SSH connection failed', [
+                Log::warning('RADIUS Show: SSH connection failed', [
                     'server_id' => $this->server->id,
                     'host' => $this->server->host,
                 ]);
@@ -88,7 +87,7 @@ class Show extends Component
             $this->lastChecked = now()->format('Y-m-d H:i:s');
             
         } catch (\Exception $e) {
-            \Log::error('RADIUS Show: Error during refresh', [
+            Log::error('RADIUS Show: Error during refresh', [
                 'server_id' => $this->server->id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
@@ -134,28 +133,51 @@ class Show extends Component
         }
     }
 
-    public function reconfigureServer(): void
+    public function restartRadiusService(): void
     {
         try {
-            // Generate new secrets
-            $sharedSecret = Str::random(32);
-            $authToken = Str::random(64);
+            $sshService = new RadiusServerSshService($this->server);
+            $result = $sshService->execute('systemctl restart freeradius');
             
-            // Update server
-            $this->server->update([
-                'secret' => $sharedSecret,
-                'auth_token' => $authToken,
-                'installation_status' => 'configuring',
-            ]);
-            
-            // Dispatch configuration job
-            ConfigureRadiusServerJob::dispatch($this->server, $sharedSecret, $authToken);
-            
-            $this->success('Reconfiguration job dispatched! Secrets will be configured via SSH.');
-            $this->refreshStatus();
-            
+            if ($result !== false) {
+                $this->success('FreeRADIUS service restarted successfully!');
+                sleep(2);
+                $this->refreshStatus();
+            } else {
+                $this->error('Failed to restart FreeRADIUS service');
+            }
         } catch (\Exception $e) {
-            $this->error('Failed to dispatch reconfiguration job: ' . $e->getMessage());
+            $this->error('Failed to restart FreeRADIUS: ' . $e->getMessage());
+        }
+    }
+
+    public function restartApiService(): void
+    {
+        try {
+            $sshService = new RadiusServerSshService($this->server);
+            $result = $sshService->execute('systemctl restart radtik-radius-api');
+            
+            if ($result !== false) {
+                $this->success('API service restarted successfully!');
+                sleep(2);
+                $this->refreshStatus();
+            } else {
+                $this->error('Failed to restart API service');
+            }
+        } catch (\Exception $e) {
+            $this->error('Failed to restart API service: ' . $e->getMessage());
+        }
+    }
+
+    public function rebootServer(): void
+    {
+        try {
+            $sshService = new RadiusServerSshService($this->server);
+            $result = $sshService->execute('reboot');
+            
+            $this->warning('Server reboot command sent. Server will be offline for a few minutes.');
+        } catch (\Exception $e) {
+            $this->error('Failed to reboot server: ' . $e->getMessage());
         }
     }
 
@@ -175,55 +197,63 @@ class Show extends Component
         }
     }
 
-    public function installRadiusServer(): void
+    public function configureCredentials(): void
     {
         try {
-            $this->server->update(['installation_status' => 'installing']);
-            
             $sshService = new RadiusServerSshService($this->server);
             
-            // Get repository URL from config or use default
-            $repoUrl = config('app.radtik_repo_url', 'https://github.com/yourusername/radtikv4.git');
-            $branch = config('app.radtik_branch', 'main');
+            $this->info('Configuring RADIUS server credentials via SSH...');
             
-            $result = $sshService->installRadiusServer($repoUrl, $branch);
+            $result = $sshService->configureSecrets(
+                $this->server->secret,
+                $this->server->auth_token
+            );
             
             if ($result['success']) {
-                $this->success('Installation started! This will take 5-10 minutes. Refresh to check status.');
-                $this->server->update(['installation_status' => 'installing']);
+                $this->success('Credentials configured successfully! Python API and FreeRADIUS restarted.');
+                sleep(2);
+                $this->refreshStatus();
             } else {
-                $this->error('Installation failed: ' . ($result['message'] ?? 'Unknown error'));
-                $this->server->update(['installation_status' => 'failed']);
+                $this->error('Configuration failed: ' . ($result['message'] ?? 'Unknown error'));
             }
-            
-            $this->refreshStatus();
-            
         } catch (\Exception $e) {
-            $this->error('Failed to start installation: ' . $e->getMessage());
-            $this->server->update(['installation_status' => 'failed']);
+            $this->error('Failed to configure credentials: ' . $e->getMessage());
         }
     }
 
-    public function checkInstallation(): void
+    public function verifyTokenSync(): void
     {
         try {
             $sshService = new RadiusServerSshService($this->server);
-            $result = $sshService->checkInstallationStatus();
             
-            if ($result['success'] && $result['installed']) {
-                $this->success('RADIUS server is fully installed and running!');
-                $this->server->update([
-                    'installation_status' => 'completed',
-                    'installed_at' => now(),
-                ]);
+            // Read the auth_token from the server's config.ini
+            // Use awk to properly parse INI format and trim whitespace
+            $command = "grep 'auth_token' /opt/radtik-radius/scripts/config.ini | awk -F' = ' '{print \$2}' | tr -d '\"'";
+            $serverToken = trim($sshService->execute($command));
+            
+            $laravelToken = $this->server->auth_token;
+            
+            Log::info('Token verification', [
+                'server_id' => $this->server->id,
+                'laravel_token' => $laravelToken,
+                'server_token' => $serverToken,
+                'laravel_length' => strlen($laravelToken),
+                'server_length' => strlen($serverToken),
+                'match' => $serverToken === $laravelToken,
+            ]);
+            
+            if ($serverToken === $laravelToken) {
+                $this->success('✓ Tokens match! Server and Laravel are in sync.');
             } else {
-                $this->warning('Installation is not complete or services are not running.');
+                $this->warning(
+                    "⚠️ Token mismatch detected!\n" .
+                    "Laravel: " . substr($laravelToken, 0, 20) . "... (length: " . strlen($laravelToken) . ")\n" .
+                    "Server: " . substr($serverToken, 0, 20) . "... (length: " . strlen($serverToken) . ")\n" .
+                    "Click 'Push Credentials' to sync."
+                );
             }
-            
-            $this->refreshStatus();
-            
         } catch (\Exception $e) {
-            $this->error('Failed to check installation: ' . $e->getMessage());
+            $this->error('Failed to verify token: ' . $e->getMessage());
         }
     }
 

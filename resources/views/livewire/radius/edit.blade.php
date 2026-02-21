@@ -16,7 +16,13 @@
             <div>
                 <x-mary-password label="Shared Secret" wire:model.live.debounce.500ms="secret"
                     placeholder="Enter shared secret" 
-                    hint="Min 8 characters" right />
+                    hint="RADIUS secret from clients.conf" right />
+            </div>
+            
+            <div class="sm:col-span-2">
+                <x-mary-password label="API Authentication Token" wire:model.live.debounce.500ms="auth_token"
+                    placeholder="Enter API token" 
+                    hint="API token from config.ini (min 32 characters)" right />
             </div>
 
             <div>

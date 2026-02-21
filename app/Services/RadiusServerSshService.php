@@ -116,12 +116,10 @@ class RadiusServerSshService
             // Path to config file
             $configPath = '/opt/radtik-radius/scripts/config.ini';
 
-            // Update auth_token in config.ini
-            $command = sprintf(
-                "sudo sed -i 's/auth_token = .*/auth_token = %s/' %s",
-                escapeshellarg($authToken),
-                $configPath
-            );
+            // Update auth_token in config.ini (without quotes - Python configparser doesn't need them)
+            // Use double quotes for sed script to avoid single quote conflicts
+            $escapedToken = addslashes($authToken);
+            $command = "sudo sed -i \"s/^auth_token = .*/auth_token = $escapedToken/\" $configPath";
             $this->execute($command);
 
             // Update MikroTik clients.conf with shared secret
@@ -130,12 +128,11 @@ class RadiusServerSshService
             // Backup existing clients.conf
             $this->execute("sudo cp $clientsPath $clientsPath.bak");
 
-            // Update secret in clients.conf
-            $updateClientSecret = sprintf(
-                "sudo sed -i 's/secret = .*/secret = %s/' %s",
-                escapeshellarg($sharedSecret),
-                $clientsPath
-            );
+            // Update secret ONLY in the "client radtik" block, not localhost
+            // This uses sed with a range: /client radtik/,/}/ means "from 'client radtik' to the closing brace"
+            // Then we replace the first occurrence of "secret = " within that range
+            $escapedSecret = addslashes($sharedSecret);
+            $updateClientSecret = "sudo sed -i '/^client radtik/,/^}/ s/secret = .*/secret = $escapedSecret/' $clientsPath";
             $this->execute($updateClientSecret);
 
             // Copy to FreeRADIUS directory

@@ -111,12 +111,6 @@
                                 <x-mary-button icon="o-wifi" tooltip="Test Connection" class="btn-sm btn-ghost text-info"
                                     wire:click="pingServer({{ $server->id }})" spinner="pingServer" />
                                 
-                                @if(in_array($server->installation_status, ['failed', 'configuring']))
-                                    <x-mary-button icon="o-arrow-path" tooltip="Retry Configuration" 
-                                        class="btn-sm btn-ghost text-warning"
-                                        wire:click="retryConfiguration({{ $server->id }})" spinner="retryConfiguration" />
-                                @endif
-                                
                                 <x-mary-button icon="o-pencil" tooltip="Edit" class="btn-sm btn-ghost"
                                     href="{{ route('radius.edit', $server->id) }}" wire:navigate />
                                 

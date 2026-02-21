@@ -12,13 +12,22 @@
             </h3>
             <div class="alert alert-info mb-4">
                 <x-mary-icon name="o-information-circle" class="w-5 h-5" />
-                <span class="text-sm">Shared secret and API token will be auto-generated and configured automatically.</span>
+                <div>
+                    <h4 class="font-semibold">Auto-Generated Credentials</h4>
+                    <p class="text-sm">RADIUS secret and API token will be generated automatically. You can configure them on the server from the show page after creation.</p>
+                </div>
             </div>
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div class="sm:col-span-2">
                     <x-mary-input label="Host / IP Address" wire:model.live.debounce.500ms="host"
                         placeholder="192.168.1.10 or radius.example.com" 
                         hint="Hostname or IP address of your RADIUS server" />
+                </div>
+                
+                <div class="sm:col-span-2">
+                    <x-mary-textarea label="Description (Optional)" wire:model.live.debounce.500ms="description"
+                        placeholder="Optional notes about this server" 
+                        rows="2" />
                 </div>
             </div>
         </div>

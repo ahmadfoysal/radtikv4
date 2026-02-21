@@ -34,6 +34,18 @@ Schedule::command('subscriptions:auto-renew')
         \Illuminate\Support\Facades\Log::error('Auto-renewal process failed at ' . now());
     });
 
+// Retry failed RADIUS voucher syncs (runs every hour)
+Schedule::command('radius:retry-failed-vouchers')
+    ->hourly()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->onSuccess(function () {
+        \Illuminate\Support\Facades\Log::info('Failed voucher retry completed at ' . now());
+    })
+    ->onFailure(function () {
+        \Illuminate\Support\Facades\Log::error('Failed voucher retry failed at ' . now());
+    });
+
 // Demo Mode: Reset demo data every hour
 if (env('DEMO_MODE', false)) {
     Schedule::command('demo:reset --force')

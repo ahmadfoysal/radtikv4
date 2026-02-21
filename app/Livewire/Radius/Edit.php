@@ -30,6 +30,9 @@ class Edit extends Component
     #[Rule(['required', 'string', 'min:8'])]
     public string $secret = '';
 
+    #[Rule(['required', 'string', 'min:32', 'max:255'])]
+    public string $auth_token = '';
+
     #[Rule(['required', 'integer', 'min:1', 'max:60'])]
     public int $timeout = 5;
 
@@ -52,6 +55,7 @@ class Edit extends Component
         $this->auth_port = $server->auth_port;
         $this->acct_port = $server->acct_port;
         $this->secret = $server->secret;
+        $this->auth_token = $server->auth_token;
         $this->timeout = $server->timeout;
         $this->retries = $server->retries;
         $this->description = $server->description;
@@ -68,6 +72,7 @@ class Edit extends Component
             'auth_port' => $this->auth_port,
             'acct_port' => $this->acct_port,
             'secret' => $this->secret,
+            'auth_token' => $this->auth_token,
             'timeout' => $this->timeout,
             'retries' => $this->retries,
             'description' => $this->description,
