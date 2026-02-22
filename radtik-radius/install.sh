@@ -507,13 +507,16 @@ echo -e "${YELLOW}[Legacy 2/3] Setting up cron jobs...${NC}"
 CRON_FILE="/etc/cron.d/radtik-sync"
 
 cat > "$CRON_FILE" << 'EOF'
-# RadTik FreeRADIUS Legacy Synchronization Cron Jobs
+# RadTik FreeRADIUS Synchronization Cron Jobs
 
 # Check for new activations (MAC binding) every minute
 * * * * * root /usr/bin/python3 /opt/radtik-sync/check-activations.py >> /var/log/radtik-sync/activations.log 2>&1
 
 # Sync deleted users every 5 minutes
 */5 * * * * root /usr/bin/python3 /opt/radtik-sync/sync-deleted.py >> /var/log/radtik-sync/deleted.log 2>&1
+
+# Sync voucher activations to Laravel every 5 minutes
+*/5 * * * * root /usr/bin/python3 /opt/radtik-radius/scripts/activation-sync.py >> /var/log/radtik-activation-sync.log 2>&1
 
 EOF
 

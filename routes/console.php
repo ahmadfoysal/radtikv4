@@ -46,6 +46,18 @@ Schedule::command('radius:retry-failed-vouchers')
         \Illuminate\Support\Facades\Log::error('Failed voucher retry failed at ' . now());
     });
 
+// Sync MAC address bindings from MikroTik to RADIUS (runs every 30 minutes)
+Schedule::command('radtik:sync-mac-bindings')
+    ->everyThirtyMinutes()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->onSuccess(function () {
+        \Illuminate\Support\Facades\Log::info('MAC binding sync completed at ' . now());
+    })
+    ->onFailure(function () {
+        \Illuminate\Support\Facades\Log::error('MAC binding sync failed at ' . now());
+    });
+
 // Demo Mode: Reset demo data every hour
 if (env('DEMO_MODE', false)) {
     Schedule::command('demo:reset --force')
