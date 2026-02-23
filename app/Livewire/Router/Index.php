@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Router;
 
-use App\MikroTik\Installer\ScriptInstaller;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Contracts\View\View;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -96,25 +95,6 @@ class Index extends Component
             $this->error('Error: ' . $e->getMessage());
         } finally {
             $this->pingingId = null;
-        }
-    }
-
-    public function installScripts(int $routerId): void
-    {
-        //authorize user to install scripts
-        $this->authorize('install_scripts');
-
-        try {
-            $router = auth()->user()->getAuthorizedRouter($routerId);
-
-            /** @var ScriptInstaller $installer */
-            $installer = app(ScriptInstaller::class);
-
-            $installer->installAllScriptsAndSchedulers($router);
-
-            $this->success('All RADTik scripts and schedulers installed successfully.');
-        } catch (\Throwable $e) {
-            $this->error('Failed to install scripts: ' . $e->getMessage());
         }
     }
 

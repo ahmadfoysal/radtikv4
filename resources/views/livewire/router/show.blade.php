@@ -220,170 +220,192 @@
         </div>
     </x-mary-card>
 
+    {{-- RADIUS Configuration Status --}}
+    @if($router->radiusServer)
+        <x-mary-card class="bg-base-100 border border-base-300 shadow-sm rounded-none">
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <x-mary-icon name="o-shield-check" class="w-6 h-6 text-primary" />
+                        <h3 class="text-lg font-semibold">RADIUS Configuration Status</h3>
+                    </div>
 
-    {{-- Compact dashboard cards --}}
-    <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
-
-        {{-- Scripts Health --}}
-        <x-mary-card class="bg-base-100 border border-base-300 shadow-sm flex flex-col rounded-none">
-            <div class="flex items-center justify-between mb-2">
-                <div class="text-sm uppercase opacity-60">Scripts Health</div>
-
-                <x-mary-button size="xs" icon="o-arrow-path" label="Sync" wire:click="syncScripts"
-                    spinner="syncScripts" />
-            </div>
-
-            @php
-                $missingScripts = collect($scriptStatuses)->where('present', false)->count();
-            @endphp
-
-            <div class="text-xs opacity-70 mb-3">
-                {{ count($scriptStatuses) }} tracked | {{ $missingScripts }} missing
-            </div>
-
-            <div class="flex-1 overflow-y-auto">
-                <table class="table table-compact text-xs w-full">
-                    <thead>
-                        <tr>
-                            <th class="bg-base-300">Script Name</th>
-                            <th class="bg-base-300 text-center">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($scriptStatuses as $script)
-                            <tr class="border-b border-base-300/70 last:border-0">
-                                <td class="truncate">{{ $script['name'] }}</td>
-                                <td class="text-center">
-                                    @if ($script['present'])
-                                        <span class="badge badge-success badge-sm">OK</span>
-                                    @else
-                                        <span class="badge badge-error badge-sm">Missing</span>
-                                    @endif
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="2" class="text-center opacity-60 py-4">
-                                    No scripts detected.
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </x-mary-card>
-
-
-        {{-- Hotspot Profiles --}}
-        <x-mary-card class="bg-base-100 border border-base-300 shadow-sm flex flex-col rounded-none">
-            <div class="flex items-center justify-between mb-2">
-                <div class="text-sm uppercase opacity-60">Hotspot Profiles</div>
-
-                <x-mary-button size="xs" icon="o-arrow-path" label="Sync" wire:click="syncProfiles"
-                    spinner="syncProfiles" />
-            </div>
-
-            <div class="text-xs opacity-70 mb-3">
-                {{ count($profiles) }} profiles on router
-            </div>
-
-            <div class="flex-1 overflow-y-auto">
-                <table class="table table-compact text-xs w-full">
-                    <thead>
-                        <tr>
-                            <th class="bg-base-300">Name</th>
-                            <th class="bg-base-300 text-center">Shared</th>
-                            <th class="bg-base-300 text-right">Rate Limit</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($profiles as $profile)
-                            <tr class="border-b border-base-300/70 last:border-0">
-                                <td>{{ $profile['name'] ?? 'N/A' }}</td>
-                                <td class="text-center">{{ $profile['shared-users'] ?? 'N/A' }}</td>
-                                <td class="text-right">{{ $profile['rate-limit'] ?? 'N/A' }}</td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="3" class="text-center opacity-60 py-4">
-                                    No profiles found.
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </x-mary-card>
-
-
-        {{-- Router Schedulers --}}
-        <x-mary-card class="bg-base-100 border border-base-300 shadow-sm flex flex-col rounded-none">
-            <div class="flex items-center justify-between mb-2">
-                <div class="text-sm uppercase opacity-60">Router Schedulers</div>
-
-                <x-mary-button size="xs" icon="o-arrow-path" label="Sync" wire:click="syncSchedulers"
-                    spinner="syncSchedulers" />
-            </div>
-
-            <div class="text-xs opacity-70 mb-3">
-                {{ count($schedulerStatuses) }} schedulers tracked
-            </div>
-
-            <div class="flex-1 overflow-y-auto">
-                <div class="overflow-x-auto">
-                    <table class="table table-compact text-xs w-full">
-                        <thead>
-                            <tr>
-                                <th class="bg-base-300">Scheduler</th>
-                                <th class="bg-base-300 text-center">Interval</th>
-                                <th class="bg-base-300 text-center">Next Run</th>
-                                <th class="bg-base-300 text-center">Last Run</th>
-                                <th class="bg-base-300 text-center">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse ($schedulerStatuses as $scheduler)
-                                <tr class="border-b border-base-300/70 last:border-0">
-                                    <td>
-                                        <div class="font-semibold">{{ $scheduler['label'] }}</div>
-                                        <div class="text-[11px] opacity-60">{{ $scheduler['name'] }}</div>
-                                    </td>
-                                    <td class="text-center">{{ $scheduler['interval'] ?? 'N/A' }}</td>
-                                    <td class="text-center whitespace-nowrap">{{ $scheduler['next_run'] ?? 'N/A' }}
-                                    </td>
-                                    <td class="text-center whitespace-nowrap">{{ $scheduler['last_run'] ?? 'N/A' }}
-                                    </td>
-                                    <td class="text-center">
-                                        <div class="flex justify-center gap-2">
-                                            @if ($scheduler['missing'])
-                                                <span class="badge badge-error badge-sm">Missing</span>
-                                            @elseif ($scheduler['disabled'])
-                                                <span class="badge badge-warning badge-sm">Disabled</span>
-                                            @else
-                                                <span class="badge badge-success badge-sm">Active</span>
-                                            @endif
-
-                                            <x-mary-button icon="o-play" size="xs" label="Run"
-                                                class="btn-outline btn-xs"
-                                                wire:click="runScheduler('{{ $scheduler['name'] }}')"
-                                                spinner="runScheduler" />
-                                        </div>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="5" class="text-center opacity-60 py-4">
-                                        No schedulers tracked yet.
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                    <div class="flex gap-2">
+                        <x-mary-button 
+                            icon="o-arrow-path" 
+                            label="Check Status" 
+                            class="btn-ghost btn-sm" 
+                            wire:click="checkRadiusConfiguration"
+                            spinner="checkRadiusConfiguration" />
+                        
+                        <x-mary-button 
+                            icon="o-wrench-screwdriver" 
+                            label="Apply RADIUS Config" 
+                            class="btn-primary btn-sm" 
+                            wire:click="applyRadiusConfiguration"
+                            spinner="applyRadiusConfiguration" />
+                    </div>
                 </div>
+
+                {{-- Overall Status --}}
+                <div class="flex items-center gap-3 p-4 rounded-lg {{ $radiusConfig['configured'] ? 'bg-success/10' : 'bg-error/10' }}">
+                    @if($radiusConfig['configured'])
+                        <x-mary-icon name="o-check-circle" class="w-8 h-8 text-success" />
+                        <div>
+                            <div class="font-semibold text-success">All RADIUS settings are properly configured</div>
+                            <div class="text-sm opacity-70">Your MikroTik router is ready for RADIUS authentication</div>
+                        </div>
+                    @else
+                        <x-mary-icon name="o-x-circle" class="w-8 h-8 text-error" />
+                        <div>
+                            <div class="font-semibold text-error">RADIUS configuration issues detected</div>
+                            <div class="text-sm opacity-70">Please review and fix the issues below</div>
+                        </div>
+                    @endif
+                </div>
+
+                {{-- Issues List --}}
+                @if(!empty($radiusConfig['issues']))
+                    <div class="space-y-2">
+                        <div class="text-sm font-semibold uppercase opacity-70">Configuration Issues:</div>
+                        <ul class="space-y-1">
+                            @foreach($radiusConfig['issues'] as $issue)
+                                <li class="flex items-start gap-2 text-sm">
+                                    <x-mary-icon name="o-exclamation-circle" class="w-4 h-4 text-error mt-0.5 flex-shrink-0" />
+                                    <span>{{ $issue }}</span>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                {{-- Configuration Details --}}
+                @if(!empty($radiusConfig['details']))
+                    <div class="space-y-4">
+                        <div class="text-sm font-semibold uppercase opacity-70">Configuration Details:</div>
+
+                        {{-- Identity Status --}}
+                        @if(isset($radiusConfig['details']['identity']))
+                            @php $identity = $radiusConfig['details']['identity']; @endphp
+                            <div class="p-3 bg-base-200 rounded-lg">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="font-semibold text-sm">System Identity (NAS Identifier)</div>
+                                    @if($identity['match'])
+                                        <span class="badge badge-success badge-sm">✓ Correct</span>
+                                    @else
+                                        <span class="badge badge-error badge-sm">✗ Mismatch</span>
+                                    @endif
+                                </div>
+                                <div class="text-xs space-y-1">
+                                    <div class="flex justify-between">
+                                        <span class="opacity-60">Expected:</span>
+                                        <span class="font-mono">{{ $identity['expected'] }}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="opacity-60">Current:</span>
+                                        <span class="font-mono">{{ $identity['current'] }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+
+                        {{-- RADIUS Server Status --}}
+                        @if(isset($radiusConfig['details']['radius_server']))
+                            @php $radServer = $radiusConfig['details']['radius_server']; @endphp
+                            <div class="p-3 bg-base-200 rounded-lg">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="font-semibold text-sm">RADIUS Server Configuration</div>
+                                    @if($radServer)
+                                        <span class="badge badge-success badge-sm">✓ Configured</span>
+                                    @else
+                                        <span class="badge badge-error badge-sm">✗ Not Configured</span>
+                                    @endif
+                                </div>
+                                @if($radServer)
+                                    <div class="text-xs space-y-1">
+                                        <div class="flex justify-between">
+                                            <span class="opacity-60">Address:</span>
+                                            <span class="font-mono">{{ $radServer['address'] }}</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="opacity-60">Timeout:</span>
+                                            <span class="font-mono">{{ $radServer['timeout'] }}</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="opacity-60">Status:</span>
+                                            @if($radServer['disabled'])
+                                                <span class="badge badge-error badge-xs">Disabled</span>
+                                            @else
+                                                <span class="badge badge-success badge-xs">Enabled</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @else
+                                    <div class="text-xs opacity-60">No RADIUS server configured for hotspot service</div>
+                                @endif
+                            </div>
+                        @endif
+
+                        {{-- Hotspot Profiles Status --}}
+                        @if(isset($radiusConfig['details']['hotspot_profiles']))
+                            @php $profiles = $radiusConfig['details']['hotspot_profiles']; @endphp
+                            <div class="p-3 bg-base-200 rounded-lg">
+                                <div class="font-semibold text-sm mb-2">Hotspot Profiles</div>
+                                <div class="space-y-1">
+                                    @forelse($profiles as $profile)
+                                        <div class="flex items-center justify-between text-xs">
+                                            <span class="font-mono">{{ $profile['name'] }}</span>
+                                            @if($profile['use_radius'])
+                                                <span class="badge badge-success badge-xs">✓ RADIUS Enabled</span>
+                                            @else
+                                                <span class="badge badge-error badge-xs">✗ RADIUS Disabled</span>
+                                            @endif
+                                        </div>
+                                    @empty
+                                        <div class="text-xs opacity-60">No hotspot profiles found</div>
+                                    @endforelse
+                                </div>
+                            </div>
+                        @endif
+
+                        {{-- RADIUS Server Information --}}
+                        <div class="p-3 bg-primary/10 rounded-lg">
+                            <div class="font-semibold text-sm mb-2 flex items-center gap-2">
+                                <x-mary-icon name="o-information-circle" class="w-4 h-4" />
+                                Connected RADIUS Server
+                            </div>
+                            <div class="text-xs space-y-1">
+                                <div class="flex justify-between">
+                                    <span class="opacity-60">Server:</span>
+                                    <span class="font-mono">{{ $router->radiusServer->name }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="opacity-60">Host:</span>
+                                    <span class="font-mono">{{ $router->radiusServer->host }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="opacity-60">Auth Port:</span>
+                                    <span class="font-mono">{{ $router->radiusServer->auth_port }}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="opacity-60">Status:</span>
+                                    @if($router->radiusServer->is_active)
+                                        <span class="badge badge-success badge-xs">Active</span>
+                                    @else
+                                        <span class="badge badge-error badge-xs">Inactive</span>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endif
             </div>
         </x-mary-card>
-
-    </div>
+    @else
+        <x-mary-alert icon="o-information-circle" class="alert-warning">
+            <span>No RADIUS server is assigned to this router. Please assign a RADIUS server from the router edit page to enable RADIUS authentication.</span>
+        </x-mary-alert>
+    @endif
 
     {{-- Delete Router Section --}}
     <x-mary-card class="bg-base-100 border border-error/30 shadow-sm rounded-none">

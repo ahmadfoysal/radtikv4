@@ -194,16 +194,6 @@
                     {{-- Card Footer --}}
                     <div class="px-5 pb-5">
                         <div class="flex items-center justify-between gap-2 pt-3 border-t border-base-300">
-                            <div class="tooltip tooltip-right" data-tip="Install Scripts">
-                                <button wire:click="installScripts({{ $router->id }})" wire:loading.attr="disabled"
-                                    wire:target="installScripts({{ $router->id }})"
-                                    class="btn btn-circle btn-sm btn-ghost hover:bg-{{ $colorClass }}/10 hover:text-{{ $colorClass }} transition-colors">
-                                    <x-mary-icon name="o-cog-6-tooth" class="w-4 h-4" />
-                                    <span wire:loading wire:target="installScripts({{ $router->id }})"
-                                        class="loading loading-spinner loading-xs"></span>
-                                </button>
-                            </div>
-
                             <div class="tooltip" data-tip="Test Connection">
                                 <button wire:click="ping({{ $router->id }})" wire:loading.attr="disabled"
                                     wire:target="ping({{ $router->id }})"

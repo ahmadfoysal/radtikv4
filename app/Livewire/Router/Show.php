@@ -2,19 +2,15 @@
 
 namespace App\Livewire\Router;
 
-use App\MikroTik\Actions\HotspotProfileManager;
+use App\MikroTik\Actions\RadiusConfigManager;
 use App\MikroTik\Actions\RouterDiagnostics;
-use App\MikroTik\Actions\SchedulerManager;
 use App\MikroTik\Client\RouterClient;
-use App\MikroTik\Installer\ScriptInstaller;
-use App\MikroTik\Scripts\PullProfilesScript;
 use App\Models\Router;
 use Carbon\Carbon;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 use Mary\Traits\Toast;
-use RouterOS\Query;
 
 class Show extends Component
 {
@@ -27,10 +23,6 @@ class Show extends Component
     public array $clock = [];
 
     public array $hotspotCounts = [];
-
-    public array $scriptStatuses = [];
-
-    public array $profiles = [];
 
     public array $interfaces = [];
 
@@ -60,7 +52,11 @@ class Show extends Component
 
     public ?string $errorMessage = null;
 
-    public array $schedulerStatuses = [];
+    public array $radiusConfig = [
+        'configured' => false,
+        'issues' => [],
+        'details' => [],
+    ];
 
     protected $queryString = [
         'interface' => ['except' => ''],
@@ -76,6 +72,7 @@ class Show extends Component
         $this->interface = $this->interface ?: ($this->interfaces[0]['name'] ?? '');
 
         $this->refreshRealtimeData();
+        $this->checkRadiusConfiguration();
     }
 
     public function refreshRealtimeData(): void
@@ -85,11 +82,8 @@ class Show extends Component
 
             $this->resource = $diag->systemResource($this->router);
             $this->clock = $diag->systemClock($this->router);
-            $this->scriptStatuses = $diag->scriptStatuses($this->router);
             $this->hotspotCounts = $diag->hotspotCounts($this->router);
             // $this->logs = $diag->hotspotLogs($this->router, 10);
-            $this->profiles = $this->loadProfiles();
-            $this->schedulerStatuses = $this->loadSchedulerStatuses();
             $this->hotspotUserStats = $this->computeHotspotUserStats();
             $this->activityStats = $this->computeActivityStats();
             if (empty($this->interfaces)) {
@@ -151,11 +145,6 @@ class Show extends Component
     protected function routerClient(): RouterClient
     {
         return app(RouterClient::class);
-    }
-
-    protected function schedulerManager(): SchedulerManager
-    {
-        return app(SchedulerManager::class);
     }
 
     protected function buildChartData(): array
@@ -235,53 +224,6 @@ class Show extends Component
                 ],
             ],
         ];
-    }
-
-    protected function profileManager(): HotspotProfileManager
-    {
-        return app(HotspotProfileManager::class);
-    }
-
-    protected function loadProfiles(): array
-    {
-        try {
-            $profiles = $this->profileManager()->listProfiles($this->router);
-
-            return is_array($profiles) ? $profiles : [];
-        } catch (\Throwable $e) {
-            $this->errorMessage = $e->getMessage();
-            $this->error('Failed to load profiles: ' . $e->getMessage());
-
-            return [];
-        }
-    }
-
-    protected function loadSchedulerStatuses(): array
-    {
-        $definitions = $this->schedulerDefinitions();
-
-        try {
-            $names = array_column($definitions, 'name');
-            $remote = collect($this->schedulerManager()->list($this->router, $names))->keyBy('name');
-        } catch (\Throwable $e) {
-            $this->error('Failed to load schedulers: ' . $e->getMessage());
-            $remote = collect();
-        }
-
-        return array_map(function (array $definition) use ($remote) {
-            $status = $remote->get($definition['name']);
-
-            return [
-                'name' => $definition['name'],
-                'label' => $definition['label'] ?? $definition['name'],
-                'interval' => $status['interval'] ?? $definition['interval'],
-                'next_run' => $status['next_run'] ?? null,
-                'last_run' => $status['last_run'] ?? null,
-                'on_event' => $status['on_event'] ?? $definition['on_event'],
-                'disabled' => $status['disabled'] ?? false,
-                'missing' => $status === null,
-            ];
-        }, $definitions);
     }
 
     protected function computeHotspotUserStats(): array
@@ -373,103 +315,55 @@ class Show extends Component
         return view('livewire.router.show');
     }
 
-    public function syncScripts(): void
+    protected function radiusConfigManager(): RadiusConfigManager
+    {
+        return app(RadiusConfigManager::class);
+    }
+
+    public function checkRadiusConfiguration(): void
+    {
+        try {
+            $this->radiusConfig = $this->radiusConfigManager()->checkRadiusConfig($this->router);
+        } catch (\Throwable $e) {
+            $this->radiusConfig = [
+                'configured' => false,
+                'issues' => ['Failed to check RADIUS config: ' . $e->getMessage()],
+                'details' => [],
+            ];
+        }
+    }
+
+    public function applyRadiusConfiguration(): void
     {
         $this->authorize('sync_router_data');
 
         try {
-            /** @var ScriptInstaller $installer */
-            $installer = app(ScriptInstaller::class);
-            $router = $this->router;
+            $result = $this->radiusConfigManager()->applyRadiusConfig($this->router);
 
-            $installer->installAllScriptsAndSchedulers($router);
-            $this->schedulerStatuses = $this->loadSchedulerStatuses();
-            $this->scriptStatuses = $this->diagnostics()->scriptStatuses($router);
+            if ($result['success']) {
+                $this->success($result['message']);
+                
+                // Show steps taken
+                foreach ($result['steps'] as $step) {
+                    $this->info($step);
+                }
+            } else {
+                $this->error($result['message']);
+                
+                // Show errors
+                foreach ($result['errors'] ?? [] as $error) {
+                    $this->error($error);
+                }
+            }
 
-            $this->success('Scripts synced successfully.');
+            // Refresh RADIUS config status
+            $this->checkRadiusConfiguration();
+            
         } catch (\Throwable $e) {
-            $this->error('Failed to sync scripts: ' . $e->getMessage());
+            $this->error('Failed to apply RADIUS configuration: ' . $e->getMessage());
         }
     }
 
-    public function syncSchedulers(): void
-    {
-        $this->authorize('sync_router_data');
-
-        try {
-            /** @var ScriptInstaller $installer */
-            $installer = app(ScriptInstaller::class);
-
-            $this->upsertConfiguredSchedulers($installer);
-            $this->schedulerStatuses = $this->loadSchedulerStatuses();
-
-            $this->success('Schedulers synced successfully.');
-        } catch (\Throwable $e) {
-            $this->error('Failed to sync schedulers: ' . $e->getMessage());
-        }
-    }
-
-    public function runScheduler(string $name): void
-    {
-        try {
-            $this->schedulerManager()->run($this->router, $name);
-            $this->schedulerStatuses = $this->loadSchedulerStatuses();
-            $this->success("Scheduler {$name} triggered.");
-        } catch (\Throwable $e) {
-            $this->error('Failed to run scheduler: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Return tracked scheduler definitions.
-     *
-     * @return array<int,array{name:string,label:string,interval:string,on_event:string}>
-     */
-    protected function schedulerDefinitions(): array
-    {
-        return ScriptInstaller::schedulerDefinitions();
-    }
-
-    protected function upsertConfiguredSchedulers(ScriptInstaller $installer): void
-    {
-        foreach ($this->schedulerDefinitions() as $scheduler) {
-            $installer->upsertScheduler(
-                $this->router,
-                $scheduler['name'],
-                $scheduler['interval'],
-                $scheduler['on_event']
-            );
-        }
-    }
-
-    public function syncProfiles(): void
-    {
-        $this->authorize('sync_router_data');
-
-        try {
-            /** @var ScriptInstaller $installer */
-            $installer = app(ScriptInstaller::class);
-            $router = $this->router;
-
-            $pullProfilesUrl = route('mikrotik.pullProfiles');
-            $installer->installProfileOnLoginScript($router);
-            $installer->installPullProfilesScript($router, $pullProfilesUrl);
-
-            $client = $this->routerClient();
-            $ros = $client->make($router);
-
-            $client->safeRead(
-                $ros,
-                (new Query('/system/script/run'))
-                    ->equal('number', PullProfilesScript::name())
-            );
-
-            $this->profiles = $this->loadProfiles();
-            $this->success('Profiles synced successfully.');
-        } catch (\Throwable $e) {
-            $this->error('Failed to sync profiles: ' . $e->getMessage());
-        }
-    }
 
     public string $deleteConfirmation = '';
 
