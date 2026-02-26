@@ -223,7 +223,8 @@
     {{-- RADIUS Configuration Status --}}
     @if($router->radiusServer)
         <x-mary-card class="bg-base-100 border border-base-300 shadow-sm rounded-none">
-            <div class="space-y-4">
+            <div class="space-y-6">
+                {{-- Header --}}
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <x-mary-icon name="o-shield-check" class="w-6 h-6 text-primary" />
@@ -247,7 +248,7 @@
                     </div>
                 </div>
 
-                {{-- Overall Status --}}
+                {{-- Overall Status Banner --}}
                 <div class="flex items-center gap-3 p-4 rounded-lg {{ $radiusConfig['configured'] ? 'bg-success/10' : 'bg-error/10' }}">
                     @if($radiusConfig['configured'])
                         <x-mary-icon name="o-check-circle" class="w-8 h-8 text-success" />
@@ -264,14 +265,14 @@
                     @endif
                 </div>
 
-                {{-- Issues List --}}
+                {{-- Issues Compact List --}}
                 @if(!empty($radiusConfig['issues']))
-                    <div class="space-y-2">
-                        <div class="text-sm font-semibold uppercase opacity-70">Configuration Issues:</div>
+                    <div class="p-3 bg-error/5 rounded-lg border border-error/20">
+                        <div class="text-xs font-semibold uppercase opacity-70 mb-2">Configuration Issues:</div>
                         <ul class="space-y-1">
                             @foreach($radiusConfig['issues'] as $issue)
-                                <li class="flex items-start gap-2 text-sm">
-                                    <x-mary-icon name="o-exclamation-circle" class="w-4 h-4 text-error mt-0.5 flex-shrink-0" />
+                                <li class="flex items-start gap-2 text-xs">
+                                    <x-mary-icon name="o-exclamation-circle" class="w-3.5 h-3.5 text-error mt-0.5 flex-shrink-0" />
                                     <span>{{ $issue }}</span>
                                 </li>
                             @endforeach
@@ -279,61 +280,62 @@
                     </div>
                 @endif
 
-                {{-- Configuration Details --}}
+                {{-- Configuration Details - Grid Layout --}}
                 @if(!empty($radiusConfig['details']))
-                    <div class="space-y-4">
-                        <div class="text-sm font-semibold uppercase opacity-70">Configuration Details:</div>
-
-                        {{-- Identity Status --}}
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        
+                        {{-- System Identity Card --}}
                         @if(isset($radiusConfig['details']['identity']))
                             @php $identity = $radiusConfig['details']['identity']; @endphp
-                            <div class="p-3 bg-base-200 rounded-lg">
-                                <div class="flex items-center justify-between mb-2">
-                                    <div class="font-semibold text-sm">System Identity (NAS Identifier)</div>
+                            <div class="p-4 bg-base-200 rounded-lg border-2 {{ $identity['match'] ? 'border-success/30' : 'border-error/30' }} hover:shadow-md transition-shadow">
+                                <div class="flex items-start justify-between mb-3">
+                                    <x-mary-icon name="o-identification" class="w-8 h-8 {{ $identity['match'] ? 'text-success' : 'text-error' }}" />
                                     @if($identity['match'])
                                         <span class="badge badge-success badge-sm">✓ Correct</span>
                                     @else
                                         <span class="badge badge-error badge-sm">✗ Mismatch</span>
                                     @endif
                                 </div>
-                                <div class="text-xs space-y-1">
-                                    <div class="flex justify-between">
-                                        <span class="opacity-60">Expected:</span>
-                                        <span class="font-mono">{{ $identity['expected'] }}</span>
+                                <div class="text-xs font-semibold uppercase tracking-wide opacity-60 mb-2">System Identity (NAS Identifier)</div>
+                                <div class="text-xs space-y-1.5">
+                                    <div>
+                                        <div class="opacity-60 text-[10px] uppercase">Expected:</div>
+                                        <div class="font-mono font-semibold truncate">{{ $identity['expected'] }}</div>
                                     </div>
-                                    <div class="flex justify-between">
-                                        <span class="opacity-60">Current:</span>
-                                        <span class="font-mono">{{ $identity['current'] }}</span>
+                                    <div>
+                                        <div class="opacity-60 text-[10px] uppercase">Current:</div>
+                                        <div class="font-mono font-semibold truncate">{{ $identity['current'] }}</div>
                                     </div>
                                 </div>
                             </div>
                         @endif
 
-                        {{-- RADIUS Server Status --}}
+                        {{-- RADIUS Server Card --}}
                         @if(isset($radiusConfig['details']['radius_server']))
                             @php $radServer = $radiusConfig['details']['radius_server']; @endphp
-                            <div class="p-3 bg-base-200 rounded-lg">
-                                <div class="flex items-center justify-between mb-2">
-                                    <div class="font-semibold text-sm">RADIUS Server Configuration</div>
+                            <div class="p-4 bg-base-200 rounded-lg border-2 {{ $radServer && !($radServer['disabled'] ?? false) ? 'border-success/30' : 'border-error/30' }} hover:shadow-md transition-shadow">
+                                <div class="flex items-start justify-between mb-3">
+                                    <x-mary-icon name="o-server" class="w-8 h-8 {{ $radServer && !($radServer['disabled'] ?? false) ? 'text-success' : 'text-error' }}" />
                                     @if($radServer)
                                         <span class="badge badge-success badge-sm">✓ Configured</span>
                                     @else
-                                        <span class="badge badge-error badge-sm">✗ Not Configured</span>
+                                        <span class="badge badge-error badge-sm">✗ Not Set</span>
                                     @endif
                                 </div>
+                                <div class="text-xs font-semibold uppercase tracking-wide opacity-60 mb-2">RADIUS Server Configuration</div>
                                 @if($radServer)
-                                    <div class="text-xs space-y-1">
-                                        <div class="flex justify-between">
-                                            <span class="opacity-60">Address:</span>
-                                            <span class="font-mono">{{ $radServer['address'] }}</span>
+                                    <div class="text-xs space-y-1.5">
+                                        <div>
+                                            <div class="opacity-60 text-[10px] uppercase">Address</div>
+                                            <div class="font-mono font-semibold">{{ $radServer['address'] ?? 'N/A' }}{{ isset($radServer['authentication-port']) ? ':' . $radServer['authentication-port'] : '' }}</div>
                                         </div>
-                                        <div class="flex justify-between">
-                                            <span class="opacity-60">Timeout:</span>
-                                            <span class="font-mono">{{ $radServer['timeout'] }}</span>
+                                        <div>
+                                            <div class="opacity-60 text-[10px] uppercase">Timeout</div>
+                                            <div class="font-mono font-semibold">{{ $radServer['timeout'] ?? 'N/A' }}</div>
                                         </div>
-                                        <div class="flex justify-between">
-                                            <span class="opacity-60">Status:</span>
-                                            @if($radServer['disabled'])
+                                        <div>
+                                            <div class="opacity-60 text-[10px] uppercase">Status</div>
+                                            @if($radServer['disabled'] ?? false)
                                                 <span class="badge badge-error badge-xs">Disabled</span>
                                             @else
                                                 <span class="badge badge-success badge-xs">Enabled</span>
@@ -341,62 +343,71 @@
                                         </div>
                                     </div>
                                 @else
-                                    <div class="text-xs opacity-60">No RADIUS server configured for hotspot service</div>
+                                    <div class="text-xs opacity-60 mt-2">No RADIUS server configured for hotspot service</div>
                                 @endif
                             </div>
                         @endif
 
-                        {{-- Hotspot Profiles Status --}}
+                        {{-- Hotspot Profiles Card --}}
                         @if(isset($radiusConfig['details']['hotspot_profiles']))
-                            @php $profiles = $radiusConfig['details']['hotspot_profiles']; @endphp
-                            <div class="p-3 bg-base-200 rounded-lg">
-                                <div class="font-semibold text-sm mb-2">Hotspot Profiles</div>
-                                <div class="space-y-1">
+                            @php 
+                                $profiles = $radiusConfig['details']['hotspot_profiles']; 
+                                $enabledCount = collect($profiles)->where('use_radius', true)->count();
+                                $totalCount = count($profiles);
+                                $allEnabled = $enabledCount === $totalCount && $totalCount > 0;
+                            @endphp
+                            <div class="p-4 bg-base-200 rounded-lg border-2 {{ $allEnabled ? 'border-success/30' : 'border-error/30' }} hover:shadow-md transition-shadow">
+                                <div class="flex items-start justify-between mb-3">
+                                    <x-mary-icon name="o-wifi" class="w-8 h-8 {{ $allEnabled ? 'text-success' : 'text-error' }}" />
+                                    <span class="badge badge-sm {{ $allEnabled ? 'badge-success' : 'badge-error' }}">
+                                        {{ $enabledCount }}/{{ $totalCount }}
+                                    </span>
+                                </div>
+                                <div class="text-xs font-semibold uppercase tracking-wide opacity-60 mb-2">Hotspot Profiles</div>
+                                <div class="space-y-1.5 max-h-20 overflow-y-auto">
                                     @forelse($profiles as $profile)
                                         <div class="flex items-center justify-between text-xs">
-                                            <span class="font-mono">{{ $profile['name'] }}</span>
+                                            <span class="font-mono truncate mr-2">{{ $profile['name'] }}</span>
                                             @if($profile['use_radius'])
-                                                <span class="badge badge-success badge-xs">✓ RADIUS Enabled</span>
+                                                <x-mary-icon name="o-check-circle" class="w-3.5 h-3.5 text-success flex-shrink-0" />
                                             @else
-                                                <span class="badge badge-error badge-xs">✗ RADIUS Disabled</span>
+                                                <x-mary-icon name="o-x-circle" class="w-3.5 h-3.5 text-error flex-shrink-0" />
                                             @endif
                                         </div>
                                     @empty
-                                        <div class="text-xs opacity-60">No hotspot profiles found</div>
+                                        <div class="text-xs opacity-60">No profiles found</div>
                                     @endforelse
                                 </div>
                             </div>
                         @endif
 
-                        {{-- RADIUS Server Information --}}
-                        <div class="p-3 bg-primary/10 rounded-lg">
-                            <div class="font-semibold text-sm mb-2 flex items-center gap-2">
-                                <x-mary-icon name="o-information-circle" class="w-4 h-4" />
-                                Connected RADIUS Server
+                        {{-- Connected RADIUS Server Info Card --}}
+                        <div class="p-4 bg-primary/5 rounded-lg border-2 border-primary/20 hover:shadow-md transition-shadow">
+                            <div class="flex items-start justify-between mb-3">
+                                <x-mary-icon name="o-cloud" class="w-8 h-8 text-primary" />
+                                @if($router->radiusServer->is_active)
+                                    <span class="badge badge-success badge-sm">Active</span>
+                                @else
+                                    <span class="badge badge-error badge-sm">Inactive</span>
+                                @endif
                             </div>
-                            <div class="text-xs space-y-1">
-                                <div class="flex justify-between">
-                                    <span class="opacity-60">Server:</span>
-                                    <span class="font-mono">{{ $router->radiusServer->name }}</span>
+                            <div class="text-xs font-semibold uppercase tracking-wide opacity-60 mb-2">Connected RADIUS Server</div>
+                            <div class="text-xs space-y-1.5">
+                                <div>
+                                    <div class="opacity-60 text-[10px] uppercase">Server Name</div>
+                                    <div class="font-semibold truncate">{{ $router->radiusServer->name }}</div>
                                 </div>
-                                <div class="flex justify-between">
-                                    <span class="opacity-60">Host:</span>
-                                    <span class="font-mono">{{ $router->radiusServer->host }}</span>
+                                <div>
+                                    <div class="opacity-60 text-[10px] uppercase">Host</div>
+                                    <div class="font-mono font-semibold truncate">{{ $router->radiusServer->host }}</div>
                                 </div>
-                                <div class="flex justify-between">
-                                    <span class="opacity-60">Auth Port:</span>
-                                    <span class="font-mono">{{ $router->radiusServer->auth_port }}</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="opacity-60">Status:</span>
-                                    @if($router->radiusServer->is_active)
-                                        <span class="badge badge-success badge-xs">Active</span>
-                                    @else
-                                        <span class="badge badge-error badge-xs">Inactive</span>
-                                    @endif
+                                <div>
+                                    <div class="opacity-60 text-[10px] uppercase">Auth Port</div>
+                                    <div class="font-mono font-semibold">{{ $router->radiusServer->auth_port }}</div>
                                 </div>
                             </div>
                         </div>
+
                     </div>
                 @endif
             </div>

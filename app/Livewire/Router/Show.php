@@ -66,7 +66,8 @@ class Show extends Component
     {
         $this->authorize('view_router');
 
-        $this->router = $router;
+        // Load necessary relationships upfront
+        $this->router = $router->load(['radiusServer', 'zone', 'user']);
 
         $this->interfaces = $this->fetchInterfaces();
         $this->interface = $this->interface ?: ($this->interfaces[0]['name'] ?? '');
@@ -323,6 +324,9 @@ class Show extends Component
     public function checkRadiusConfiguration(): void
     {
         try {
+            // Ensure radiusServer relationship is loaded
+            $this->router->load('radiusServer');
+            
             $this->radiusConfig = $this->radiusConfigManager()->checkRadiusConfig($this->router);
         } catch (\Throwable $e) {
             $this->radiusConfig = [
@@ -338,22 +342,33 @@ class Show extends Component
         $this->authorize('sync_router_data');
 
         try {
+            // Ensure radiusServer relationship is loaded
+            $this->router->load('radiusServer');
+            
             $result = $this->radiusConfigManager()->applyRadiusConfig($this->router);
 
-            if ($result['success']) {
-                $this->success($result['message']);
-                
-                // Show steps taken
-                foreach ($result['steps'] as $step) {
+            // Always show all steps, even if there are errors
+            foreach ($result['steps'] as $step) {
+                // Determine toast type based on step prefix
+                if (str_starts_with($step, '✓') || str_starts_with($step, 'ℹ️')) {
+                    $this->info($step);
+                } else if (str_starts_with($step, '⚠️')) {
+                    $this->warning($step);
+                } else {
                     $this->info($step);
                 }
+            }
+
+            // Show all errors
+            foreach ($result['errors'] ?? [] as $error) {
+                $this->error($error);
+            }
+
+            // Final success or error message
+            if ($result['success']) {
+                $this->success($result['message']);
             } else {
                 $this->error($result['message']);
-                
-                // Show errors
-                foreach ($result['errors'] ?? [] as $error) {
-                    $this->error($error);
-                }
             }
 
             // Refresh RADIUS config status

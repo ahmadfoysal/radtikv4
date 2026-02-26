@@ -180,10 +180,10 @@ Route::post('/mikrotik/api/sync-orphans', [MikrotikApiController::class, 'syncOr
     ->withoutMiddleware([VerifyCsrfToken::class]);
 
 // Hotspot profile sync
-Route::get('/mikrotik/api/pull-profiles', [MikrotikApiController::class, 'pullProfiles'])
-    ->name('mikrotik.pullProfiles');
-Route::get('/mikrotik/api/pull-updated-profiles', [MikrotikApiController::class, 'pullUpdatedProfiles'])
-    ->name('mikrotik.pullUpdatedProfiles');
+// Route::get('/mikrotik/api/pull-profiles', [MikrotikApiController::class, 'pullProfiles'])
+//     ->name('mikrotik.pullProfiles');
+// Route::get('/mikrotik/api/pull-updated-profiles', [MikrotikApiController::class, 'pullUpdatedProfiles'])
+//     ->name('mikrotik.pullUpdatedProfiles');
 
 /* RADIUS Server API Routes (without CSRF) */
 // Receive voucher activation data from RADIUS server
