@@ -344,6 +344,114 @@ def delete_voucher():
         }), 500
 
 
+@app.route('/toggle/voucher-status', methods=['POST'])
+@require_auth
+def toggle_voucher_status():
+    """
+    Enable or disable a voucher in RADIUS database
+    
+    When disabling: Adds Auth-Type = Reject to block authentication
+    When enabling: Removes Auth-Type = Reject to allow authentication
+    
+    Expected JSON payload:
+    {
+        "username": "ABC12345",
+        "status": "disabled"  // or "active"
+    }
+    
+    Returns:
+    {
+        "success": true,
+        "message": "Voucher status updated successfully",
+        "status": "disabled"
+    }
+    """
+    try:
+        data = request.get_json()
+        
+        if not data or 'username' not in data or 'status' not in data:
+            return jsonify({
+                'success': False,
+                'error': 'Missing username or status in request'
+            }), 400
+        
+        username = data['username']
+        status = data['status']
+        
+        if status not in ['active', 'disabled']:
+            return jsonify({
+                'success': False,
+                'error': 'Invalid status. Must be "active" or "disabled"'
+            }), 400
+        
+        logger.info(f"Toggling voucher status: {username} → {status}")
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Check if voucher exists
+        cursor.execute(
+            "SELECT COUNT(*) FROM radcheck WHERE username = ? AND attribute = 'Cleartext-Password'",
+            (username,)
+        )
+        exists = cursor.fetchone()[0] > 0
+        
+        if not exists:
+            conn.close()
+            return jsonify({
+                'success': False,
+                'error': 'Voucher not found in RADIUS database'
+            }), 404
+        
+        if status == 'disabled':
+            # Check if Auth-Type Reject already exists
+            cursor.execute(
+                "SELECT COUNT(*) FROM radcheck WHERE username = ? AND attribute = 'Auth-Type' AND value = 'Reject'",
+                (username,)
+            )
+            reject_exists = cursor.fetchone()[0] > 0
+            
+            if not reject_exists:
+                # Add Auth-Type = Reject to disable authentication
+                cursor.execute(
+                    "INSERT INTO radcheck (username, attribute, op, value) VALUES (?, ?, ?, ?)",
+                    (username, 'Auth-Type', ':=', 'Reject')
+                )
+                conn.commit()
+                logger.info(f"Voucher disabled: {username} (Auth-Type = Reject added)")
+            else:
+                logger.info(f"Voucher already disabled: {username}")
+        else:
+            # status == 'active'
+            # Remove Auth-Type = Reject to enable authentication
+            cursor.execute(
+                "DELETE FROM radcheck WHERE username = ? AND attribute = 'Auth-Type' AND value = 'Reject'",
+                (username,)
+            )
+            deleted_count = cursor.rowcount
+            conn.commit()
+            
+            if deleted_count > 0:
+                logger.info(f"Voucher enabled: {username} (Auth-Type = Reject removed)")
+            else:
+                logger.info(f"Voucher already enabled: {username}")
+        
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Voucher status updated successfully',
+            'status': status
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Toggle status endpoint error: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
 @app.route('/sync-mac-bindings', methods=['POST'])
 @require_auth
 def sync_mac_bindings():

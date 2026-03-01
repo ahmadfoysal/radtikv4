@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\MikroTik\Actions\HotspotUserManager;
+use Illuminate\Support\Facades\Log;
 
 class VoucherService
 {
@@ -91,7 +92,7 @@ class VoucherService
 
         // Verify user has access to the voucher's router
         try {
-            $user->getAuthorizedRouter($voucher->router_id);
+            $router = $user->getAuthorizedRouter($voucher->router_id);
         } catch (ModelNotFoundException $e) {
             return [
                 'success' => false,
@@ -99,6 +100,35 @@ class VoucherService
             ];
         }
 
+        // If router has RADIUS server configured, delete from RADIUS first
+        if ($router->radiusServer && $router->radiusServer->isReady()) {
+            try {
+                $radiusService = new RadiusApiService($router->radiusServer);
+                $radiusResult = $radiusService->deleteVoucher($voucher->username);
+
+                Log::info('Voucher deleted from RADIUS server', [
+                    'voucher_id' => $voucher->id,
+                    'username' => $voucher->username,
+                    'radius_server_id' => $router->radiusServer->id,
+                    'radius_response' => $radiusResult,
+                ]);
+            } catch (\Exception $e) {
+                // Log error but continue - RADIUS deletion failure should not block DB deletion
+                Log::error('Failed to delete voucher from RADIUS server', [
+                    'voucher_id' => $voucher->id,
+                    'username' => $voucher->username,
+                    'radius_server_id' => $router->radiusServer->id,
+                    'error' => $e->getMessage(),
+                ]);
+
+                return [
+                    'success' => false,
+                    'message' => 'Failed to delete voucher from RADIUS server: ' . $e->getMessage(),
+                ];
+            }
+        }
+
+        // Delete from RADTik database only after successful RADIUS deletion (or no RADIUS configured)
         $voucher->delete();
 
         return [
@@ -204,6 +234,8 @@ class VoucherService
 
     /**
      * Toggle voucher disabled status if user has access to its router.
+     * If router has RADIUS server configured, updates RADIUS first,
+     * then updates RADTik database only if RADIUS update succeeds.
      *
      * @param User $user The authenticated user
      * @param int $voucherId The voucher ID to toggle
@@ -224,7 +256,7 @@ class VoucherService
 
         // Verify user has access to the voucher's router
         try {
-            $user->getAuthorizedRouter($voucher->router_id);
+            $router = $user->getAuthorizedRouter($voucher->router_id);
         } catch (ModelNotFoundException $e) {
             return [
                 'success' => false,
@@ -233,8 +265,44 @@ class VoucherService
             ];
         }
 
-        // Toggle status
-        $voucher->status = $voucher->status === 'disabled' ? 'active' : 'disabled';
+        // Determine new status
+        $newStatus = $voucher->status === 'disabled' ? 'active' : 'disabled';
+
+        // If router has RADIUS server configured, update RADIUS first
+        if ($router->radiusServer && $router->radiusServer->isReady()) {
+            try {
+                $radiusService = new RadiusApiService($router->radiusServer);
+                $radiusResult = $radiusService->toggleVoucherStatus($voucher->username, $newStatus);
+
+                Log::info('Voucher status toggled in RADIUS server', [
+                    'voucher_id' => $voucher->id,
+                    'username' => $voucher->username,
+                    'old_status' => $voucher->status,
+                    'new_status' => $newStatus,
+                    'radius_server_id' => $router->radiusServer->id,
+                    'radius_response' => $radiusResult,
+                ]);
+            } catch (\Exception $e) {
+                // Log error and return failure - don't update RADTik DB if RADIUS fails
+                Log::error('Failed to toggle voucher status in RADIUS server', [
+                    'voucher_id' => $voucher->id,
+                    'username' => $voucher->username,
+                    'old_status' => $voucher->status,
+                    'new_status' => $newStatus,
+                    'radius_server_id' => $router->radiusServer->id,
+                    'error' => $e->getMessage(),
+                ]);
+
+                return [
+                    'success' => false,
+                    'message' => 'Failed to update voucher status in RADIUS server: ' . $e->getMessage(),
+                    'new_status' => null,
+                ];
+            }
+        }
+
+        // Update RADTik database only after successful RADIUS update (or no RADIUS configured)
+        $voucher->status = $newStatus;
         $voucher->save();
 
         return [

@@ -7,6 +7,8 @@ use App\Models\Voucher;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Component;
 use Mary\Traits\Toast;
+use App\Services\RadiusApiService;
+use Illuminate\Support\Facades\Log;
 
 class BulkManager extends Component
 {
@@ -105,8 +107,32 @@ class BulkManager extends Component
         $this->authorize('bulk_delete_vouchers');
         if ($id) {
             // Single Delete
-            $voucher = Voucher::find($id);
+            $voucher = Voucher::with('router.radiusServer')->find($id);
             if ($voucher) {
+                // If router has RADIUS server, delete from RADIUS first
+                if ($voucher->router->radiusServer && $voucher->router->radiusServer->isReady()) {
+                    try {
+                        $radiusService = new RadiusApiService($voucher->router->radiusServer);
+                        $radiusResult = $radiusService->deleteVoucher($voucher->username);
+
+                        Log::info('Voucher deleted from RADIUS server (BulkManager)', [
+                            'voucher_id' => $voucher->id,
+                            'username' => $voucher->username,
+                            'radius_server_id' => $voucher->router->radiusServer->id,
+                            'radius_response' => $radiusResult,
+                        ]);
+                    } catch (\Exception $e) {
+                        Log::error('Failed to delete voucher from RADIUS server (BulkManager)', [
+                            'voucher_id' => $voucher->id,
+                            'username' => $voucher->username,
+                            'error' => $e->getMessage(),
+                        ]);
+
+                        $this->error('Failed to delete from RADIUS: ' . $e->getMessage());
+                        return;
+                    }
+                }
+
                 // Log before deletion
                 \App\Services\VoucherLogger::log(
                     $voucher,
@@ -138,9 +164,34 @@ class BulkManager extends Component
                 return;
             }
 
+            $failedCount = 0;
+            $successCount = 0;
+
             // Fetch vouchers before deletion for logging
-            $query->chunkById(1000, function ($vouchers) {
+            $query->with('router.radiusServer')->chunkById(1000, function ($vouchers) use (&$failedCount, &$successCount) {
                 foreach ($vouchers as $voucher) {
+                    // If router has RADIUS server, delete from RADIUS first
+                    if ($voucher->router->radiusServer && $voucher->router->radiusServer->isReady()) {
+                        try {
+                            $radiusService = new RadiusApiService($voucher->router->radiusServer);
+                            $radiusResult = $radiusService->deleteVoucher($voucher->username);
+
+                            Log::info('Voucher deleted from RADIUS server (Bulk)', [
+                                'voucher_id' => $voucher->id,
+                                'username' => $voucher->username,
+                                'radius_server_id' => $voucher->router->radiusServer->id,
+                            ]);
+                        } catch (\Exception $e) {
+                            Log::error('Failed to delete voucher from RADIUS server (Bulk)', [
+                                'voucher_id' => $voucher->id,
+                                'username' => $voucher->username,
+                                'error' => $e->getMessage(),
+                            ]);
+                            $failedCount++;
+                            return; // Skip this voucher
+                        }
+                    }
+
                     // Log each voucher before deletion
                     \App\Services\VoucherLogger::log(
                         $voucher,
@@ -154,22 +205,29 @@ class BulkManager extends Component
                         'Bulk deletion from bulk manager'
                     );
                     $voucher->delete();
+                    $successCount++;
                 }
             });
 
             // Log bulk voucher deletion
             \App\Models\ActivityLog::log(
                 'bulk_deleted',
-                "Bulk deleted {$count} vouchers",
+                "Bulk deleted {$successCount} vouchers" . ($failedCount > 0 ? " ({$failedCount} failed)" : ""),
                 [
-                    'count' => $count,
+                    'success_count' => $successCount,
+                    'failed_count' => $failedCount,
+                    'total_count' => $count,
                     'router_id' => $this->router_id,
                     'batch' => $this->batch,
                     'status' => $this->status,
                 ]
             );
 
-            $this->success("{$count} Vouchers deleted successfully.");
+            if ($failedCount > 0) {
+                $this->warning("{$successCount} vouchers deleted successfully, {$failedCount} failed (check RADIUS server).");
+            } else {
+                $this->success("{$successCount} vouchers deleted successfully.");
+            }
 
             // Reset filters after bulk delete (Keep router_id selected)
             $this->reset(['batch', 'status']);

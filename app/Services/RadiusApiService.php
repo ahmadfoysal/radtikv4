@@ -147,6 +147,58 @@ class RadiusApiService
     }
 
     /**
+     * Toggle voucher status (enable/disable) in RADIUS server
+     * 
+     * @param string $username Voucher username
+     * @param string $status New status ('active' or 'disabled')
+     * @return array Response from RADIUS API
+     * @throws Exception
+     */
+    public function toggleVoucherStatus(string $username, string $status): array
+    {
+        if (!$this->server->isReady()) {
+            throw new Exception('RADIUS server is not ready.');
+        }
+
+        if (!in_array($status, ['active', 'disabled'])) {
+            throw new Exception('Invalid status. Must be "active" or "disabled"');
+        }
+
+        $endpoint = $this->server->api_url . '/toggle/voucher-status';
+
+        Log::info('Toggling voucher status in RADIUS', [
+            'server_id' => $this->server->id,
+            'username' => $username,
+            'status' => $status,
+        ]);
+
+        try {
+            $response = Http::timeout(15)
+                ->withToken($this->server->auth_token)
+                ->post($endpoint, [
+                    'username' => $username,
+                    'status' => $status,
+                ]);
+
+            if (!$response->successful()) {
+                throw new Exception(
+                    "Failed to toggle voucher status: [{$response->status()}] " . $response->body()
+                );
+            }
+
+            return $response->json();
+        } catch (\Exception $e) {
+            Log::error('RADIUS voucher status toggle failed', [
+                'username' => $username,
+                'status' => $status,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw $e;
+        }
+    }
+
+    /**
      * Test connection to RADIUS API
      * 
      * @return bool
