@@ -134,7 +134,7 @@ class Create extends Component
                 'username' => $this->username,
                 'password' => $this->password,
                 'batch' => $batch,
-                'status' => 'unused',
+                'status' => 'inactive',
                 'created_by' => auth()->id(),
                 'user_id' => auth()->id(),
                 'router_id' => $this->router_id,
