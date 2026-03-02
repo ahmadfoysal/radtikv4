@@ -105,6 +105,101 @@ class RadiusApiService
     }
 
     /**
+     * Create a single voucher in RADIUS server
+     * 
+     * @param string $username Voucher username
+     * @param string $password Voucher password
+     * @param string $rateLimit MikroTik rate limit (e.g., '10M/10M')
+     * @param string $nasIdentifier NAS identifier from router
+     * @return array Response from RADIUS API
+     * @throws Exception
+     */
+    public function createSingleVoucher(string $username, string $password, string $rateLimit, string $nasIdentifier): array
+    {
+        // Validate server configuration
+        if (!$this->server->isReady()) {
+            throw new Exception('RADIUS server is not ready. Status: ' . $this->server->installation_status);
+        }
+
+        if (!$this->server->auth_token) {
+            throw new Exception('RADIUS server auth token is not configured.');
+        }
+
+        $endpoint = $this->server->sync_endpoint;
+
+        if (!$endpoint) {
+            throw new Exception('RADIUS server API endpoint is not configured.');
+        }
+
+        // Create payload with single voucher
+        $payload = [
+            'vouchers' => [
+                [
+                    'username' => $username,
+                    'password' => $password,
+                    'mikrotik_rate_limit' => $rateLimit,
+                    'nas_identifier' => $nasIdentifier,
+                ],
+            ],
+        ];
+
+        Log::info('Creating single voucher in RADIUS', [
+            'server_id' => $this->server->id,
+            'username' => $username,
+            'nas_identifier' => $nasIdentifier,
+        ]);
+
+        try {
+            $response = Http::timeout(30)
+                ->retry(2, 100)
+                ->withToken($this->server->auth_token)
+                ->post($endpoint, $payload);
+
+            if (!$response->successful()) {
+                throw new Exception(
+                    "RADIUS API returned error: [{$response->status()}] " . $response->body()
+                );
+            }
+
+            $result = $response->json();
+
+            // Check if sync was successful
+            if (isset($result['synced']) && $result['synced'] === 1) {
+                Log::info('Voucher created successfully in RADIUS', [
+                    'username' => $username,
+                    'server_id' => $this->server->id,
+                ]);
+                return $result;
+            }
+
+            // Check for errors
+            if (isset($result['errors']) && !empty($result['errors'])) {
+                $errorMessage = is_array($result['errors']) ? implode(', ', $result['errors']) : $result['errors'];
+                throw new Exception('RADIUS creation failed: ' . $errorMessage);
+            }
+
+            throw new Exception('Failed to create voucher in RADIUS: Unknown error');
+
+        } catch (\Illuminate\Http\Client\ConnectionException $e) {
+            Log::error('RADIUS API connection failed', [
+                'server_id' => $this->server->id,
+                'endpoint' => $endpoint,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw new Exception('Failed to connect to RADIUS server: ' . $e->getMessage());
+        } catch (\Illuminate\Http\Client\RequestException $e) {
+            Log::error('RADIUS API request failed', [
+                'server_id' => $this->server->id,
+                'endpoint' => $endpoint,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw new Exception('RADIUS API request failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Delete a voucher from RADIUS server
      * 
      * @param string $username Voucher username

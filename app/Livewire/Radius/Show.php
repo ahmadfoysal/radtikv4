@@ -26,11 +26,25 @@ class Show extends Component
     public bool $loading = true;
     public string $lastChecked = '';
     
+    // Update Properties
+    public string $installedVersion = '';
+    public string $latestVersion = '';
+    public bool $updateAvailable = false;
+    public bool $checkingUpdates = false;
+    public bool $applyingUpdate = false;
+    public string $updateMessage = '';
+    public array $releaseNotes = [];
+    
+    // Tab State
+    public string $selectedTab = 'overview';
+    public string $logTab = 'freeradius';
+    
     public function mount(RadiusServer $server): void
     {
         $this->authorize('view_radius');
         $this->server = $server;
         $this->refreshStatus();
+        $this->getInstalledVersion();
     }
 
     #[On('refresh-status')]
@@ -272,6 +286,99 @@ class Show extends Component
             return (int) trim($result);
         } catch (\Exception $e) {
             return 0;
+        }
+    }
+
+    public function getInstalledVersion(): void
+    {
+        try {
+            $sshService = new RadiusServerSshService($this->server);
+            $result = $sshService->getInstalledVersion();
+            
+            if ($result['success']) {
+                $this->installedVersion = $result['version'];
+            } else {
+                $this->installedVersion = 'Unknown';
+            }
+        } catch (\Exception $e) {
+            $this->installedVersion = 'Unknown';
+            Log::error('Failed to get installed version', [
+                'server_id' => $this->server->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    public function checkForUpdates(): void
+    {
+        $this->checkingUpdates = true;
+        $this->updateMessage = '';
+        
+        try {
+            $sshService = new RadiusServerSshService($this->server);
+            $result = $sshService->checkForUpdates();
+            
+            if ($result['success']) {
+                $this->installedVersion = $result['installed_version'];
+                $this->latestVersion = $result['latest_version'];
+                $this->updateAvailable = $result['update_available'];
+                
+                if ($this->updateAvailable) {
+                    $this->updateMessage = $result['message'];
+                    $this->success("Update available: v{$this->installedVersion} → v{$this->latestVersion}");
+                } else {
+                    $this->info('You are running the latest version (' . $this->installedVersion . ')');
+                }
+            } else {
+                $this->error('Failed to check for updates: ' . ($result['message'] ?? 'Unknown error'));
+            }
+        } catch (\Exception $e) {
+            $this->error('Failed to check for updates: ' . $e->getMessage());
+            Log::error('Check for updates failed', [
+                'server_id' => $this->server->id,
+                'error' => $e->getMessage(),
+            ]);
+        } finally {
+            $this->checkingUpdates = false;
+        }
+    }
+
+    public function applyUpdate(): void
+    {
+        $this->applyingUpdate = true;
+        
+        try {
+            $sshService = new RadiusServerSshService($this->server);
+            
+            $this->info('Applying update... This may take a few minutes.');
+            
+            $result = $sshService->applyUpdate();
+            
+            if ($result['success']) {
+                $this->success(
+                    "Successfully updated from v{$result['old_version']} to v{$result['new_version']}! " .
+                    "Backup saved at: {$result['backup_location']}"
+                );
+                
+                // Refresh version info
+                $this->getInstalledVersion();
+                $this->updateAvailable = false;
+                $this->latestVersion = $result['new_version'];
+                
+                // Refresh status to check services
+                sleep(2);
+                $this->refreshStatus();
+            } else {
+                $this->error('Update failed: ' . ($result['message'] ?? 'Unknown error'));
+            }
+        } catch (\Exception $e) {
+            $this->error('Failed to apply update: ' . $e->getMessage());
+            Log::error('Apply update failed', [
+                'server_id' => $this->server->id,
+                'error' => $e->getMessage(),
+            ]);
+        } finally {
+            $this->applyingUpdate = false;
         }
     }
 

@@ -2,10 +2,10 @@
 
 namespace App\Livewire\HotspotUsers;
 
-use App\MikroTik\Actions\HotspotUserManager;
 use App\Models\Router;
 use App\Models\UserProfile;
 use App\Models\Voucher;
+use App\Services\RadiusApiService;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Rule as V;
 use Livewire\Component;
@@ -76,7 +76,12 @@ class Create extends Component
         try {
             $user = auth()->user();
             $router = $user->getAuthorizedRouter($this->router_id);
-            $manager = app(HotspotUserManager::class);
+
+            // Check if router has RADIUS server configured
+            if (!$router->radiusServer || !$router->radiusServer->isReady()) {
+                $this->error('This router does not have a RADIUS server configured or it is not ready. Please configure a RADIUS server first.');
+                return;
+            }
 
             // Get accessible profiles based on user role
             $accessibleProfiles = $user->getAccessibleProfiles();
@@ -98,22 +103,30 @@ class Create extends Component
                 return;
             }
 
-            // Create user in MikroTik first - use profile name from database
-            $profileName = $selectedProfile ? $selectedProfile->name : null;
-            $result = $manager->addUser(
-                $router,
-                $this->username,
-                $this->password,
-                $profileName
-            );
+            // Create user in RADIUS server first
+            $radiusService = new RadiusApiService($router->radiusServer);
+            
+            try {
+                $result = $radiusService->createSingleVoucher(
+                    $this->username,
+                    $this->password,
+                    $userProfile->rate_limit ?? '10M/10M',
+                    $router->nas_identifier
+                );
 
-            // Check if MikroTik creation was successful
-            if (isset($result['ok']) && $result['ok'] === false) {
-                $this->error('Failed to create user in MikroTik: ' . ($result['message'] ?? 'Unknown error'));
+                // Check if RADIUS creation was successful
+                if (!isset($result['synced']) || $result['synced'] !== 1) {
+                    $errorMsg = isset($result['errors']) ? implode(', ', $result['errors']) : 'Unknown error';
+                    $this->error('Failed to create user in RADIUS server: ' . $errorMsg);
+                    return;
+                }
+
+            } catch (\Exception $e) {
+                $this->error('Failed to create user in RADIUS server: ' . $e->getMessage());
                 return;
             }
 
-            // Create record in vouchers table only after successful MikroTik creation
+            // Create record in vouchers table only after successful RADIUS creation
             $batch = 'HS' . now()->format('ymdHis') . Str::upper(Str::random(4));
 
             Voucher::create([
@@ -121,17 +134,16 @@ class Create extends Component
                 'username' => $this->username,
                 'password' => $this->password,
                 'batch' => $batch,
-                'status' => 'active',
+                'status' => 'unused',
                 'created_by' => auth()->id(),
                 'user_id' => auth()->id(),
                 'router_id' => $this->router_id,
                 'user_profile_id' => $userProfile->id,
                 'bytes_in' => 0,
                 'bytes_out' => 0,
-                'activated_at' => now(),
             ]);
 
-            $this->success('Hotspot user created successfully in MikroTik and database.');
+            $this->success('Hotspot user created successfully in RADIUS server and database.');
 
             // Reset form
             $this->reset(['username', 'password']);

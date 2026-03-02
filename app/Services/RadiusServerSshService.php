@@ -465,6 +465,218 @@ class RadiusServerSshService
     }
 
     /**
+     * Get installed radtik-radius version
+     */
+    public function getInstalledVersion(): array
+    {
+        try {
+            $version = trim($this->execute('cat /opt/radtik-radius/VERSION 2>&1'));
+            
+            // Check if file exists
+            if (str_contains($version, 'No such file')) {
+                return [
+                    'success' => false,
+                    'version' => null,
+                    'message' => 'VERSION file not found',
+                ];
+            }
+
+            return [
+                'success' => true,
+                'version' => $version,
+                'message' => 'Version retrieved successfully',
+            ];
+        } catch (Exception $e) {
+            Log::error('Failed to get installed version', [
+                'server_id' => $this->server->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'version' => null,
+                'message' => 'Failed to retrieve version: ' . $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Check for available updates from GitHub
+     */
+    public function checkForUpdates(): array
+    {
+        try {
+            // Get installed version
+            $installedResult = $this->getInstalledVersion();
+            if (!$installedResult['success']) {
+                return $installedResult;
+            }
+
+            $installedVersion = $installedResult['version'];
+
+            // Check GitHub API for latest release
+            $githubApiUrl = 'https://api.github.com/repos/ahmadfoysal/radtik-radius/releases/latest';
+            $latestReleaseJson = trim($this->execute("curl -s '$githubApiUrl'"));
+            
+            // Parse JSON response
+            $latestRelease = json_decode($latestReleaseJson, true);
+            
+            if (!$latestRelease || !isset($latestRelease['tag_name'])) {
+                return [
+                    'success' => false,
+                    'message' => 'Failed to fetch latest release from GitHub',
+                    'installed_version' => $installedVersion,
+                    'latest_version' => null,
+                    'update_available' => false,
+                ];
+            }
+
+            $latestVersion = ltrim($latestRelease['tag_name'], 'v');
+            $updateAvailable = version_compare($latestVersion, $installedVersion, '>');
+
+            return [
+                'success' => true,
+                'installed_version' => $installedVersion,
+                'latest_version' => $latestVersion,
+                'update_available' => $updateAvailable,
+                'release_url' => $latestRelease['html_url'] ?? null,
+                'release_notes' => $latestRelease['body'] ?? null,
+                'published_at' => $latestRelease['published_at'] ?? null,
+                'message' => $updateAvailable ? 
+                    "Update available: v{$installedVersion} → v{$latestVersion}" : 
+                    'You are running the latest version',
+            ];
+        } catch (Exception $e) {
+            Log::error('Failed to check for updates', [
+                'server_id' => $this->server->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Failed to check for updates: ' . $e->getMessage(),
+                'update_available' => false,
+            ];
+        }
+    }
+
+    /**
+     * Apply update from GitHub
+     */
+    public function applyUpdate(string $targetVersion = 'latest'): array
+    {
+        try {
+            // First check if update is available
+            $updateCheck = $this->checkForUpdates();
+            if (!$updateCheck['success']) {
+                return $updateCheck;
+            }
+
+            if (!$updateCheck['update_available'] && $targetVersion === 'latest') {
+                return [
+                    'success' => false,
+                    'message' => 'No updates available. Already running version ' . $updateCheck['installed_version'],
+                ];
+            }
+
+            $version = $targetVersion === 'latest' ? $updateCheck['latest_version'] : $targetVersion;
+            
+            Log::info('Starting radtik-radius update', [
+                'server_id' => $this->server->id,
+                'from_version' => $updateCheck['installed_version'],
+                'to_version' => $version,
+            ]);
+
+            // Create backup directory with timestamp
+            $timestamp = date('Y-m-d_H-i-s');
+            $backupDir = "/opt/radtik-radius-backup-{$timestamp}";
+            
+            // Backup current installation
+            $this->execute("sudo cp -r /opt/radtik-radius $backupDir");
+            
+            Log::info('Created backup', [
+                'server_id' => $this->server->id,
+                'backup_dir' => $backupDir,
+            ]);
+
+            // Download and extract update
+            $downloadUrl = "https://github.com/ahmadfoysal/radtik-radius/archive/refs/tags/v{$version}.tar.gz";
+            $tmpDir = "/tmp/radtik-radius-update-{$timestamp}";
+            
+            // Download archive
+            $downloadCommand = "mkdir -p $tmpDir && cd $tmpDir && curl -L -o update.tar.gz '$downloadUrl'";
+            $this->execute($downloadCommand);
+            
+            // Extract archive
+            $this->execute("cd $tmpDir && tar -xzf update.tar.gz");
+            
+            // Copy files to installation directory (excluding .git)
+            $extractedDir = "$tmpDir/radtik-radius-" . ltrim($version, 'v');
+            $this->execute("sudo cp -r $extractedDir/* /opt/radtik-radius/");
+            
+            // Preserve config.ini if it exists in backup
+            $this->execute("sudo cp $backupDir/scripts/config.ini /opt/radtik-radius/scripts/config.ini 2>/dev/null || true");
+            
+            // Set proper permissions
+            $this->execute("sudo chown -R root:root /opt/radtik-radius");
+            $this->execute("sudo chmod +x /opt/radtik-radius/install.sh");
+            $this->execute("sudo chmod +x /opt/radtik-radius/scripts/*.py");
+            
+            // Restart services
+            $this->execute('sudo systemctl restart radtik-radius-api');
+            $this->execute('sudo systemctl restart freeradius');
+            
+            // Wait for services to start
+            sleep(3);
+            
+            // Verify services are running
+            $apiStatus = trim($this->execute('sudo systemctl is-active radtik-radius-api'));
+            $radiusStatus = trim($this->execute('sudo systemctl is-active freeradius'));
+            
+            // Cleanup temp directory
+            $this->execute("rm -rf $tmpDir");
+            
+            $allActive = ($apiStatus === 'active' && $radiusStatus === 'active');
+            
+            // Verify version update
+            $newVersion = $this->getInstalledVersion();
+            
+            Log::info('Update completed', [
+                'server_id' => $this->server->id,
+                'new_version' => $newVersion['version'] ?? 'unknown',
+                'api_status' => $apiStatus,
+                'radius_status' => $radiusStatus,
+                'backup_dir' => $backupDir,
+            ]);
+
+            return [
+                'success' => $allActive,
+                'message' => $allActive ? 
+                    "Successfully updated to version {$version}" : 
+                    "Update completed but services need attention",
+                'old_version' => $updateCheck['installed_version'],
+                'new_version' => $newVersion['version'] ?? $version,
+                'backup_location' => $backupDir,
+                'api_status' => $apiStatus,
+                'radius_status' => $radiusStatus,
+            ];
+
+        } catch (Exception $e) {
+            Log::error('Failed to apply update', [
+                'server_id' => $this->server->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return [
+                'success' => false,
+                'message' => 'Update failed: ' . $e->getMessage(),
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
      * Close SSH connection
      */
     public function disconnect(): void

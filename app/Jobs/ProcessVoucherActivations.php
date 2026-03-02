@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Voucher;
+use App\Services\VoucherLogger;
 use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -151,6 +152,28 @@ class ProcessVoucherActivations implements ShouldQueue
 
         if ($updated) {
             $voucher->save();
+            
+            // Log activation event
+            VoucherLogger::log(
+                $voucher,
+                $voucher->router,
+                'activated',
+                [
+                    'activated_at' => $voucher->activated_at?->toDateTimeString(),
+                    'mac_address' => $voucher->mac_address,
+                    'nas_identifier' => $nasIdentifier,
+                    'expiry_date' => $voucher->expiry_date?->toDateTimeString(),
+                    'status' => $voucher->status,
+                    'batch' => $voucher->batch,
+                ],
+                'Voucher activated via RADIUS authentication'
+            );
+            
+            Log::info('Voucher activation logged', [
+                'username' => $username,
+                'voucher_id' => $voucher->id,
+            ]);
+            
             return 'processed';
         }
 
