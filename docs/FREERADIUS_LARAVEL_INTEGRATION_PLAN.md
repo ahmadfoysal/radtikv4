@@ -226,7 +226,7 @@ pip install requests schedule
 
 ```ini
 [laravel]
-api_url = https://radtik.example.com/api/radius
+api_url = https://radtik.com
 api_secret = your-shared-secret-token
 
 [radius]
@@ -762,7 +762,7 @@ sudo systemctl status radtik-sync
 sudo tail -f /var/log/radtik-sync.log
 
 # Test Laravel API manually
-curl -X POST https://radtik.example.com/api/radius/sync/vouchers \
+curl -X POST https://radtik.com/api/radius/sync/vouchers \
   -H "X-RADIUS-SECRET: your-secret" \
   -H "Content-Type: application/json"
 ```
