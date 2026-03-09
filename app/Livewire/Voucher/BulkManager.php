@@ -123,14 +123,26 @@ class BulkManager extends Component
                             'radius_response' => $radiusResult,
                         ]);
                     } catch (\Exception $e) {
-                        Log::error('Failed to delete voucher from RADIUS server (BulkManager)', [
-                            'voucher_id' => $voucher->id,
-                            'username' => $voucher->username,
-                            'error' => $e->getMessage(),
-                        ]);
+                        $errorMessage = $e->getMessage();
+                        
+                        // Check if voucher is already deleted from RADIUS (404 error)
+                        if (str_contains($errorMessage, '[404]') || str_contains($errorMessage, 'not found')) {
+                            Log::warning('Voucher already deleted from RADIUS server (BulkManager)', [
+                                'voucher_id' => $voucher->id,
+                                'username' => $voucher->username,
+                            ]);
+                            // Continue to delete from Laravel database - don't treat as error
+                        } else {
+                            // Real RADIUS error
+                            Log::error('Failed to delete voucher from RADIUS server (BulkManager)', [
+                                'voucher_id' => $voucher->id,
+                                'username' => $voucher->username,
+                                'error' => $errorMessage,
+                            ]);
 
-                        $this->error('Failed to delete from RADIUS: ' . $e->getMessage());
-                        return;
+                            $this->error('Failed to delete from RADIUS: ' . $errorMessage);
+                            return;
+                        }
                     }
                 }
 
@@ -183,13 +195,25 @@ class BulkManager extends Component
                                 'radius_server_id' => $voucher->router->radiusServer->id,
                             ]);
                         } catch (\Exception $e) {
-                            Log::error('Failed to delete voucher from RADIUS server (Bulk)', [
-                                'voucher_id' => $voucher->id,
-                                'username' => $voucher->username,
-                                'error' => $e->getMessage(),
-                            ]);
-                            $failedCount++;
-                            continue; // Skip this voucher and continue with the next one
+                            $errorMessage = $e->getMessage();
+                            
+                            // Check if voucher is already deleted from RADIUS (404 error)
+                            if (str_contains($errorMessage, '[404]') || str_contains($errorMessage, 'not found')) {
+                                Log::warning('Voucher already deleted from RADIUS server (Bulk)', [
+                                    'voucher_id' => $voucher->id,
+                                    'username' => $voucher->username,
+                                ]);
+                                // Continue to delete from Laravel database - don't count as failure
+                            } else {
+                                // Real RADIUS error - count as failure and skip
+                                Log::error('Failed to delete voucher from RADIUS server (Bulk)', [
+                                    'voucher_id' => $voucher->id,
+                                    'username' => $voucher->username,
+                                    'error' => $errorMessage,
+                                ]);
+                                $failedCount++;
+                                continue; // Skip this voucher and continue with the next one
+                            }
                         }
                     }
 

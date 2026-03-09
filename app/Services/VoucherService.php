@@ -115,22 +115,34 @@ class VoucherService
                     'radius_response' => $radiusResult,
                 ]);
             } catch (\Exception $e) {
-                // Log error but continue - RADIUS deletion failure should not block DB deletion
-                Log::error('Failed to delete voucher from RADIUS server', [
-                    'voucher_id' => $voucher->id,
-                    'username' => $voucher->username,
-                    'radius_server_id' => $router->radiusServer->id,
-                    'error' => $e->getMessage(),
-                ]);
+                $errorMessage = $e->getMessage();
+                
+                // Check if voucher is already deleted from RADIUS (404 error)
+                if (str_contains($errorMessage, '[404]') || str_contains($errorMessage, 'not found')) {
+                    Log::warning('Voucher already deleted from RADIUS server', [
+                        'voucher_id' => $voucher->id,
+                        'username' => $voucher->username,
+                        'radius_server_id' => $router->radiusServer->id,
+                    ]);
+                    // Continue to delete from Laravel database - don't treat as error
+                } else {
+                    // Real RADIUS error - log and return error
+                    Log::error('Failed to delete voucher from RADIUS server', [
+                        'voucher_id' => $voucher->id,
+                        'username' => $voucher->username,
+                        'radius_server_id' => $router->radiusServer->id,
+                        'error' => $errorMessage,
+                    ]);
 
-                return [
-                    'success' => false,
-                    'message' => 'Failed to delete voucher from RADIUS server: ' . $e->getMessage(),
-                ];
+                    return [
+                        'success' => false,
+                        'message' => 'Failed to delete voucher from RADIUS server: ' . $errorMessage,
+                    ];
+                }
             }
         }
 
-        // Delete from RADTik database only after successful RADIUS deletion (or no RADIUS configured)
+        // Delete from RADTik database
         $voucher->delete();
 
         return [
