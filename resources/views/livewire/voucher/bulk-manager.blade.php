@@ -78,6 +78,30 @@
                 </span>
             @endscope
 
+            {{-- RADIUS Sync Status Badge --}}
+            @scope('cell_radius_sync', $voucher)
+                @if($voucher->router->radiusServer)
+                    <span class="badge badge-xs {{ $syncStatusColor($voucher->radius_sync_status ?? 'none') }} gap-1"
+                          title="RADIUS Sync: {{ $voucher->radius_sync_status ?? 'not synced' }}">
+                        @if($voucher->isSynced())
+                            <x-mary-icon name="o-check-circle" class="w-3 h-3" />
+                            <span class="hidden sm:inline">Synced</span>
+                        @elseif($voucher->isPendingSync())
+                            <x-mary-icon name="o-clock" class="w-3 h-3" />
+                            <span class="hidden sm:inline">Pending</span>
+                        @else
+                            <x-mary-icon name="o-x-circle" class="w-3 h-3" />
+                            <span class="hidden sm:inline">{{ ucfirst($voucher->radius_sync_status ?? 'None') }}</span>
+                        @endif
+                    </span>
+                @else
+                    <span class="badge badge-xs badge-ghost">
+                        <x-mary-icon name="o-minus" class="w-3 h-3" />
+                        <span class="hidden sm:inline">N/A</span>
+                    </span>
+                @endif
+            @endscope
+
             {{-- Actions per row --}}
             @scope('actions', $voucher)
                 <div class="flex items-center gap-2">

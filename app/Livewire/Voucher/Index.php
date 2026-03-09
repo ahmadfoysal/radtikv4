@@ -87,6 +87,16 @@ class Index extends Component
         };
     }
 
+    protected function syncStatusColor(string $s): string
+    {
+        return match ($s) {
+            'synced' => 'badge-success',
+            'pending' => 'badge-warning',
+            'failed' => 'badge-error',
+            default => 'badge-ghost',
+        };
+    }
+
     public function delete(int $id)
     {
         $this->authorize('delete_vouchers');
@@ -162,6 +172,7 @@ class Index extends Component
 
             // send helpers to view
             'statusColor' => fn($s) => $this->statusColor($s),
+            'syncStatusColor' => fn($s) => $this->syncStatusColor($s),
         ]);
     }
 }

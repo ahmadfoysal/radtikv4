@@ -32,6 +32,7 @@ class BulkManager extends Component
         ['key' => 'profile.name', 'label' => 'Profile', 'sortable' => false],
         ['key' => 'batch', 'label' => 'Batch'],
         ['key' => 'status', 'label' => 'Status'],
+        ['key' => 'radius_sync', 'label' => 'RADIUS', 'sortable' => false],
     ];
 
     public function mount()
@@ -91,7 +92,7 @@ class BulkManager extends Component
             $router = $user->getAuthorizedRouter($this->router_id);
 
             return Voucher::query()
-                ->with('profile')
+                ->with('profile', 'router.radiusServer')
                 ->where('router_id', $this->router_id)
                 ->when($this->batch, fn($q) => $q->where('batch', $this->batch))
                 ->when($this->status !== 'all', fn($q) => $q->where('status', $this->status))
@@ -188,7 +189,7 @@ class BulkManager extends Component
                                 'error' => $e->getMessage(),
                             ]);
                             $failedCount++;
-                            return; // Skip this voucher
+                            continue; // Skip this voucher and continue with the next one
                         }
                     }
 
@@ -297,6 +298,17 @@ class BulkManager extends Component
             'routers' => $routers,
             'vouchers' => $query ? $query->get() : [],
             'total_count' => $query ? $query->count() : 0,
+            'syncStatusColor' => fn($s) => $this->syncStatusColor($s),
         ]);
+    }
+
+    protected function syncStatusColor(string $s): string
+    {
+        return match ($s) {
+            'synced' => 'badge-success',
+            'pending' => 'badge-warning',
+            'failed' => 'badge-error',
+            default => 'badge-ghost',
+        };
     }
 }

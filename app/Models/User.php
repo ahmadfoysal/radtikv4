@@ -219,7 +219,7 @@ class User extends Authenticatable
 
     public function getResellerRouters()
     {
-        return $this->resellerRouters()->get();
+        return $this->resellerRouters()->mainRouters()->get();
     }
 
     public function profileAssignments()
@@ -273,7 +273,30 @@ class User extends Authenticatable
      * 
      * @return \Illuminate\Database\Eloquent\Collection
      */
+    /**
+     * Get accessible routers (main routers only, excludes NAS devices).
+     * Use this for voucher generation, hotspot users, and other operations.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
     public function getAccessibleRouters()
+    {
+        if ($this->isAdmin()) {
+            return $this->routers()->mainRouters()->orderBy('name')->get();
+        } elseif ($this->isReseller()) {
+            return $this->resellerRouters()->mainRouters()->orderBy('name')->get();
+        }
+
+        return collect();
+    }
+
+    /**
+     * Get all accessible routers including NAS devices.
+     * Use this for router management and NAS device operations.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getAllAccessibleRouters()
     {
         if ($this->isAdmin()) {
             return $this->routers()->orderBy('name')->get();

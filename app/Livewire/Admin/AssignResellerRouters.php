@@ -234,6 +234,7 @@ class AssignResellerRouters extends Component
     protected function routerQuery(?string $term = null): Builder
     {
         $query = Router::query()
+            ->mainRouters() // Exclude NAS devices from reseller assignment
             ->select('id', 'name', 'address', 'user_id')
             ->with('user:id,name');
 

@@ -35,7 +35,7 @@ class Index extends Component
     protected function paginatedNasDevices(): LengthAwarePaginator
     {
         $user = auth()->user();
-        $accessibleRouters = $user->getAccessibleRouters();
+        $accessibleRouters = $user->getAllAccessibleRouters(); // Include NAS devices for management
         $accessibleRouterIds = $accessibleRouters->pluck('id')->toArray();
 
         return \App\Models\Router::query()

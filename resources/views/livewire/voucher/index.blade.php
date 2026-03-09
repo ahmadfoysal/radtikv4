@@ -68,6 +68,18 @@
                                 <span class="badge badge-xs {{ $badge }} capitalize">
                                     {{ $v->status }}
                                 </span>
+                                @if($v->router->radiusServer)
+                                    <span class="badge badge-xs {{ $syncStatusColor($v->radius_sync_status ?? 'none') }} capitalize"
+                                          title="RADIUS Sync Status: {{ $v->radius_sync_status ?? 'not synced' }}">
+                                        @if($v->isSynced())
+                                            <x-mary-icon name="o-check-circle" class="w-3 h-3" />
+                                        @elseif($v->isPendingSync())
+                                            <x-mary-icon name="o-clock" class="w-3 h-3" />
+                                        @else
+                                            <x-mary-icon name="o-x-circle" class="w-3 h-3" />
+                                        @endif
+                                    </span>
+                                @endif
                             </div>
                         </div>
                     </div>

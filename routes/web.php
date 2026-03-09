@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\MikrotikApiController;
 use App\Http\Controllers\Api\RadiusActivationController;
+use App\Http\Controllers\Api\RadiusVoucherVerificationController;
 use App\Http\Controllers\PaymentCallbackController;
 use App\Http\Controllers\Voucher\SingleVoucherPrintController;
 use App\Http\Controllers\Voucher\VoucherPrintController;
@@ -190,6 +191,11 @@ Route::post('/mikrotik/api/sync-orphans', [MikrotikApiController::class, 'syncOr
 Route::post('/api/radius/activations', [RadiusActivationController::class, 'store'])
     ->withoutMiddleware([VerifyCsrfToken::class])
     ->name('radius.activations.store');
+
+// Verify voucher existence for orphan cleanup
+Route::post('/api/radius/verify-vouchers', [RadiusVoucherVerificationController::class, 'verify'])
+    ->withoutMiddleware([VerifyCsrfToken::class])
+    ->name('radius.vouchers.verify');
 
 /* Payment Gateway Callbacks (without CSRF) */
 Route::post('/payment/cryptomus/callback', [App\Http\Controllers\PaymentCallbackController::class, 'cryptomus'])

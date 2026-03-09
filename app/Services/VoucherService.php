@@ -37,6 +37,8 @@ class VoucherService
         }
 
         $query = Voucher::query()
+            // Eager load relationships to avoid N+1 queries
+            ->with(['profile', 'router.radiusServer'])
             // Only show vouchers from accessible routers
             ->whereIn('router_id', $accessibleRouterIds);
 
