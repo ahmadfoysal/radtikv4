@@ -298,17 +298,6 @@ class BulkManager extends Component
             'routers' => $routers,
             'vouchers' => $query ? $query->get() : [],
             'total_count' => $query ? $query->count() : 0,
-            'syncStatusColor' => fn($s) => $this->syncStatusColor($s),
         ]);
-    }
-
-    protected function syncStatusColor(string $s): string
-    {
-        return match ($s) {
-            'synced' => 'badge-success',
-            'pending' => 'badge-warning',
-            'failed' => 'badge-error',
-            default => 'badge-ghost',
-        };
     }
 }

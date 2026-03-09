@@ -81,7 +81,16 @@
             {{-- RADIUS Sync Status Badge --}}
             @scope('cell_radius_sync', $voucher)
                 @if($voucher->router->radiusServer)
-                    <span class="badge badge-xs {{ $syncStatusColor($voucher->radius_sync_status ?? 'none') }} gap-1"
+                    @php
+                        $status = $voucher->radius_sync_status ?? 'none';
+                        $badgeColor = match($status) {
+                            'synced' => 'badge-success',
+                            'pending' => 'badge-warning',
+                            'failed' => 'badge-error',
+                            default => 'badge-ghost',
+                        };
+                    @endphp
+                    <span class="badge badge-xs {{ $badgeColor }} gap-1"
                           title="RADIUS Sync: {{ $voucher->radius_sync_status ?? 'not synced' }}">
                         @if($voucher->isSynced())
                             <x-mary-icon name="o-check-circle" class="w-3 h-3" />
