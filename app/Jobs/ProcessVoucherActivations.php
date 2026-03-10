@@ -123,8 +123,8 @@ class ProcessVoucherActivations implements ShouldQueue
         if (!$voucher->activated_at) {
             $voucher->activated_at = $authenticatedAt;
             
-            // Calculate expiry date based on profile validity
-            $expiryDate = $authenticatedAt->copy()->addHours($profile->validity_hours);
+            // Calculate expiry date based on profile validity (e.g., "1d2h30m")
+            $expiryDate = $this->calculateExpiryDate($authenticatedAt, $profile->validity);
             $voucher->expires_at = $expiryDate;
             $voucher->status = 'active';
             
@@ -134,6 +134,7 @@ class ProcessVoucherActivations implements ShouldQueue
                 'username' => $username,
                 'activated_at' => $authenticatedAt->toDateTimeString(),
                 'expires_at' => $expiryDate->toDateTimeString(),
+                'validity' => $profile->validity,
             ]);
         }
 
@@ -160,7 +161,7 @@ class ProcessVoucherActivations implements ShouldQueue
                     'activated_at' => $voucher->activated_at?->toDateTimeString(),
                     'mac_address' => $voucher->mac_address,
                     'nas_identifier' => $nasIdentifier,
-                    'expiry_date' => $voucher->expiry_date?->toDateTimeString(),
+                    'expires_at' => $voucher->expires_at?->toDateTimeString(),
                     'status' => $voucher->status,
                     'batch' => $voucher->batch,
                 ],
@@ -176,5 +177,58 @@ class ProcessVoucherActivations implements ShouldQueue
         }
 
         return 'skipped';
+    }
+
+    /**
+     * Parse validity string and calculate expiry date
+     * Format: 1d2h30m45s (days, hours, minutes, seconds)
+     * 
+     * @param Carbon $startDate
+     * @param string|null $validity
+     * @return Carbon|null
+     */
+    protected function calculateExpiryDate(Carbon $startDate, ?string $validity): ?Carbon
+    {
+        if (!$validity) {
+            // Keep null if no validity specified
+            return null;
+        }
+        
+        $expiryDate = $startDate->copy();
+        
+        // Parse validity string (e.g., "1d2h30m" or "2h" or "30m")
+        // Format: (?:(?P<days>\d+)d)?(?:(?P<hours>\d+)h)?(?:(?P<minutes>\d+)m)?(?:(?P<seconds>\d+)s)?
+        if (preg_match('/^(?:(\d+)d)?(\d+h)?(\d+m)?(\d+s)?$/i', $validity, $matches)) {
+            // Extract days
+            if (!empty($matches[1])) {
+                $expiryDate->addDays((int)$matches[1]);
+            }
+            
+            // Extract hours
+            if (!empty($matches[2])) {
+                $hours = (int)rtrim($matches[2], 'hH');
+                $expiryDate->addHours($hours);
+            }
+            
+            // Extract minutes
+            if (!empty($matches[3])) {
+                $minutes = (int)rtrim($matches[3], 'mM');
+                $expiryDate->addMinutes($minutes);
+            }
+            
+            // Extract seconds
+            if (!empty($matches[4])) {
+                $seconds = (int)rtrim($matches[4], 'sS');
+                $expiryDate->addSeconds($seconds);
+            }
+        } else {
+            // Invalid format, keep null
+            Log::warning('Invalid validity format, keeping expires_at null', [
+                'validity' => $validity,
+            ]);
+            return null;
+        }
+        
+        return $expiryDate;
     }
 }
