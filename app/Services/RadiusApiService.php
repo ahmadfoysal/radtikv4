@@ -66,16 +66,38 @@ class RadiusApiService
                 'mikrotik_rate_limit' => $voucher->profile->rate_limit ?? '10M/10M',
                 'nas_identifier' => $router->nas_identifier,
             ];
-        })->values()->toArray(); // Use values() to reset keys and ensure clean array
+        })->values()->all(); // Use values() to reset keys and all() instead of toArray()
+
+        // Double-check array formatting with array_values to ensure sequential numeric keys
+        $vouchersArray = array_values($vouchersArray);
 
         // Validate the array is properly formatted
         if (!is_array($vouchersArray) || empty($vouchersArray)) {
             throw new Exception('Failed to convert vouchers to array format.');
         }
 
+        // Additional validation: check if it's a proper indexed array (not associative)
+        if (array_keys($vouchersArray) !== range(0, count($vouchersArray) - 1)) {
+            Log::error('Vouchers array has non-sequential keys', [
+                'keys' => array_keys($vouchersArray),
+                'expected_keys' => range(0, count($vouchersArray) - 1),
+            ]);
+            throw new Exception('Vouchers array has non-sequential keys.');
+        }
+
         $payload = [
             'vouchers' => $vouchersArray,
         ];
+
+        // Debug log the payload structure
+        Log::debug('RADIUS sync payload prepared', [
+            'server_id' => $this->server->id,
+            'voucher_count' => count($vouchersArray),
+            'payload_keys' => array_keys($payload),
+            'vouchers_is_array' => is_array($payload['vouchers']),
+            'vouchers_is_list' => array_is_list($payload['vouchers']),
+            'first_voucher' => $vouchersArray[0] ?? null,
+        ]);
 
         Log::info('Syncing vouchers to RADIUS', [
             'server_id' => $this->server->id,
@@ -87,12 +109,26 @@ class RadiusApiService
 
         try {
             // Send HTTP request to RADIUS server
+            // Use asJson() to ensure proper JSON encoding with correct Content-Type header
             $response = Http::timeout(30)
                 ->retry(2, 100) // Retry 2 times with 100ms delay
                 ->withToken($this->server->auth_token)
+                ->asJson() // Ensure JSON encoding and Content-Type: application/json header
                 ->post($endpoint, $payload);
 
             if (!$response->successful()) {
+                // Log the actual request that was sent for debugging
+                Log::error('RADIUS API request failed', [
+                    'server_id' => $this->server->id,
+                    'endpoint' => $endpoint,
+                    'status_code' => $response->status(),
+                    'response_body' => $response->body(),
+                    'payload_sample' => [
+                        'vouchers_count' => count($payload['vouchers']),
+                        'first_three_vouchers' => array_slice($payload['vouchers'], 0, 3),
+                    ],
+                ]);
+
                 throw new Exception(
                     "RADIUS API returned error: [{$response->status()}] " . $response->body()
                 );
