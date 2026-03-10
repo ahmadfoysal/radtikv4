@@ -125,7 +125,7 @@ class ProcessVoucherActivations implements ShouldQueue
             
             // Calculate expiry date based on profile validity
             $expiryDate = $authenticatedAt->copy()->addHours($profile->validity_hours);
-            $voucher->expiry_date = $expiryDate;
+            $voucher->expires_at = $expiryDate;
             $voucher->status = 'active';
             
             $updated = true;
