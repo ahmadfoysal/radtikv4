@@ -83,65 +83,67 @@ class SyncVouchersToRadiusJob implements ShouldQueue
             $failedChunks = 0;
             $errors = [];
 
-            Voucher::with('profile')
+            // Get all pending vouchers for this batch ONCE to avoid chunking issues
+            $pendingVouchers = Voucher::with('profile')
                 ->where('batch', $this->batchId)
                 ->where('radius_sync_status', 'pending')
-                ->chunkById(250, function ($chunk) use ($radiusApi, $router, &$totalChunks, &$successChunks, &$failedChunks, &$errors) {
-                    $totalChunks++;
-                    
-                    try {
-                        // Add delay between chunks to prevent rate limiting (skip for first chunk)
-                        if ($totalChunks > 1) {
-                            sleep(2); // 2 second delay between chunks
-                        }
+                ->get();
 
-                        // Sync batch to RADIUS
-                        $response = $radiusApi->syncBatch($chunk, $router);
-
-                        // Collect IDs for batch update (more efficient than updating each model)
-                        $voucherIds = $chunk->pluck('id')->toArray();
-                        
-                        // Batch update to 'synced' status
-                        Voucher::whereIn('id', $voucherIds)->update([
-                            'radius_sync_status' => 'synced',
-                            'synced_at' => now(),
-                        ]);
-
-                        $successChunks++;
-
-                        Log::info('Voucher batch synced successfully', [
-                            'batch_id' => $this->batchId,
-                            'chunk_number' => $totalChunks,
-                            'chunk_size' => $chunk->count(),
-                            'response' => $response,
-                        ]);
-
-                    } catch (Exception $e) {
-                        $failedChunks++;
-                        $errorMessage = $e->getMessage();
-                        $errors[] = "Chunk {$totalChunks}: {$errorMessage}";
-                        
-                        // Collect IDs for batch update
-                        $voucherIds = $chunk->pluck('id')->toArray();
-                        
-                        // Batch update to 'failed' status
-                        Voucher::whereIn('id', $voucherIds)->update([
-                            'radius_sync_status' => 'failed',
-                            'sync_error' => $errorMessage,
-                        ]);
-
-                        Log::error('Voucher batch sync failed', [
-                            'batch_id' => $this->batchId,
-                            'chunk_number' => $totalChunks,
-                            'chunk_size' => $chunk->count(),
-                            'error' => $errorMessage,
-                        ]);
-
-                        // Don't throw exception - continue processing remaining chunks
+            // Process in chunks using Collection chunk method (safer than chunkById with updates)
+            foreach ($pendingVouchers->chunk(250) as $chunk) {
+                $totalChunks++;
+                
+                try {
+                    // Add delay between chunks to prevent rate limiting (skip for first chunk)
+                    if ($totalChunks > 1) {
+                        sleep(2); // 2 second delay between chunks
                     }
+
+                    // Sync batch to RADIUS
+                    $response = $radiusApi->syncBatch($chunk, $router);
+
+                    // Collect IDs for batch update (more efficient than updating each model)
+                    $voucherIds = $chunk->pluck('id')->toArray();
                     
-                    return true; // Continue chunking
-                });
+                    // Batch update to 'synced' status
+                    Voucher::whereIn('id', $voucherIds)->update([
+                        'radius_sync_status' => 'synced',
+                        'synced_at' => now(),
+                    ]);
+
+                    $successChunks++;
+
+                    Log::info('Voucher batch synced successfully', [
+                        'batch_id' => $this->batchId,
+                        'chunk_number' => $totalChunks,
+                        'chunk_size' => $chunk->count(),
+                        'response' => $response,
+                    ]);
+
+                } catch (Exception $e) {
+                    $failedChunks++;
+                    $errorMessage = $e->getMessage();
+                    $errors[] = "Chunk {$totalChunks}: {$errorMessage}";
+                    
+                    // Collect IDs for batch update
+                    $voucherIds = $chunk->pluck('id')->toArray();
+                    
+                    // Batch update to 'failed' status
+                    Voucher::whereIn('id', $voucherIds)->update([
+                        'radius_sync_status' => 'failed',
+                        'sync_error' => $errorMessage,
+                    ]);
+
+                    Log::error('Voucher batch sync failed', [
+                        'batch_id' => $this->batchId,
+                        'chunk_number' => $totalChunks,
+                        'chunk_size' => $chunk->count(),
+                        'error' => $errorMessage,
+                    ]);
+
+                    // Don't throw exception - continue processing remaining chunks
+                }
+            }
 
             // Log summary
             Log::info('RADIUS voucher sync completed', [

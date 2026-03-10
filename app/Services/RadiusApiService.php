@@ -44,23 +44,44 @@ class RadiusApiService
             throw new Exception('RADIUS server API endpoint is not configured.');
         }
 
+        // Validate input
+        if (!($vouchers instanceof Collection)) {
+            throw new Exception('Vouchers parameter must be a Collection instance.');
+        }
+
+        if ($vouchers->isEmpty()) {
+            throw new Exception('Cannot sync empty vouchers collection.');
+        }
+
         // Transform vouchers to API format
+        $vouchersArray = $vouchers->map(function ($voucher) use ($router) {
+            // Validate required fields
+            if (empty($voucher->username) || empty($voucher->password)) {
+                throw new Exception("Voucher #{$voucher->id} has empty username or password.");
+            }
+
+            return [
+                'username' => $voucher->username,
+                'password' => $voucher->password,
+                'mikrotik_rate_limit' => $voucher->profile->rate_limit ?? '10M/10M',
+                'nas_identifier' => $router->nas_identifier,
+            ];
+        })->values()->toArray(); // Use values() to reset keys and ensure clean array
+
+        // Validate the array is properly formatted
+        if (!is_array($vouchersArray) || empty($vouchersArray)) {
+            throw new Exception('Failed to convert vouchers to array format.');
+        }
+
         $payload = [
-            'vouchers' => $vouchers->map(function ($voucher) use ($router) {
-                return [
-                    'username' => $voucher->username,
-                    'password' => $voucher->password,
-                    'mikrotik_rate_limit' => $voucher->profile->rate_limit ?? '10M/10M',
-                    'nas_identifier' => $router->nas_identifier,
-                ];
-            })->toArray(),
+            'vouchers' => $vouchersArray,
         ];
 
         Log::info('Syncing vouchers to RADIUS', [
             'server_id' => $this->server->id,
             'server_name' => $this->server->name,
             'endpoint' => $endpoint,
-            'voucher_count' => $vouchers->count(),
+            'voucher_count' => count($vouchersArray),
             'nas_identifier' => $router->nas_identifier,
         ]);
 
