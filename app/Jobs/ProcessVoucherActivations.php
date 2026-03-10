@@ -82,9 +82,7 @@ class ProcessVoucherActivations implements ShouldQueue
         // If NAS identifier provided, filter by router
         if ($nasIdentifier) {
             $voucherQuery->whereHas('router', function ($query) use ($nasIdentifier) {
-                $query->where('nas_identifier', $nasIdentifier)
-                    ->orWhere('host', $nasIdentifier)
-                    ->orWhere('ip', $nasIdentifier);
+                $query->where('nas_identifier', $nasIdentifier);
             });
         }
 
