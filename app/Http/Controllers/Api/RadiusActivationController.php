@@ -34,10 +34,16 @@ class RadiusActivationController extends Controller
                 ], 401);
             }
             
-            // Verify token against radius_servers table
-            $radiusServer = RadiusServer::where('auth_token', $providedToken)
-                ->where('is_active', true)
-                ->first();
+            // Find RADIUS server by auth_token
+            // Token is encrypted in DB but provided in plain text, so we must:
+            // 1. Fetch all active servers
+            // 2. Use model accessor to decrypt tokens
+            // 3. Find the one that matches
+            $radiusServer = RadiusServer::where('is_active', true)
+                ->get()
+                ->first(function ($server) use ($providedToken) {
+                    return $server->auth_token === $providedToken;
+                });
             
             if (!$radiusServer) {
                 Log::warning('Invalid RADIUS activation token', [
