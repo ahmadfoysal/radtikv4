@@ -108,7 +108,7 @@ class SyncVouchersToRadiusJob implements ShouldQueue
                     // Batch update to 'synced' status
                     Voucher::whereIn('id', $voucherIds)->update([
                         'radius_sync_status' => 'synced',
-                        'synced_at' => now(),
+                        'radius_synced_at' => now(),
                     ]);
 
                     $successChunks++;
@@ -131,7 +131,7 @@ class SyncVouchersToRadiusJob implements ShouldQueue
                     // Batch update to 'failed' status
                     Voucher::whereIn('id', $voucherIds)->update([
                         'radius_sync_status' => 'failed',
-                        'sync_error' => $errorMessage,
+                        'radius_sync_error' => $errorMessage,
                     ]);
 
                     Log::error('Voucher batch sync failed', [
