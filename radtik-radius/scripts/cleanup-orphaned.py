@@ -160,11 +160,12 @@ def delete_orphaned_vouchers(usernames: List[str]) -> int:
         conn = sqlite3.connect(RADIUS_DB_PATH)
         cursor = conn.cursor()
         
-        # Delete from radcheck and radreply tables
+        # Delete from radcheck, radreply, and radpostauth tables
         for username in usernames:
             try:
                 cursor.execute("DELETE FROM radcheck WHERE username = ?", (username,))
                 cursor.execute("DELETE FROM radreply WHERE username = ?", (username,))
+                cursor.execute("DELETE FROM radpostauth WHERE username = ?", (username,))
                 deleted_count += 1
                 
                 if deleted_count % 100 == 0:

@@ -74,15 +74,28 @@ class RadiusActivationController extends Controller
                 'source_ip' => $request->ip(),
             ]);
             
-            // Dispatch job to process activations in background
+            // Process activations synchronously and collect MAC binding information
+            $macBindings = $this->processActivationsAndGetBindings($validated['activations']);
+            
+            // Dispatch job for async logging and other tasks if needed
             ProcessVoucherActivations::dispatch($validated['activations']);
             
-            return response()->json([
+            $response = [
                 'success' => true,
-                'message' => 'Activations queued for processing',
+                'message' => 'Activations processed',
                 'received' => $activationCount,
-                'queued_at' => now()->toIso8601String(),
-            ], 200);
+                'processed_at' => now()->toIso8601String(),
+            ];
+            
+            // Include MAC bindings if any vouchers require binding
+            if (!empty($macBindings)) {
+                $response['mac_bindings'] = $macBindings;
+                Log::info('Returning MAC bindings for RADIUS sync', [
+                    'count' => count($macBindings),
+                ]);
+            }
+            
+            return response()->json($response, 200);
             
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::warning('Invalid activation data received', [
@@ -107,5 +120,74 @@ class RadiusActivationController extends Controller
                 'message' => 'Failed to process activations'
             ], 500);
         }
+    }
+    
+    /**
+     * Process activations synchronously and return MAC binding information
+     * for vouchers where profile has mac_binding enabled
+     * 
+     * @param array $activations
+     * @return array MAC bindings array with username and mac_address
+     */
+    private function processActivationsAndGetBindings(array $activations): array
+    {
+        $macBindings = [];
+        
+        foreach ($activations as $activation) {
+            try {
+                $username = $activation['username'];
+                $macAddress = $activation['calling_station_id'] ?? null;
+                $nasIdentifier = $activation['nas_identifier'] ?? null;
+                $authenticatedAt = \Carbon\Carbon::parse($activation['authenticated_at']);
+                
+                if (!$macAddress) {
+                    continue;
+                }
+                
+                // Find voucher
+                $voucherQuery = \App\Models\Voucher::where('username', $username);
+                
+                if ($nasIdentifier) {
+                    $voucherQuery->whereHas('router', function ($query) use ($nasIdentifier) {
+                        $query->where('nas_identifier', $nasIdentifier);
+                    });
+                }
+                
+                $voucher = $voucherQuery->with('profile')->first();
+                
+                if (!$voucher || !$voucher->profile) {
+                    continue;
+                }
+                
+                // Check if this is first activation (no activated_at set)
+                $isFirstActivation = is_null($voucher->activated_at);
+                
+                // Only return binding info if:
+                // 1. Profile has mac_binding enabled
+                // 2. This is the first activation
+                // 3. MAC address is provided
+                if ($isFirstActivation && $voucher->profile->mac_binding && $macAddress) {
+                    $macBindings[] = [
+                        'username' => $username,
+                        'mac_address' => $macAddress,
+                        'nas_identifier' => $nasIdentifier,
+                    ];
+                    
+                    Log::info('MAC binding required for voucher', [
+                        'username' => $username,
+                        'mac_address' => $macAddress,
+                        'profile' => $voucher->profile->name,
+                    ]);
+                }
+                
+            } catch (\Exception $e) {
+                Log::error('Failed to process activation for binding', [
+                    'username' => $activation['username'] ?? 'unknown',
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+        
+        return $macBindings;
     }
 }

@@ -118,14 +118,14 @@ def fetch_unique_activations_last_24h() -> List[Dict]:
         return []
 
 
-def post_activations_to_laravel(activations: List[Dict]) -> bool:
+def post_activations_to_laravel(activations: List[Dict]) -> Dict:
     """
     POST activation data to Laravel API
-    Returns True if successful, False otherwise
+    Returns response data with MAC bindings if any
     """
     if not activations:
         logger.info("No activations to sync")
-        return True
+        return {'success': True, 'mac_bindings': []}
     
     try:
         url = f"{LARAVEL_API_URL}/api/radius/activations"
@@ -150,19 +150,91 @@ def post_activations_to_laravel(activations: List[Dict]) -> bool:
         if response.status_code == 200:
             result = response.json()
             logger.info(f"✓ Successfully synced {len(activations)} activations")
-            return True
+            return result
         else:
             logger.error(f"Laravel API error: [{response.status_code}] {response.text}")
-            return False
+            return {'success': False, 'mac_bindings': []}
             
     except requests.exceptions.Timeout:
         logger.error("Laravel API request timed out")
-        return False
+        return {'success': False, 'mac_bindings': []}
     except requests.exceptions.ConnectionError as e:
         logger.error(f"Cannot connect to Laravel API: {e}")
-        return False
+        return {'success': False, 'mac_bindings': []}
     except Exception as e:
         logger.error(f"Failed to post activations: {e}")
+        return {'success': False, 'mac_bindings': []}
+
+
+def sync_mac_bindings_to_radius(mac_bindings: List[Dict]) -> bool:
+    """
+    Sync MAC bindings directly to RADIUS database
+    Adds Calling-Station-Id check to radcheck table to lock voucher to MAC
+    Returns True if successful
+    """
+    if not mac_bindings:
+        return True
+    
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        synced = 0
+        updated = 0
+        
+        logger.info(f"Syncing {len(mac_bindings)} MAC bindings to RADIUS database...")
+        
+        for binding in mac_bindings:
+            try:
+                username = binding['username']
+                mac_address = binding['mac_address']
+                
+                # Check if MAC binding already exists for this user
+                cursor.execute(
+                    "SELECT id, value FROM radcheck WHERE username = ? AND attribute = 'Calling-Station-Id'",
+                    (username,)
+                )
+                existing = cursor.fetchone()
+                
+                if existing:
+                    # Update existing MAC binding (in case MAC changed)
+                    existing_mac = existing['value']
+                    
+                    if existing_mac != mac_address:
+                        cursor.execute(
+                            "UPDATE radcheck SET value = ? WHERE username = ? AND attribute = 'Calling-Station-Id'",
+                            (mac_address, username)
+                        )
+                        updated += 1
+                        logger.info(f"Updated MAC for {username}: {existing_mac} → {mac_address}")
+                    else:
+                        logger.debug(f"MAC binding unchanged for {username}: {mac_address}")
+                        synced += 1
+                else:
+                    # Insert new MAC binding
+                    cursor.execute(
+                        "INSERT INTO radcheck (username, attribute, op, value) VALUES (?, ?, ?, ?)",
+                        (username, 'Calling-Station-Id', '==', mac_address)
+                    )
+                    synced += 1
+                    logger.info(f"Added MAC binding for {username}: {mac_address}")
+                
+            except sqlite3.Error as e:
+                logger.error(f"Database error for {username}: {e}")
+                continue
+        
+        # Commit all changes
+        conn.commit()
+        conn.close()
+        
+        logger.info(f"✓ MAC bindings synced: {synced} added, {updated} updated")
+        return True
+        
+    except sqlite3.Error as e:
+        logger.error(f"Failed to sync MAC bindings: {e}")
+        return False
+    except Exception as e:
+        logger.error(f"Unexpected error syncing MAC bindings: {e}")
         return False
 
 
@@ -181,13 +253,29 @@ def main():
         logger.info(f"Found {len(activations)} unique activation(s) from last 24 hours")
         
         # Post to Laravel
-        success = post_activations_to_laravel(activations)
+        result = post_activations_to_laravel(activations)
         
-        if success:
-            logger.info("Activation sync completed successfully")
-        else:
+        if not result.get('success'):
             logger.error("Failed to sync activations")
             sys.exit(1)
+        
+        logger.info("Activation sync completed successfully")
+        
+        # Check if Laravel returned MAC bindings to sync
+        mac_bindings = result.get('mac_bindings', [])
+        
+        if mac_bindings:
+            logger.info(f"Received {len(mac_bindings)} MAC binding(s) to sync to RADIUS")
+            
+            # Sync MAC bindings to RADIUS database
+            binding_success = sync_mac_bindings_to_radius(mac_bindings)
+            
+            if binding_success:
+                logger.info("MAC binding sync completed successfully")
+            else:
+                logger.warning("MAC binding sync failed, but activations were processed")
+        else:
+            logger.info("No MAC bindings required")
             
     except Exception as e:
         logger.error(f"Sync error: {e}", exc_info=True)

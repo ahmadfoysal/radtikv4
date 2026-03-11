@@ -315,6 +315,10 @@ def delete_voucher():
         cursor.execute("DELETE FROM radreply WHERE username = ?", (username,))
         radreply_deleted = cursor.rowcount
         
+        # Delete from radpostauth
+        cursor.execute("DELETE FROM radpostauth WHERE username = ?", (username,))
+        radpostauth_deleted = cursor.rowcount
+        
         conn.commit()
         conn.close()
         
@@ -325,14 +329,15 @@ def delete_voucher():
                 'error': 'Voucher not found'
             }), 404
         
-        logger.info(f"Voucher deleted: {username} ({radcheck_deleted} radcheck, {radreply_deleted} radreply)")
+        logger.info(f"Voucher deleted: {username} ({radcheck_deleted} radcheck, {radreply_deleted} radreply, {radpostauth_deleted} radpostauth)")
         
         return jsonify({
             'success': True,
             'message': 'Voucher deleted successfully',
             'deleted': {
                 'radcheck': radcheck_deleted,
-                'radreply': radreply_deleted
+                'radreply': radreply_deleted,
+                'radpostauth': radpostauth_deleted
             }
         }), 200
         
