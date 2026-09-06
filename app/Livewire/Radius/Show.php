@@ -36,7 +36,6 @@ class Show extends Component
     public array $releaseNotes = [];
     
     // Tab State
-    public string $selectedTab = 'overview';
     public string $logTab = 'freeradius';
     
     public function mount(RadiusServer $server): void
