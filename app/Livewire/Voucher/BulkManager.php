@@ -280,6 +280,60 @@ class BulkManager extends Component
         $this->js("window.open('$url', '_blank');");
     }
 
+    public function exportRsc()
+    {
+        $this->authorize('view_voucher_list');
+
+        $query = $this->getQuery();
+
+        if (! $query || $query->count() === 0) {
+            $this->error('No vouchers to export.');
+
+            return;
+        }
+
+        $vouchers = $query->with('profile')->get();
+        $lines = [
+            '# RADTik hotspot users export',
+            '# Import this file on a MikroTik router with /import file-name=<file>.rsc',
+            '',
+        ];
+
+        foreach ($vouchers as $voucher) {
+            $profile = $voucher->profile?->name ?: 'default';
+            $validity = $voucher->profile?->validity ?: 'unlimited';
+            $lock = $voucher->profile?->mac_binding ? '1' : '0';
+            $comment = "RADTik | LOCK={$lock} | VALIDITY={$validity}";
+
+            if ($voucher->activated_at) {
+                $comment .= ' | ACT=' . $voucher->activated_at->format('Y-m-d H:i:s');
+            }
+
+            $lines[] = sprintf(
+                '/ip hotspot user add name="%s" password="%s" profile="%s" comment="%s"',
+                $this->escapeRouterOsValue($voucher->username),
+                $this->escapeRouterOsValue($voucher->password),
+                $this->escapeRouterOsValue($profile),
+                $this->escapeRouterOsValue($comment),
+            );
+        }
+
+        $filename = 'radtik-hotspot-users-' . now()->format('Ymd-His') . '.rsc';
+
+        return response()->streamDownload(
+            static function () use ($lines): void {
+                echo implode("\n", $lines) . "\n";
+            },
+            $filename,
+            ['Content-Type' => 'application/octet-stream']
+        );
+    }
+
+    protected function escapeRouterOsValue(string $value): string
+    {
+        return str_replace(['\\', '"'], ['\\\\', '\\"'], $value);
+    }
+
     public function printVoucher(int $voucherId): void
     {
         if (! $this->router_id) {

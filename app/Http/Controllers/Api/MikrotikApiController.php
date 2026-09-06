@@ -94,7 +94,8 @@ class MikrotikApiController extends Controller
             $isLock = $v->profile->is_mac_binding ?? false ? '1' : '0';
 
             // Build Comment (preserve existing activation info if available)
-            $baseComment = "RADTik | LOCK={$isLock}";
+            $validity = $v->profile->validity ?? 'unlimited';
+            $baseComment = "RADTik | LOCK={$isLock} | VALIDITY={$validity}";
             if ($v->activated_at) {
                 // If already activated, send the date back so script doesn't reset it logic
                 // Format: "RADTik | LOCK=1 | Act: Dec/04/2025 10:00:00"

@@ -299,6 +299,35 @@ class RadiusApiService
     }
 
     /**
+     * Remove the MAC binding while keeping the voucher credentials intact.
+     */
+    public function resetVoucherMacBinding(string $username): array
+    {
+        if (!$this->server->isReady()) {
+            throw new Exception('RADIUS server is not ready.');
+        }
+
+        $endpoint = $this->server->api_url . '/reset/voucher';
+
+        Log::info('Resetting voucher MAC binding in RADIUS', [
+            'server_id' => $this->server->id,
+            'username' => $username,
+        ]);
+
+        $response = Http::timeout(15)
+            ->withToken($this->server->auth_token)
+            ->post($endpoint, ['username' => $username]);
+
+        if (!$response->successful()) {
+            throw new Exception(
+                "Failed to reset voucher MAC binding: [{$response->status()}] " . $response->body()
+            );
+        }
+
+        return $response->json();
+    }
+
+    /**
      * Toggle voucher status (enable/disable) in RADIUS server
      * 
      * @param string $username Voucher username

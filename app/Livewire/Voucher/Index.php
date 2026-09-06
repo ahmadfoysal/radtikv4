@@ -148,7 +148,7 @@ class Index extends Component
     //reset voucher
     public function resetVoucher(int $id)
     {
-        $this->authorize('reset_vouchers');
+        $this->authorize('reset_voucher');
         $user = auth()->user();
         $result = $this->voucherService->resetVoucher($user, $id);
         if ($result['success']) {

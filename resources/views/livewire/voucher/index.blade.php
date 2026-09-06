@@ -147,6 +147,12 @@
                             wire:click="toggleDisable({{ $v->id }})"
                             spinner="toggleDisable({{ $v->id }})" />
 
+                        {{-- Reset session and MAC binding --}}
+                        <x-mary-button icon="o-arrow-path" class="btn-ghost btn-xs !px-2 text-info"
+                            wire:click="resetVoucher({{ $v->id }})"
+                            spinner="resetVoucher({{ $v->id }})"
+                            onclick="return confirm('Reset voucher {{ $v->username }}? This removes its active session, cookie, and MAC binding.')" />
+
                         {{-- Delete --}}
                         <x-mary-button icon="o-trash" class="btn-ghost btn-xs !px-2 text-error"
                             wire:click="delete({{ $v->id }})" spinner="delete({{ $v->id }})"

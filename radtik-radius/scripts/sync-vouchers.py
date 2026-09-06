@@ -349,6 +349,44 @@ def delete_voucher():
         }), 500
 
 
+@app.route('/reset/voucher', methods=['POST'])
+@require_auth
+def reset_voucher():
+    """Remove a voucher's Calling-Station-Id binding without deleting it."""
+    try:
+        data = request.get_json()
+        if not data or 'username' not in data:
+            return jsonify({
+                'success': False,
+                'error': 'Missing username in request'
+            }), 400
+
+        username = data['username']
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "DELETE FROM radcheck WHERE username = ? AND attribute = 'Calling-Station-Id'",
+            (username,)
+        )
+        deleted = cursor.rowcount
+        conn.commit()
+        conn.close()
+
+        logger.info(f"Reset MAC binding for {username}: {deleted} row(s) removed")
+
+        return jsonify({
+            'success': True,
+            'message': 'Voucher MAC binding reset successfully',
+            'deleted': deleted,
+        }), 200
+    except Exception as e:
+        logger.error(f"Reset voucher endpoint error: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
 @app.route('/toggle/voucher-status', methods=['POST'])
 @require_auth
 def toggle_voucher_status():

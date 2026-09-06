@@ -3,13 +3,13 @@
 ## Features & Enhancements
 
 ### Voucher Reset System
-- [ ] Add reset button in voucher list
-- [ ] Implement reset functionality:
-  - [ ] Remove from MikroTik active list
-  - [ ] Remove cookies
-  - [ ] Remove MAC from RADIUS database (allow login from any device)
-- [ ] Add confirmation dialog for reset action
-- [ ] Add logging for reset operations
+- [x] Add reset button in voucher list
+- [x] Implement reset functionality:
+  - [x] Remove from MikroTik active list
+  - [x] Remove cookies
+  - [x] Remove MAC from RADIUS database (allow login from any device)
+- [x] Add confirmation dialog for reset action
+- [x] Add logging for reset operations
 
 ### RADIUS Management Update
 - [ ] Reorganize RADIUS management interface

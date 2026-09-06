@@ -41,6 +41,9 @@
 
             <x-mary-button label="Print List (PDF)" icon="o-printer" class="btn-success text-white btn-sm"
                 wire:click="print" :disabled="$total_count === 0" />
+
+            <x-mary-button label="Export MikroTik RSC" icon="o-arrow-down-tray" class="btn-info text-white btn-sm"
+                wire:click="exportRsc" :disabled="$total_count === 0" spinner="exportRsc" />
         </div>
     </div>
 

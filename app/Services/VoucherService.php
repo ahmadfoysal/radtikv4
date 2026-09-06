@@ -214,23 +214,52 @@ class VoucherService
             $manager = app(HotspotUserManager::class);
             $result = $manager->resetVoucher($router, $voucher->username);
 
-            // Step 5: Handle the result from HotspotUserManager
+            $actions = $result['actions'] ?? [];
+            $errors = $result['errors'] ?? [];
+
             if ($result['ok'] ?? false) {
+                $radiusResult = null;
+                if ($router->radiusServer && $router->radiusServer->isReady()) {
+                    $radiusResult = (new RadiusApiService($router->radiusServer))
+                        ->resetVoucherMacBinding($voucher->username);
+                    $actions[] = 'RADIUS MAC binding removed';
+                } else {
+                    $actions[] = 'No RADIUS MAC binding to remove';
+                }
+
+                $voucher->update([
+                    'mac_address' => null,
+                    'bytes_in' => 0,
+                    'bytes_out' => 0,
+                    'up_time' => null,
+                ]);
+
+                VoucherLogger::log(
+                    $voucher,
+                    $router,
+                    'reset',
+                    [
+                        'reset_by' => $user->id,
+                        'actions' => $actions,
+                        'radius_response' => $radiusResult,
+                    ],
+                    'Manual voucher reset'
+                );
+
                 return [
                     'success' => true,
-                    'message' => $result['message'] ?? 'Voucher reset successfully.',
-                    'actions' => $result['actions'] ?? [],
-                    'errors' => $result['errors'] ?? [],
-                ];
-            } else {
-                // MikroTik operation failed
-                return [
-                    'success' => false,
-                    'message' => $result['message'] ?? 'Failed to reset voucher on router.',
-                    'actions' => $result['actions'] ?? [],
-                    'errors' => $result['errors'] ?? ['Unknown error occurred during reset'],
+                    'message' => 'Voucher reset successfully.',
+                    'actions' => $actions,
+                    'errors' => $errors,
                 ];
             }
+
+            return [
+                'success' => false,
+                'message' => $result['message'] ?? 'Failed to reset voucher on router.',
+                'actions' => $actions,
+                'errors' => $errors ?: ['Unknown error occurred during reset'],
+            ];
         } catch (\Throwable $e) {
             // Catch any unexpected errors during the reset process
             return [
