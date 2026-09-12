@@ -66,7 +66,7 @@
                 @if($updateAvailable)
                     <div class="mt-2"><x-mary-badge value="Update Available" class="badge-warning" /></div>
                 @else
-                    <div class="text-3xl font-semibold">v{{ $installedVersion }}</div>
+                    <div class="text-3xl font-semibold font-mono">{{ $installedVersion }}</div>
                 @endif
             </x-mary-card>
             <x-mary-card class="bg-base-100 border border-base-300 shadow-sm rounded-none">
@@ -219,15 +219,15 @@
                 <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <dl class="space-y-1">
                         <div class="flex items-center justify-between gap-3 py-1.5 border-b border-base-200">
-                            <dt class="text-[11px] uppercase opacity-60">Installed Version</dt>
-                            <dd><x-mary-badge :value="'v' . $installedVersion" class="badge-primary badge-sm" /></dd>
+                            <dt class="text-[11px] uppercase opacity-60">Installed Commit</dt>
+                            <dd><x-mary-badge :value="$installedVersion" class="badge-primary badge-sm font-mono" /></dd>
                         </div>
                         @if($latestVersion)
                             <div class="flex items-center justify-between gap-3 py-1.5 border-b border-base-200">
-                                <dt class="text-[11px] uppercase opacity-60">Latest Version</dt>
+                                <dt class="text-[11px] uppercase opacity-60">Latest Commit</dt>
                                 <dd>
-                                    <x-mary-badge :value="'v' . $latestVersion"
-                                        :class="($updateAvailable ? 'badge-success' : 'badge-ghost') . ' badge-sm'" />
+                                    <x-mary-badge :value="$latestVersion"
+                                        :class="($updateAvailable ? 'badge-success' : 'badge-ghost') . ' badge-sm font-mono'" />
                                 </dd>
                             </div>
                         @endif
@@ -263,7 +263,7 @@
                                 class="btn-success btn-sm w-full" />
                         @endif
 
-                        <p class="text-xs text-base-content/60 mt-1">Automatic backup is created before every update, and services are restarted with configuration preserved.</p>
+                        <p class="text-xs text-base-content/60 mt-1">Checks the latest commit on the configured branch (no GitHub release required). Automatic backup is created before every update, and config.ini, clients.conf and the live database are preserved.</p>
                     </div>
                 </div>
             </x-mary-card>

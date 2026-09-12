@@ -295,7 +295,7 @@ class Show extends Component
             $result = $sshService->getInstalledVersion();
             
             if ($result['success']) {
-                $this->installedVersion = $result['version'];
+                $this->installedVersion = $result['short_version'];
             } else {
                 $this->installedVersion = 'Unknown';
             }
@@ -318,13 +318,13 @@ class Show extends Component
             $result = $sshService->checkForUpdates();
             
             if ($result['success']) {
-                $this->installedVersion = $result['installed_version'];
-                $this->latestVersion = $result['latest_version'];
+                $this->installedVersion = $result['installed_short'];
+                $this->latestVersion = $result['latest_short'];
                 $this->updateAvailable = $result['update_available'];
                 
                 if ($this->updateAvailable) {
                     $this->updateMessage = $result['message'];
-                    $this->success("Update available: v{$this->installedVersion} → v{$this->latestVersion}");
+                    $this->success("Update available: {$this->installedVersion} → {$this->latestVersion}");
                 } else {
                     $this->info('You are running the latest version (' . $this->installedVersion . ')');
                 }
@@ -354,15 +354,17 @@ class Show extends Component
             $result = $sshService->applyUpdate();
             
             if ($result['success']) {
+                $oldShort = substr($result['old_version'], 0, 7);
+                $newShort = substr($result['new_version'], 0, 7);
                 $this->success(
-                    "Successfully updated from v{$result['old_version']} to v{$result['new_version']}! " .
+                    "Successfully updated from {$oldShort} to {$newShort}! " .
                     "Backup saved at: {$result['backup_location']}"
                 );
                 
                 // Refresh version info
                 $this->getInstalledVersion();
                 $this->updateAvailable = false;
-                $this->latestVersion = $result['new_version'];
+                $this->latestVersion = $newShort;
                 
                 // Refresh status to check services
                 sleep(2);

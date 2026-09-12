@@ -1,7 +1,7 @@
 @props(['code', 'language' => 'bash'])
 
-<div class="relative group mb-4">
-    <div class="bg-base-300 rounded-lg border border-base-content/10 shadow-sm">
+<div class="relative group mb-4 min-w-0">
+    <div class="bg-base-300 rounded-lg border border-base-content/10 shadow-sm min-w-0">
         <div class="flex items-center justify-between px-4 py-2 border-b border-base-content/10 bg-base-200/50">
             <span class="text-xs font-mono text-base-content/60">{{ $language }}</span>
             <button 

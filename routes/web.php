@@ -111,9 +111,9 @@ Route::middleware(['auth', 'check.suspended'])->group(function () {
         // RADIUS Server Management
         Route::get('/radius', App\Livewire\Radius\Index::class)->name('radius.index');
         Route::get('/radius/create', App\Livewire\Radius\Create::class)->name('radius.create');
+        Route::get('/radius/setup-guide', App\Livewire\Radius\SetupGuide::class)->name('radius.setup-guide');
         Route::get('/radius/{server}', App\Livewire\Radius\Show::class)->name('radius.show');
         Route::get('/radius/{server}/edit', App\Livewire\Radius\Edit::class)->name('radius.edit');
-        Route::get('/radius/setup-guide', App\Livewire\Radius\SetupGuide::class)->name('radius.setup-guide');
 
         // Subscription Management
         Route::get('/subscription', App\Livewire\Subscription\Index::class)->name('subscription.index');

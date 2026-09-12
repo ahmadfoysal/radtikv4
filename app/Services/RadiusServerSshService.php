@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\RadiusServer;
 use Exception;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use phpseclib3\Net\SSH2;
 use phpseclib3\Crypt\PublicKeyLoader;
@@ -465,25 +466,42 @@ class RadiusServerSshService
     }
 
     /**
-     * Get installed radtik-radius version
+     * Get "owner/repo" slug from the configured repository URL
+     */
+    protected function getRepoSlug(): string
+    {
+        $url = rtrim(config('app.radtik_repo_url', 'https://github.com/ahmadfoysal/radtik-radius.git'), '/');
+        $url = preg_replace('/\.git$/', '', $url);
+
+        return trim((string) parse_url($url, PHP_URL_PATH), '/');
+    }
+
+    /**
+     * Get the commit currently installed on the RADIUS server.
+     * Uses a marker file written by applyUpdate(); falls back to the local
+     * git HEAD for installs that predate the marker file.
      */
     public function getInstalledVersion(): array
     {
         try {
-            $version = trim($this->execute('cat /opt/radtik-radius/VERSION 2>&1'));
-            
-            // Check if file exists
-            if (str_contains($version, 'No such file')) {
+            $marker = trim($this->execute('cat /opt/radtik-radius/.installed_commit 2>/dev/null'));
+
+            if ($marker === '') {
+                $marker = trim($this->execute('cd /opt/radtik-radius 2>/dev/null && git rev-parse HEAD 2>/dev/null'));
+            }
+
+            if ($marker === '') {
                 return [
                     'success' => false,
                     'version' => null,
-                    'message' => 'VERSION file not found',
+                    'message' => 'Installed version could not be determined',
                 ];
             }
 
             return [
                 'success' => true,
-                'version' => $version,
+                'version' => $marker,
+                'short_version' => substr($marker, 0, 7),
                 'message' => 'Version retrieved successfully',
             ];
         } catch (Exception $e) {
@@ -501,50 +519,64 @@ class RadiusServerSshService
     }
 
     /**
-     * Check for available updates from GitHub
+     * Check for available updates by comparing the installed commit against
+     * the latest commit pushed to the configured branch on GitHub.
+     * This repository is not tagged with releases, so we track branch commits directly.
      */
     public function checkForUpdates(): array
     {
         try {
-            // Get installed version
             $installedResult = $this->getInstalledVersion();
             if (!$installedResult['success']) {
                 return $installedResult;
             }
 
-            $installedVersion = $installedResult['version'];
+            $installedCommit = $installedResult['version'];
+            $branch = config('app.radtik_branch', 'main');
+            $repoSlug = $this->getRepoSlug();
 
-            // Check GitHub API for latest release
-            $githubApiUrl = 'https://api.github.com/repos/ahmadfoysal/radtik-radius/releases/latest';
-            $latestReleaseJson = trim($this->execute("curl -s '$githubApiUrl'"));
-            
-            // Parse JSON response
-            $latestRelease = json_decode($latestReleaseJson, true);
-            
-            if (!$latestRelease || !isset($latestRelease['tag_name'])) {
+            $response = Http::withHeaders(['Accept' => 'application/vnd.github+json'])
+                ->timeout(15)
+                ->get("https://api.github.com/repos/{$repoSlug}/commits/{$branch}");
+
+            if (!$response->successful()) {
                 return [
                     'success' => false,
-                    'message' => 'Failed to fetch latest release from GitHub',
-                    'installed_version' => $installedVersion,
+                    'message' => 'Failed to fetch latest commit from GitHub: HTTP ' . $response->status(),
+                    'installed_version' => $installedCommit,
                     'latest_version' => null,
                     'update_available' => false,
                 ];
             }
 
-            $latestVersion = ltrim($latestRelease['tag_name'], 'v');
-            $updateAvailable = version_compare($latestVersion, $installedVersion, '>');
+            $latest = $response->json();
+            $latestCommit = $latest['sha'] ?? null;
+
+            if (!$latestCommit) {
+                return [
+                    'success' => false,
+                    'message' => 'Unexpected response from GitHub API',
+                    'installed_version' => $installedCommit,
+                    'latest_version' => null,
+                    'update_available' => false,
+                ];
+            }
+
+            $updateAvailable = $installedCommit !== $latestCommit;
 
             return [
                 'success' => true,
-                'installed_version' => $installedVersion,
-                'latest_version' => $latestVersion,
+                'installed_version' => $installedCommit,
+                'installed_short' => substr($installedCommit, 0, 7),
+                'latest_version' => $latestCommit,
+                'latest_short' => substr($latestCommit, 0, 7),
                 'update_available' => $updateAvailable,
-                'release_url' => $latestRelease['html_url'] ?? null,
-                'release_notes' => $latestRelease['body'] ?? null,
-                'published_at' => $latestRelease['published_at'] ?? null,
-                'message' => $updateAvailable ? 
-                    "Update available: v{$installedVersion} → v{$latestVersion}" : 
-                    'You are running the latest version',
+                'release_url' => "https://github.com/{$repoSlug}/commit/{$latestCommit}",
+                'release_notes' => $latest['commit']['message'] ?? null,
+                'published_at' => $latest['commit']['author']['date'] ?? null,
+                'message' => $updateAvailable
+                    ? 'Update available: ' . substr($installedCommit, 0, 7) . ' → ' . substr($latestCommit, 0, 7)
+                    : 'You are running the latest version',
             ];
         } catch (Exception $e) {
             Log::error('Failed to check for updates', [
@@ -561,7 +593,8 @@ class RadiusServerSshService
     }
 
     /**
-     * Apply update from GitHub
+     * Pull the latest commit for the configured branch and deploy it, preserving
+     * server-specific files (config.ini, clients.conf, live SQLite database).
      */
     public function applyUpdate(string $targetVersion = 'latest'): array
     {
@@ -575,75 +608,80 @@ class RadiusServerSshService
             if (!$updateCheck['update_available'] && $targetVersion === 'latest') {
                 return [
                     'success' => false,
-                    'message' => 'No updates available. Already running version ' . $updateCheck['installed_version'],
+                    'message' => 'No updates available. Already running ' . ($updateCheck['installed_short'] ?? $updateCheck['installed_version']),
                 ];
             }
 
-            $version = $targetVersion === 'latest' ? $updateCheck['latest_version'] : $targetVersion;
-            
+            $commit = $targetVersion === 'latest' ? $updateCheck['latest_version'] : $targetVersion;
+            $repoSlug = $this->getRepoSlug();
+            $repoName = substr($repoSlug, strpos($repoSlug, '/') + 1);
+
             Log::info('Starting radtik-radius update', [
                 'server_id' => $this->server->id,
-                'from_version' => $updateCheck['installed_version'],
-                'to_version' => $version,
+                'from_commit' => $updateCheck['installed_version'],
+                'to_commit' => $commit,
             ]);
 
             // Create backup directory with timestamp
             $timestamp = date('Y-m-d_H-i-s');
             $backupDir = "/opt/radtik-radius-backup-{$timestamp}";
-            
-            // Backup current installation
             $this->execute("sudo cp -r /opt/radtik-radius $backupDir");
-            
+
             Log::info('Created backup', [
                 'server_id' => $this->server->id,
                 'backup_dir' => $backupDir,
             ]);
 
-            // Download and extract update
-            $downloadUrl = "https://github.com/ahmadfoysal/radtik-radius/archive/refs/tags/v{$version}.tar.gz";
+            // Preserve server-specific files that must never be overwritten by an update
+            $protectedDir = "/tmp/radtik-radius-protected-{$timestamp}";
+            $this->execute("mkdir -p $protectedDir/scripts $protectedDir/sqlite");
+            $this->execute("sudo cp /opt/radtik-radius/scripts/config.ini $protectedDir/scripts/config.ini 2>/dev/null || true");
+            $this->execute("sudo cp /opt/radtik-radius/clients.conf $protectedDir/clients.conf 2>/dev/null || true");
+            $this->execute("sudo cp /opt/radtik-radius/sqlite/radius.db $protectedDir/sqlite/radius.db 2>/dev/null || true");
+
+            // Download the exact commit that was checked, avoiding a race with new pushes
+            $downloadUrl = "https://github.com/{$repoSlug}/archive/{$commit}.tar.gz";
             $tmpDir = "/tmp/radtik-radius-update-{$timestamp}";
-            
-            // Download archive
-            $downloadCommand = "mkdir -p $tmpDir && cd $tmpDir && curl -L -o update.tar.gz '$downloadUrl'";
-            $this->execute($downloadCommand);
-            
-            // Extract archive
+            $this->execute("mkdir -p $tmpDir && cd $tmpDir && curl -fsSL -o update.tar.gz '$downloadUrl'");
             $this->execute("cd $tmpDir && tar -xzf update.tar.gz");
-            
-            // Copy files to installation directory (excluding .git)
-            $extractedDir = "$tmpDir/radtik-radius-" . ltrim($version, 'v');
+
+            // Copy files to installation directory
+            $extractedDir = "$tmpDir/{$repoName}-{$commit}";
             $this->execute("sudo cp -r $extractedDir/* /opt/radtik-radius/");
-            
-            // Preserve config.ini if it exists in backup
-            $this->execute("sudo cp $backupDir/scripts/config.ini /opt/radtik-radius/scripts/config.ini 2>/dev/null || true");
-            
+
+            // Restore protected files
+            $this->execute("sudo cp $protectedDir/scripts/config.ini /opt/radtik-radius/scripts/config.ini 2>/dev/null || true");
+            $this->execute("sudo cp $protectedDir/clients.conf /opt/radtik-radius/clients.conf 2>/dev/null || true");
+            $this->execute("sudo cp $protectedDir/sqlite/radius.db /opt/radtik-radius/sqlite/radius.db 2>/dev/null || true");
+
+            // Record the installed commit so future checks compare against it
+            $this->execute("echo '{$commit}' | sudo tee /opt/radtik-radius/.installed_commit > /dev/null");
+
             // Set proper permissions
-            $this->execute("sudo chown -R root:root /opt/radtik-radius");
-            $this->execute("sudo chmod +x /opt/radtik-radius/install.sh");
-            $this->execute("sudo chmod +x /opt/radtik-radius/scripts/*.py");
-            
+            $this->execute('sudo chown -R root:root /opt/radtik-radius');
+            $this->execute('sudo chown -R freerad:freerad /opt/radtik-radius/sqlite 2>/dev/null || true');
+            $this->execute('sudo chmod +x /opt/radtik-radius/install.sh 2>/dev/null || true');
+            $this->execute('sudo chmod +x /opt/radtik-radius/scripts/*.py 2>/dev/null || true');
+
             // Restart services
             $this->execute('sudo systemctl restart radtik-radius-api');
             $this->execute('sudo systemctl restart freeradius');
-            
+
             // Wait for services to start
             sleep(3);
-            
+
             // Verify services are running
             $apiStatus = trim($this->execute('sudo systemctl is-active radtik-radius-api'));
             $radiusStatus = trim($this->execute('sudo systemctl is-active freeradius'));
-            
-            // Cleanup temp directory
-            $this->execute("rm -rf $tmpDir");
-            
+
+            // Cleanup temp directories
+            $this->execute("rm -rf $tmpDir $protectedDir");
+
             $allActive = ($apiStatus === 'active' && $radiusStatus === 'active');
-            
-            // Verify version update
-            $newVersion = $this->getInstalledVersion();
-            
+
             Log::info('Update completed', [
                 'server_id' => $this->server->id,
-                'new_version' => $newVersion['version'] ?? 'unknown',
+                'new_commit' => $commit,
                 'api_status' => $apiStatus,
                 'radius_status' => $radiusStatus,
                 'backup_dir' => $backupDir,
@@ -651,11 +689,11 @@ class RadiusServerSshService
 
             return [
                 'success' => $allActive,
-                'message' => $allActive ? 
-                    "Successfully updated to version {$version}" : 
-                    "Update completed but services need attention",
+                'message' => $allActive ?
+                    'Successfully updated to ' . substr($commit, 0, 7) :
+                    'Update completed but services need attention',
                 'old_version' => $updateCheck['installed_version'],
-                'new_version' => $newVersion['version'] ?? $version,
+                'new_version' => $commit,
                 'backup_location' => $backupDir,
                 'api_status' => $apiStatus,
                 'radius_status' => $radiusStatus,
@@ -675,6 +713,7 @@ class RadiusServerSshService
             ];
         }
     }
+
 
     /**
      * Close SSH connection

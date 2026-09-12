@@ -22,16 +22,16 @@
                     <div class="p-3 bg-primary rounded-full">
                         <x-mary-icon name="o-bolt" class="w-6 h-6 text-white" />
                     </div>
-                    <div class="flex-1">
+                    <div class="flex-1 min-w-0">
                         <h3 class="font-bold text-lg mb-2">⚡ Quick Setup (Automated Script)</h3>
                         <p class="text-sm mb-3">Save time! Use our automated bash script to complete the entire setup in 2-3 minutes.</p>
-                        <x-command-block code="curl -fsSL https://raw.githubusercontent.com/ahmadfoysal/radtik-radius-setup/main/radius-setup.sh | sudo bash" language="bash" />
+                        <x-command-block code="curl -fsSL https://raw.githubusercontent.com/ahmadfoysal/radtik-radius/main/bootstrap-install.sh | sudo bash" language="bash" />
                         <div class="mt-3 flex flex-wrap gap-2">
-                            <a href="https://github.com/ahmadfoysal/radtik-radius-setup/blob/main/radius-setup.sh" target="_blank" class="btn btn-primary btn-sm gap-2">
+                            <a href="https://github.com/ahmadfoysal/radtik-radius/blob/main/bootstrap-install.sh" target="_blank" class="btn btn-primary btn-sm gap-2">
                                 <x-mary-icon name="o-code-bracket" class="w-4 h-4" />
                                 View Script
                             </a>
-                            <a href="https://github.com/ahmadfoysal/radtik-radius-setup/blob/main/README.md" target="_blank" class="btn btn-ghost btn-sm gap-2">
+                            <a href="https://github.com/ahmadfoysal/radtik-radius/blob/main/README.md" target="_blank" class="btn btn-ghost btn-sm gap-2">
                                 <x-mary-icon name="o-document-text" class="w-4 h-4" />
                                 Script Documentation
                             </a>
